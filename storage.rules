@@ -1,0 +1,21 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Plant scan images — uploaded by Cloud Function, readable by owner
+    match /scans/{uid}/{scanId}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false; // Written only by Cloud Functions
+    }
+
+    // User plant images (manually uploaded from My Plants)
+    match /plants/{uid}/{plantId}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 5 * 1024 * 1024  // 5 MB max
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

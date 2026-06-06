@@ -1,0 +1,45 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.DS_Store
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Environment variables
+.env
+.env.local
+.env.staging
+.env.production
+
+# Firebase
+google-services.json
+GoogleService-Info.plist
+.firebase/
+firebase-debug.log
+firestore-debug.log
+functions/lib/
+
+# Google Play
+google-play-service-account.json
+
+# EAS
+.easignore
+
+# Dev environment runtime files
+.dev-pids
+.dev-session
+logs/*.log
+logs/archive/
+logs/.emulator-data/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

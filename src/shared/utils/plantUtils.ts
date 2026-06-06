@@ -1,0 +1,48 @@
+import type { UserPlantDoc } from '../../types/firestore.types';
+import type { HealthStatus } from '../../constants/plants';
+import { REMINDER_MESSAGES } from '../../constants/plants';
+import type { ReminderType } from '../../constants/plants';
+
+export const getNextWaterDate = (plant: UserPlantDoc): Date => {
+  const last = plant.lastWateredAt.toDate();
+  const next = new Date(last);
+  next.setDate(next.getDate() + plant.wateringFrequencyDays);
+  return next;
+};
+
+export const isDueForWater = (plant: UserPlantDoc): boolean => {
+  return getNextWaterDate(plant) <= new Date();
+};
+
+export const getHealthColor = (status: HealthStatus): string => {
+  const map: Record<HealthStatus, string> = {
+    Healthy: '#22C55E',
+    'Needs Attention': '#F59E0B',
+    Critical: '#EF4444',
+  };
+  return map[status];
+};
+
+export const buildReminderMessage = (nickname: string, type: ReminderType): string => {
+  const templates = REMINDER_MESSAGES[type];
+  const template = templates[Math.floor(Math.random() * templates.length)];
+  return template.replace('{nickname}', nickname);
+};
+
+export const getDaysSince = (date: Date): number => {
+  const diffMs = new Date().getTime() - date.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+};
+
+export const getIKImageUrl = (
+  firebaseUrl: string,
+  transform = 'tr=w-400,h-400,q-80'
+): string => {
+  const ikBase = process.env.EXPO_PUBLIC_IMAGEKIT_URL_ENDPOINT;
+  if (!ikBase || !firebaseUrl) return firebaseUrl;
+  // Extract path from Firebase Storage URL
+  const pathMatch = firebaseUrl.match(/\/o\/(.+)\?/);
+  if (!pathMatch) return firebaseUrl;
+  const path = decodeURIComponent(pathMatch[1]);
+  return `${ikBase}/${path}?${transform}`;
+};

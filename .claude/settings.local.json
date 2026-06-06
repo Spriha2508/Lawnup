@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(firebase --version)",
+      "Bash(npx expo *)",
+      "Bash(chmod +x /Users/mobcoderid-009/Desktop/Lawnup/dev-start.sh /Users/mobcoderid-009/Desktop/Lawnup/dev-stop.sh)",
+      "Bash(bash -n /Users/mobcoderid-009/Desktop/Lawnup/dev-start.sh)",
+      "Bash(bash -n /Users/mobcoderid-009/Desktop/Lawnup/dev-stop.sh)",
+      "Bash(git -C /Users/mobcoderid-009/Desktop/Lawnup status)",
+      "Bash(gh auth *)",
+      "Bash(git --version)",
+      "Bash(npm --version)",
+      "Bash(git config *)",
+      "Bash(brew install *)",
+      "Bash(ssh -T git@github.com)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}

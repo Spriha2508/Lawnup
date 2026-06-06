@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid);
+      // Only allow updating non-sensitive fields from client; subscription is set by Cloud Functions
+      allow update: if isOwner(uid)
+        && !('subscription' in request.resource.data.diff(resource.data).affectedKeys())
+        && !('subscriptionExpiry' in request.resource.data.diff(resource.data).affectedKeys());
+
+      // Plants subcollection
+      match /plants/{plantId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Chat history — client can read but writes only via Cloud Function
+      match /chat_history/{chatId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Plant memory — written only by Cloud Functions
+      match /plant_memory/{plantId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Reminders — client can create and update their own reminders
+      match /reminders/{reminderId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── Usage ─────────────────────────────────────────────────────────────────
+    // Created by Cloud Functions on sign-up; read-only on client
+    match /usage/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // ── Subscriptions ──────────────────────────────────────────────────────────
+    // Written only by Cloud Functions (verifyPayment, cashfreeWebhook)
+    match /subscriptions/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // ── Plant scans ────────────────────────────────────────────────────────────
+    match /plant_scans/{scanId} {
+      allow read: if isAuth() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ── Weather cache ──────────────────────────────────────────────────────────
+    // Written only by Cloud Functions; readable by any authenticated user
+    match /cache/{cacheId} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+  }
+}
