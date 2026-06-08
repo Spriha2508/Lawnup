@@ -168,7 +168,7 @@ export const MainTabNavigator: React.FC = () => (
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: '#FAF7F0',
+    backgroundColor: '#F5F1E8',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(200,196,188,0.6)',
     ...Platform.select({

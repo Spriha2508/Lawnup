@@ -174,7 +174,7 @@ export const ScanResultScreen: React.FC = () => {
           {savedNickname && (
             <View style={styles.savedBanner}>
               <Text style={styles.savedBannerText}>
-                ✅  {savedNickname} added to My Plants!
+                ✦  {savedNickname} added to My Plants
               </Text>
             </View>
           )}
