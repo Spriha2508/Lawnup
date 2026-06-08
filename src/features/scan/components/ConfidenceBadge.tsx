@@ -1,16 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../../constants/colors';
-
 interface ConfidenceBadgeProps {
   confidence: number; // 0–1
   size?: 'sm' | 'md' | 'lg';
 }
 
 const getConfidenceColor = (v: number): string => {
-  if (v >= 0.85) return colors.success;
-  if (v >= 0.65) return colors.warning;
-  return colors.accent;
+  if (v >= 0.85) return '#6F943E';
+  if (v >= 0.65) return '#B07000';
+  return '#9E9A94';
 };
 
 const getConfidenceLabel = (v: number): string => {

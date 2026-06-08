@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import type { StackNavigationProp, RouteProp } from '@react-navigation/stack';
-import { SafeScreen } from '../../../shared/components/layout/SafeScreen';
-import { Button } from '../../../shared/components/ui/Button';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RouteProp } from '@react-navigation/native';
+import { NicknameInputCard } from '../components/NicknameInputCard';
 import { useScanStore } from '../store/scanStore';
 import { track } from '../../../services/analytics/posthog';
-import { NICKNAME_SUGGESTIONS } from '../../../constants/plants';
 import type { ScanStackParamList } from '../../../navigation/types';
-import { colors } from '../../../constants/colors';
 
 type Nav = StackNavigationProp<ScanStackParamList, 'Nickname'>;
 type Route = RouteProp<ScanStackParamList, 'Nickname'>;
@@ -18,22 +17,17 @@ export const NicknameScreen: React.FC = () => {
   const route = useRoute<Route>();
   const { scanId, speciesName } = route.params;
   const { setPendingNickname } = useScanStore();
-  const [nickname, setNickname] = useState('');
 
-  const suggestions = NICKNAME_SUGGESTIONS[speciesName] ?? NICKNAME_SUGGESTIONS.default;
-
-  const handleSave = () => {
-    const finalName = nickname.trim() || suggestions[0];
-    setPendingNickname(finalName);
+  const handleSave = (nickname: string) => {
+    setPendingNickname(nickname);
     track('plant_nicknamed', {
-      nickname_length: finalName.length,
+      nickname_length: nickname.length,
       species: speciesName,
-      used_suggestion: !nickname.trim(),
     });
     navigation.navigate('AddPlant' as any, {
       fromScanId: scanId,
       speciesName,
-      nickname: finalName,
+      nickname,
     });
   };
 
@@ -43,69 +37,63 @@ export const NicknameScreen: React.FC = () => {
   };
 
   return (
-    <SafeScreen>
-      <View className="flex-1 px-6 pt-20 pb-8 justify-between">
-        <View>
-          <Text style={{ fontSize: 48 }} className="mb-4">🌿</Text>
-          <Text className="text-text-primary text-2xl font-nunito-bold mb-2">
-            Give it a name
-          </Text>
-          <Text className="text-text-secondary text-base font-nunito-regular mb-8 leading-6">
-            Plants with names get better care — you'll love it more!
-          </Text>
+    <View style={styles.root}>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        {/* Back button */}
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+        >
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
 
-          {/* Name input */}
-          <TextInput
-            className="bg-surface border-2 border-primary rounded-2xl px-4 py-4 text-text-primary text-xl font-nunito-bold mb-6"
-            placeholder={suggestions[0]}
-            placeholderTextColor={colors.textSecondary}
-            value={nickname}
-            onChangeText={setNickname}
-            maxLength={24}
-            autoFocus
-          />
-
-          {/* Suggestions */}
-          <Text className="text-text-secondary text-sm font-nunito-semibold mb-3">
-            Suggestions for {speciesName}:
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {suggestions.map((s) => (
-              <TouchableOpacity
-                key={s}
-                onPress={() => setNickname(s)}
-                className={[
-                  'rounded-full px-4 py-2 border',
-                  nickname === s ? 'bg-primary border-primary' : 'bg-surface border-border',
-                ].join(' ')}
-              >
-                <Text
-                  className={[
-                    'text-sm font-nunito-semibold',
-                    nickname === s ? 'text-white' : 'text-text-primary',
-                  ].join(' ')}
-                >
-                  {s}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        {/* Decorative botanical mark */}
+        <View style={styles.markWrap}>
+          <Text style={styles.mark}>✦</Text>
         </View>
 
-        <View className="gap-3">
-          <Button
-            label={`Save as "${nickname.trim() || suggestions[0]}"`}
-            onPress={handleSave}
-            fullWidth
-          />
-          <Button
-            label="Skip for now"
-            onPress={handleSkip}
-            variant="ghost"
-            fullWidth
+        {/* Input card fills the rest */}
+        <View style={styles.cardWrap}>
+          <NicknameInputCard
+            speciesName={speciesName}
+            onConfirm={handleSave}
+            onSkip={handleSkip}
           />
         </View>
-      </View>
-    </SafeScreen>
+      </SafeAreaView>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#F5F1E8',
+  },
+  safe: {
+    flex: 1,
+  },
+  backBtn: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  backText: {
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 14,
+    color: '#6B6B5E',
+  },
+  markWrap: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  mark: {
+    fontSize: 32,
+    color: 'rgba(111,148,62,0.4)',
+  },
+  cardWrap: {
+    flex: 1,
+  },
+});

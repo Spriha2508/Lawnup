@@ -119,7 +119,7 @@ export const ScanResultScreen: React.FC = () => {
   if (!scanResult) {
     return (
       <View style={styles.errorScreen}>
-        <Text style={styles.errorEmoji}>🌿</Text>
+        <Text style={styles.errorEmoji}>✦</Text>
         <Text style={styles.errorTitle}>No scan result found</Text>
         <TouchableOpacity
           style={styles.errorBtn}
@@ -448,7 +448,8 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   errorEmoji: {
-    fontSize: 56,
+    fontSize: 40,
+    color: 'rgba(111,148,62,0.5)',
   },
   errorTitle: {
     fontFamily: 'Nunito-Bold',

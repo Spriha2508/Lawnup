@@ -25,14 +25,17 @@ export type AnalyticsEvent =
   | 'scan_failed'
   | 'quota_hit'
   | 'onboarding_completed'
-  | 'app_opened';
+  | 'app_opened'
+  | 'scan_result_viewed'
+  | 'plant_saved_from_scan'
+  | 'plant_updated';
 
 export const identifyUser = (uid: string, properties: Record<string, unknown>): void => {
-  posthog.identify(uid, properties);
+  posthog.identify(uid, properties as any);
 };
 
 export const track = (event: AnalyticsEvent, properties?: Record<string, unknown>): void => {
-  posthog.capture(event, properties);
+  posthog.capture(event, properties as any);
 };
 
 export const resetAnalytics = (): void => {

@@ -91,7 +91,7 @@ export const ProfileScreen: React.FC = () => {
   const { plan, scansUsed, scanLimit, chatsUsed, chatLimit } = useSubscriptionStore();
   const { plants } = usePlantsStore();
 
-  const initials  = user?.name ? getInitials(user.name) : '🌿';
+  const initials  = user?.name ? getInitials(user.name) : 'G';
   const thriving  = plants.filter(p => p.healthStatus === 'Healthy').length;
   const year      = getMemberSince(user?.createdAt);
   const isPremium = plan === 'premium';
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F1E8',
     alignItems: 'center',
     justifyContent: 'center',
   },

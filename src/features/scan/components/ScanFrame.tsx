@@ -1,13 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, View, StyleSheet, Dimensions } from 'react-native';
-import { colors } from '../../../constants/colors';
-
 const { width: SW } = Dimensions.get('window');
 export const FRAME_SIZE = SW * 0.72;
 const CORNER = 28;
 const BORDER = 3;
-const CORNER_COLOR = colors.primaryLight;
-const LINE_COLOR = 'rgba(82, 183, 136, 0.7)';
+const CORNER_COLOR = '#6F943E';
+const LINE_COLOR = 'rgba(111, 148, 62, 0.7)';
 
 interface ScanFrameProps {
   active?: boolean;

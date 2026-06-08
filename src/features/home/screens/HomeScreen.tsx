@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   Pressable,
+  TouchableOpacity,
   StyleSheet,
   Dimensions,
 } from 'react-native';
@@ -95,7 +96,7 @@ export const HomeScreen: React.FC = () => {
 
         {/* ── AI Diagnostics hero card ──────────────────────────────────── */}
         <Animated.View entering={FadeInDown.delay(120).duration(400)}>
-          <Pressable
+          <TouchableOpacity
             style={styles.aiCard}
             onPress={() => navigation.navigate('Scan')}
             activeOpacity={0.88}
@@ -115,7 +116,7 @@ export const HomeScreen: React.FC = () => {
             >
               <Text style={styles.aiBtnText}>⬡  Start Scanner</Text>
             </Pressable>
-          </Pressable>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* ── Your Greenhouse ───────────────────────────────────────────── */}

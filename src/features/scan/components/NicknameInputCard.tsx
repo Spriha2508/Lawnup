@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { colors } from '../../../constants/colors';
 import { NICKNAME_SUGGESTIONS } from '../../../constants/plants';
 
 interface NicknameInputCardProps {
@@ -35,10 +34,9 @@ export const NicknameInputCard: React.FC<NicknameInputCardProps> = ({
       <View style={styles.card}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.emoji}>🌱</Text>
           <Text style={styles.title}>Give it a name</Text>
           <Text style={styles.subtitle}>
-            Plants with nicknames get 3× more care — proven by our users!
+            Plants with names get better care.
           </Text>
         </View>
 
@@ -46,7 +44,7 @@ export const NicknameInputCard: React.FC<NicknameInputCardProps> = ({
         <TextInput
           style={styles.input}
           placeholder={suggestions[0]}
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor="#B0ACA6"
           value={value}
           onChangeText={setValue}
           maxLength={24}
@@ -56,7 +54,7 @@ export const NicknameInputCard: React.FC<NicknameInputCardProps> = ({
         />
 
         {/* Chip suggestions */}
-        <Text style={styles.suggestLabel}>Quick picks for {speciesName}:</Text>
+        <Text style={styles.suggestLabel}>Suggestions for {speciesName}:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -66,10 +64,7 @@ export const NicknameInputCard: React.FC<NicknameInputCardProps> = ({
             <TouchableOpacity
               key={s}
               onPress={() => setValue(s)}
-              style={[
-                styles.chip,
-                value === s && styles.chipActive,
-              ]}
+              style={[styles.chip, value === s && styles.chipActive]}
               activeOpacity={0.7}
             >
               <Text style={[styles.chipText, value === s && styles.chipTextActive]}>
@@ -105,49 +100,44 @@ export const NicknameInputCard: React.FC<NicknameInputCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    backgroundColor: '#F5F1E8',
     paddingHorizontal: 24,
-    paddingTop: 12,
+    paddingTop: 16,
     paddingBottom: 36,
     gap: 16,
   },
   header: {
-    alignItems: 'center',
-    paddingTop: 12,
-    gap: 6,
-  },
-  emoji: {
-    fontSize: 40,
+    gap: 5,
   },
   title: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 22,
-    color: colors.textPrimary,
+    fontFamily: 'Cormorant-SemiBold',
+    fontSize: 26,
+    color: '#111111',
+    lineHeight: 30,
   },
   subtitle: {
     fontFamily: 'Nunito-Regular',
     fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
+    color: '#6B6B5E',
     lineHeight: 20,
   },
   input: {
-    height: 56,
+    height: 54,
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: '#F8FAF5',
+    borderWidth: 1.5,
+    borderColor: '#DDD4C7',
+    backgroundColor: '#EEE7DA',
     paddingHorizontal: 18,
-    fontFamily: 'Nunito-Bold',
-    fontSize: 18,
-    color: colors.textPrimary,
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 16,
+    color: '#111111',
   },
   suggestLabel: {
     fontFamily: 'Nunito-SemiBold',
-    fontSize: 13,
-    color: colors.textSecondary,
+    fontSize: 11,
+    color: '#9E9A94',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   chips: {
     gap: 8,
@@ -156,40 +146,35 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: '#fff',
+    borderColor: '#DDD4C7',
+    backgroundColor: '#EEE7DA',
   },
   chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#111111',
+    borderColor: '#111111',
   },
   chipText: {
     fontFamily: 'Nunito-SemiBold',
-    fontSize: 14,
-    color: colors.textPrimary,
+    fontSize: 13,
+    color: '#111111',
   },
   chipTextActive: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
   actions: {
     gap: 10,
   },
   confirmBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 18,
+    backgroundColor: '#111111',
+    borderRadius: 999,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
   },
   confirmText: {
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
     color: '#fff',
     letterSpacing: 0.2,
@@ -201,6 +186,6 @@ const styles = StyleSheet.create({
   skipText: {
     fontFamily: 'Nunito-Regular',
     fontSize: 14,
-    color: colors.textSecondary,
+    color: '#9E9A94',
   },
 });

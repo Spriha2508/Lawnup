@@ -9,12 +9,12 @@ import {
   Alert,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import type { StackNavigationProp, RouteProp } from '@react-navigation/stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePlantsStore } from '../store/plantsStore';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useScanStore } from '../../scan/store/scanStore';
-import { colors } from '../../../constants/colors';
 import { PLANT_LOCATIONS } from '../../../constants/plants';
 import { logger } from '../../../shared/utils/logger';
 import { track } from '../../../services/analytics/posthog';
@@ -133,7 +133,7 @@ export const AddPlantScreen: React.FC = () => {
         {fromScanId && scanResult && (
           <View style={styles.fromScanBadge}>
             <Text style={styles.fromScanText}>
-              🌿  From scan · {scanResult.commonName}
+              ✦  From scan · {scanResult.commonName}
             </Text>
           </View>
         )}
@@ -145,7 +145,7 @@ export const AddPlantScreen: React.FC = () => {
             value={nickname}
             onChangeText={setNickname}
             placeholder="e.g. Lucky, Basil Bhai, Luna"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor="#B0ACA6"
             maxLength={32}
             autoCorrect={false}
           />
@@ -158,7 +158,7 @@ export const AddPlantScreen: React.FC = () => {
             value={species}
             onChangeText={setSpecies}
             placeholder="e.g. Money Plant, Aloe Vera"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor="#B0ACA6"
             maxLength={64}
           />
         </FormSection>
@@ -216,7 +216,7 @@ export const AddPlantScreen: React.FC = () => {
             value={notes}
             onChangeText={setNotes}
             placeholder="Water more in summer, repot next March..."
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor="#B0ACA6"
             multiline
             maxLength={300}
             textAlignVertical="top"
@@ -233,7 +233,7 @@ export const AddPlantScreen: React.FC = () => {
           activeOpacity={0.88}
         >
           <Text style={styles.saveBtnText}>
-            {isSaving ? 'Adding...' : '🌿  Add to My Plants'}
+            {isSaving ? 'Adding...' : 'Add to My Plants'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -256,7 +256,7 @@ const FormSection: React.FC<{
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F5F1E8',
   },
   header: {
     flexDirection: 'row',
@@ -265,8 +265,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-    backgroundColor: '#fff',
+    borderBottomColor: '#DDD4C7',
+    backgroundColor: '#F5F1E8',
   },
   headerBack: {
     width: 32,
@@ -274,29 +274,29 @@ const styles = StyleSheet.create({
   headerBackText: {
     fontFamily: 'Nunito-Bold',
     fontSize: 22,
-    color: colors.primary,
+    color: '#111111',
   },
   headerTitle: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 18,
-    color: colors.textPrimary,
+    fontFamily: 'Cormorant-SemiBold',
+    fontSize: 20,
+    color: '#111111',
   },
   scroll: {
     padding: 20,
     gap: 24,
   },
   fromScanBadge: {
-    backgroundColor: '#F0FFF4',
-    borderRadius: 12,
+    backgroundColor: 'rgba(111,148,62,0.07)',
+    borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: 'rgba(111,148,62,0.20)',
   },
   fromScanText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 13,
-    color: colors.primary,
+    color: '#6F943E',
   },
   formSection: {
     gap: 8,
@@ -304,24 +304,24 @@ const styles = StyleSheet.create({
   formLabel: {
     fontFamily: 'Nunito-Bold',
     fontSize: 15,
-    color: colors.textPrimary,
+    color: '#111111',
   },
   formHint: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: colors.textSecondary,
+    color: '#9E9A94',
     marginTop: -4,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#EEE7DA',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: '#DDD4C7',
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
-    color: colors.textPrimary,
+    color: '#111111',
   },
   notesInput: {
     minHeight: 88,
@@ -335,10 +335,10 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 16,
     paddingVertical: 9,
-    borderRadius: 20,
+    borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: '#fff',
+    borderColor: '#DDD4C7',
+    backgroundColor: '#EEE7DA',
   },
   locationGrid: {
     flexDirection: 'row',
@@ -348,19 +348,19 @@ const styles = StyleSheet.create({
   locationChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: '#fff',
+    borderColor: '#DDD4C7',
+    backgroundColor: '#EEE7DA',
   },
   chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#111111',
+    borderColor: '#111111',
   },
   chipText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 14,
-    color: colors.textPrimary,
+    color: '#111111',
   },
   chipTextActive: {
     color: '#fff',
@@ -372,30 +372,23 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: 'rgba(248,250,245,0.96)',
+    backgroundColor: 'rgba(245,241,232,0.97)',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: '#DDD4C7',
   },
   saveBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 18,
-    height: 58,
+    backgroundColor: '#111111',
+    borderRadius: 999,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.32,
-    shadowRadius: 16,
-    elevation: 8,
   },
   saveBtnDisabled: {
-    opacity: 0.45,
-    shadowOpacity: 0,
-    elevation: 0,
+    opacity: 0.35,
   },
   saveBtnText: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 17,
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 16,
     color: '#fff',
     letterSpacing: 0.2,
   },

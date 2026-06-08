@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../../constants/colors';
 import { PROCESSING_STAGES } from '../mocks/scanMocks';
 
 interface ProcessingAnimationProps {
@@ -126,7 +125,7 @@ const styles = StyleSheet.create({
   ring1: {
     width: RING_SIZE,
     height: RING_SIZE,
-    borderColor: colors.primaryLight,
+    borderColor: 'rgba(111,148,62,0.6)',
     borderStyle: 'dashed',
     opacity: 0.7,
   },
@@ -141,10 +140,10 @@ const styles = StyleSheet.create({
     width: RING_SIZE - 56,
     height: RING_SIZE - 56,
     borderRadius: (RING_SIZE - 56) / 2,
-    backgroundColor: colors.primary,
+    backgroundColor: '#6F943E',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
+    shadowColor: '#6F943E',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
@@ -185,7 +184,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   dotActive: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: 'rgba(111,148,62,0.8)',
   },
   dotInactive: {
     backgroundColor: 'rgba(255,255,255,0.25)',

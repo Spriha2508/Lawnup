@@ -10,7 +10,6 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../constants/colors';
 import { NicknameInputCard } from './NicknameInputCard';
 import type { ScanResult } from '../store/scanStore';
 
@@ -70,6 +69,8 @@ export const SavePlantModal: React.FC<SavePlantModalProps> = ({
 
   if (!isRendered) return null;
 
+  const initial = scanResult.commonName.charAt(0).toUpperCase();
+
   return (
     <Modal transparent visible animationType="none" onRequestClose={onDismiss}>
       {/* Backdrop */}
@@ -94,10 +95,11 @@ export const SavePlantModal: React.FC<SavePlantModalProps> = ({
             <Image
               source={{ uri: scanResult.imageUri }}
               style={styles.thumb}
+              resizeMode="cover"
             />
           ) : (
             <View style={[styles.thumb, styles.thumbPlaceholder]}>
-              <Text style={{ fontSize: 28 }}>🌿</Text>
+              <Text style={styles.thumbInitial}>{initial}</Text>
             </View>
           )}
           <View style={styles.previewInfo}>
@@ -109,17 +111,16 @@ export const SavePlantModal: React.FC<SavePlantModalProps> = ({
             </Text>
             <View style={[
               styles.healthPill,
-              { backgroundColor: scanResult.isHealthy ? '#DCFCE7' : '#FEE2E2' },
+              { backgroundColor: scanResult.isHealthy ? 'rgba(111,148,62,0.10)' : 'rgba(192,57,43,0.08)' },
             ]}>
               <Text style={[
                 styles.healthText,
-                { color: scanResult.isHealthy ? colors.success : colors.error },
+                { color: scanResult.isHealthy ? '#6F943E' : '#C0392B' },
               ]}>
-                {scanResult.isHealthy ? '✓ Healthy' : '⚠ Needs care'}
+                {scanResult.isHealthy ? 'Healthy' : 'Needs care'}
               </Text>
             </View>
           </View>
-          {/* Dismiss */}
           <TouchableOpacity onPress={onDismiss} style={styles.closeBtn} hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}>
             <Text style={styles.closeIcon}>✕</Text>
           </TouchableOpacity>
@@ -150,16 +151,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F1E8',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     overflow: 'hidden',
   },
   handle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#DDD4C7',
     alignSelf: 'center',
     marginTop: 10,
     marginBottom: 4,
@@ -172,28 +173,35 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   thumb: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
+    width: 60,
+    height: 60,
+    borderRadius: 14,
   },
   thumbPlaceholder: {
-    backgroundColor: '#F0FFF4',
+    backgroundColor: '#EEE7DA',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#DDD4C7',
+  },
+  thumbInitial: {
+    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontSize: 24,
+    color: '#9E9A94',
   },
   previewInfo: {
     flex: 1,
     gap: 4,
   },
   previewName: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 17,
-    color: colors.textPrimary,
+    fontFamily: 'Nunito-Bold',
+    fontSize: 16,
+    color: '#111111',
   },
   previewSci: {
     fontFamily: 'Nunito-Regular',
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#9E9A94',
     fontStyle: 'italic',
   },
   healthPill: {
@@ -204,7 +212,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   healthText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 11,
   },
   closeBtn: {
@@ -212,12 +220,12 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   closeIcon: {
-    fontSize: 16,
-    color: colors.textSecondary,
+    fontSize: 15,
+    color: '#9E9A94',
   },
   divider: {
-    height: 1,
-    backgroundColor: colors.border,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#DDD4C7',
     marginHorizontal: 20,
   },
 });
