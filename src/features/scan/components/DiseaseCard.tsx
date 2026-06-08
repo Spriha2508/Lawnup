@@ -1,67 +1,55 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { DiseaseResult } from '../../../types/firestore.types';
-import { colors } from '../../../constants/colors';
 
-interface DiseaseCardProps {
-  disease: DiseaseResult;
-  index?: number;
-}
-
-const getSeverityLabel = (probability: number): { label: string; color: string; bg: string } => {
-  if (probability >= 0.75) return { label: 'High risk', color: colors.error, bg: '#FEE2E2' };
-  if (probability >= 0.45) return { label: 'Moderate', color: colors.warning, bg: '#FEF3C7' };
-  return { label: 'Low risk', color: colors.accent, bg: '#FEF9EE' };
+const severityMeta = (p: number): { label: string; color: string; bg: string } => {
+  if (p >= 0.75) return { label: 'High risk',  color: '#C0392B', bg: 'rgba(192,57,43,0.08)'  };
+  if (p >= 0.45) return { label: 'Moderate',   color: '#B07000', bg: 'rgba(176,112,0,0.08)'  };
+  return             { label: 'Low risk',   color: '#6F943E', bg: 'rgba(111,148,62,0.08)' };
 };
 
-export const DiseaseCard: React.FC<DiseaseCardProps> = ({ disease, index = 0 }) => {
+export const DiseaseCard: React.FC<{ disease: DiseaseResult; index?: number }> = ({
+  disease, index = 0,
+}) => {
   const [expanded, setExpanded] = useState(index === 0);
-  const severity = getSeverityLabel(disease.probability);
+  const sv = severityMeta(disease.probability);
 
   return (
-    <View style={[styles.card, { borderLeftColor: severity.color }]}>
-      {/* Header row */}
+    <View style={[styles.card, { borderLeftColor: sv.color }]}>
       <TouchableOpacity
         style={styles.header}
-        onPress={() => setExpanded(!expanded)}
+        onPress={() => setExpanded(e => !e)}
         activeOpacity={0.75}
       >
         <View style={styles.headerLeft}>
           <Text style={styles.name}>{disease.name}</Text>
-          <View style={[styles.severityBadge, { backgroundColor: severity.bg }]}>
-            <View style={[styles.severityDot, { backgroundColor: severity.color }]} />
-            <Text style={[styles.severityLabel, { color: severity.color }]}>
-              {severity.label} · {Math.round(disease.probability * 100)}%
+          <View style={[styles.severityBadge, { backgroundColor: sv.bg }]}>
+            <View style={[styles.dot, { backgroundColor: sv.color }]} />
+            <Text style={[styles.severityText, { color: sv.color }]}>
+              {sv.label}  ·  {Math.round(disease.probability * 100)}%
             </Text>
           </View>
         </View>
-        <Text style={[styles.chevron, { color: severity.color }]}>
-          {expanded ? '▲' : '▼'}
-        </Text>
+        <Text style={[styles.chevron, { color: sv.color }]}>{expanded ? '▲' : '▼'}</Text>
       </TouchableOpacity>
 
-      {/* Expanded content */}
       {expanded && (
         <View style={styles.body}>
           <Text style={styles.description}>{disease.description}</Text>
-
-          {/* Treatment rows */}
           {disease.treatment.biological && (
-            <TreatmentRow icon="🌿" label="Natural" text={disease.treatment.biological} />
+            <TreatRow icon="🌿" label="Natural"    text={disease.treatment.biological} />
           )}
           {disease.treatment.chemical && (
-            <TreatmentRow icon="🧪" label="Chemical" text={disease.treatment.chemical} />
+            <TreatRow icon="🧪" label="Chemical"   text={disease.treatment.chemical} />
           )}
-          <TreatmentRow icon="🛡" label="Prevention" text={disease.treatment.prevention} />
+          <TreatRow icon="🛡" label="Prevention" text={disease.treatment.prevention} />
         </View>
       )}
     </View>
   );
 };
 
-const TreatmentRow: React.FC<{ icon: string; label: string; text: string }> = ({
-  icon, label, text,
-}) => (
+const TreatRow: React.FC<{ icon: string; label: string; text: string }> = ({ icon, label, text }) => (
   <View style={styles.treatRow}>
     <Text style={styles.treatIcon}>{icon}</Text>
     <View style={styles.treatContent}>
@@ -73,16 +61,11 @@ const TreatmentRow: React.FC<{ icon: string; label: string; text: string }> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#EEE7DA',
     borderRadius: 16,
-    borderLeftWidth: 4,
-    marginBottom: 12,
+    borderLeftWidth: 3.5,
+    marginBottom: 10,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
   },
   header: {
     flexDirection: 'row',
@@ -92,12 +75,12 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flex: 1,
-    gap: 6,
+    gap: 7,
   },
   name: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 16,
-    color: colors.textPrimary,
+    fontSize: 15,
+    color: '#111111',
   },
   severityBadge: {
     flexDirection: 'row',
@@ -105,42 +88,42 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: 999,
     gap: 5,
   },
-  severityDot: {
-    width: 6,
-    height: 6,
+  dot: {
+    width: 5,
+    height: 5,
     borderRadius: 3,
   },
-  severityLabel: {
+  severityText: {
     fontFamily: 'Nunito-SemiBold',
-    fontSize: 12,
+    fontSize: 11,
   },
   chevron: {
-    fontSize: 12,
+    fontSize: 11,
     marginLeft: 12,
   },
   body: {
     paddingHorizontal: 16,
     paddingBottom: 16,
-    gap: 12,
+    gap: 10,
   },
   description: {
     fontFamily: 'Nunito-Regular',
     fontSize: 14,
-    color: colors.textSecondary,
+    color: '#6B6B5E',
     lineHeight: 21,
   },
   treatRow: {
     flexDirection: 'row',
     gap: 10,
-    backgroundColor: '#F8FAF5',
+    backgroundColor: '#F5F1E8',
     borderRadius: 12,
     padding: 12,
   },
   treatIcon: {
-    fontSize: 18,
+    fontSize: 16,
     marginTop: 1,
   },
   treatContent: {
@@ -149,15 +132,15 @@ const styles = StyleSheet.create({
   },
   treatLabel: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 12,
-    color: colors.primary,
+    fontSize: 10,
+    color: '#6F943E',
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
   },
   treatText: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: colors.textPrimary,
+    color: '#111111',
     lineHeight: 19,
   },
 });

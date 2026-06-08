@@ -4,10 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   Animated,
-  Dimensions,
-  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -15,39 +12,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
 import { useScanStore } from '../store/scanStore';
-import { colors } from '../../../constants/colors';
+import { ScanFrame } from '../components/ScanFrame';
 import { logger } from '../../../shared/utils/logger';
 import type { ScanStackParamList } from '../../../navigation/types';
-
-const { width: SW } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'ScanLanding'>;
-
-const FEATURES = [
-  { icon: '🌿', title: 'Instant ID', desc: '5000+ Indian plant species' },
-  { icon: '🩺', title: 'Disease scan', desc: 'Detect problems early' },
-  { icon: '💡', title: 'Care guide', desc: 'Climate-aware advice' },
-];
 
 export const ScanLandingScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { canScan, scansUsed, scanLimit } = useSubscriptionStore();
   const { reset, setCapturedImageUri } = useScanStore();
 
-  // Entrance animations
-  const heroScale = useRef(new Animated.Value(0.85)).current;
-  const heroOpacity = useRef(new Animated.Value(0)).current;
-  const contentSlide = useRef(new Animated.Value(30)).current;
-  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const sheetSlide = useRef(new Animated.Value(40)).current;
+  const sheetOpacity = useRef(new Animated.Value(0)).current;
+  const titleFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     reset();
     Animated.parallel([
-      Animated.spring(heroScale, { toValue: 1, damping: 14, stiffness: 100, useNativeDriver: true }),
-      Animated.timing(heroOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(contentSlide, { toValue: 0, duration: 600, delay: 150, useNativeDriver: true }),
-      Animated.timing(contentOpacity, { toValue: 1, duration: 600, delay: 150, useNativeDriver: true }),
+      Animated.timing(titleFade, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(sheetOpacity, { toValue: 1, duration: 550, delay: 150, useNativeDriver: true }),
+      Animated.spring(sheetSlide, { toValue: 0, damping: 16, stiffness: 100, delay: 150, useNativeDriver: true } as any),
     ]).start();
-  }, [heroScale, heroOpacity, contentSlide, contentOpacity, reset]);
+  }, []);
 
   const handleCamera = () => {
     if (!canScan()) return;
@@ -58,10 +44,7 @@ export const ScanLandingScreen: React.FC = () => {
   const handleGallery = async () => {
     if (!canScan()) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      logger.scan.failed('Gallery permission denied');
-      return;
-    }
+    if (status !== 'granted') return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.9,
@@ -81,341 +64,226 @@ export const ScanLandingScreen: React.FC = () => {
   const limitReached = !canScan();
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
-        bounces={false}
+    <View style={styles.root}>
+      {/* ── Dark hero ──────────────────────────────────────────────────── */}
+      <SafeAreaView edges={['top']} style={styles.hero}>
+        <Animated.View style={[styles.heroContent, { opacity: titleFade }]}>
+          <Text style={styles.eyebrow}>AI DIAGNOSTICIAN</Text>
+          <Text style={styles.heroTitle}>Identify your{'\n'}plant.</Text>
+        </Animated.View>
+
+        {/* Scan frame centered in remaining hero space */}
+        <View style={styles.frameWrap}>
+          <ScanFrame active={true} />
+        </View>
+
+        {/* Feature tags */}
+        <Animated.View style={[styles.tagRow, { opacity: titleFade }]}>
+          {['5 000+ species', 'Disease scan', 'Care advice'].map(tag => (
+            <View key={tag} style={styles.tag}>
+              <Text style={styles.tagText}>{tag}</Text>
+            </View>
+          ))}
+        </Animated.View>
+      </SafeAreaView>
+
+      {/* ── Cream bottom sheet ─────────────────────────────────────────── */}
+      <Animated.View
+        style={[
+          styles.sheet,
+          { opacity: sheetOpacity, transform: [{ translateY: sheetSlide }] },
+        ]}
       >
-        {/* ── Hero ── */}
-        <Animated.View
-          style={[
-            styles.heroSection,
-            { opacity: heroOpacity, transform: [{ scale: heroScale }] },
-          ]}
-        >
-          {/* Soft backdrop circle */}
-          <View style={styles.heroCircle} />
-          <View style={styles.heroInner}>
-            <Text style={styles.heroEmoji}>🔍</Text>
-          </View>
-        </Animated.View>
-
-        {/* ── Content ── */}
-        <Animated.View
-          style={[
-            styles.content,
-            { opacity: contentOpacity, transform: [{ translateY: contentSlide }] },
-          ]}
-        >
-          {/* Title */}
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>What's this plant?</Text>
-            <Text style={styles.titleBadge}>AI</Text>
-          </View>
-          <Text style={styles.subtitle}>
-            Identify species, detect diseases, and get personalised care tips — instantly.
-          </Text>
-
-          {/* Feature pills */}
-          <View style={styles.features}>
-            {FEATURES.map((f) => (
-              <View key={f.title} style={styles.featureChip}>
-                <Text style={styles.featureIcon}>{f.icon}</Text>
-                <View>
-                  <Text style={styles.featureTitle}>{f.title}</Text>
-                  <Text style={styles.featureDesc}>{f.desc}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-
-          {/* ── Quota bar ── */}
-          <View style={styles.quotaCard}>
-            <View style={styles.quotaRow}>
-              <Text style={styles.quotaLabel}>Scans this month</Text>
-              <Text style={styles.quotaCount}>
-                {scansUsed} / {scanLimitDisplay}
-              </Text>
+        {/* Quota bar */}
+        {scanLimit !== -1 && (
+          <View style={styles.quotaRow}>
+            <Text style={styles.quotaLabel}>
+              {scansUsed} of {scanLimitDisplay} scans used this month
+            </Text>
+            <View style={styles.quotaTrack}>
+              <View
+                style={[
+                  styles.quotaFill,
+                  {
+                    width: `${Math.min(100, scanPercent * 100)}%` as any,
+                    backgroundColor: limitReached ? '#C0392B' : '#6F943E',
+                  },
+                ]}
+              />
             </View>
-            {scanLimit !== -1 && (
-              <View style={styles.progressTrack}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min(100, scanPercent * 100)}%` as any,
-                      backgroundColor: limitReached ? colors.error : colors.primary,
-                    },
-                  ]}
-                />
-              </View>
-            )}
             {limitReached && (
-              <Text style={styles.quotaWarning}>
-                Monthly limit reached · Upgrade for 20+ scans
-              </Text>
+              <Text style={styles.quotaWarning}>Monthly limit reached</Text>
             )}
           </View>
+        )}
 
-          {/* ── CTAs ── */}
+        {/* Camera CTA */}
+        <TouchableOpacity
+          style={[styles.cameraBtn, limitReached && styles.btnDisabled]}
+          onPress={handleCamera}
+          disabled={limitReached}
+          activeOpacity={0.88}
+        >
+          <Text style={styles.cameraBtnText}>Open camera  →</Text>
+        </TouchableOpacity>
+
+        {/* Gallery CTA */}
+        <TouchableOpacity
+          style={[styles.galleryBtn, limitReached && styles.btnDisabled]}
+          onPress={handleGallery}
+          disabled={limitReached}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.galleryBtnText}>Upload from gallery</Text>
+        </TouchableOpacity>
+
+        {/* Upgrade nudge */}
+        {limitReached && (
           <TouchableOpacity
-            style={[styles.cameraBtn, limitReached && styles.btnDisabled]}
-            onPress={handleCamera}
-            disabled={limitReached}
-            activeOpacity={0.88}
+            style={styles.upgradeBtn}
+            onPress={() => navigation.getParent<any>()?.navigate('Profile')}
+            activeOpacity={0.85}
           >
-            <View style={styles.cameraBtnInner}>
-              <Text style={styles.cameraBtnIcon}>📷</Text>
-              <View>
-                <Text style={styles.cameraBtnTitle}>Take a photo</Text>
-                <Text style={styles.cameraBtnSub}>Use camera with live scan frame</Text>
-              </View>
-            </View>
-            <Text style={styles.cameraBtnArrow}>→</Text>
+            <Text style={styles.upgradeBtnText}>Upgrade for unlimited scans</Text>
           </TouchableOpacity>
+        )}
 
-          <TouchableOpacity
-            style={[styles.galleryBtn, limitReached && styles.btnDisabled]}
-            onPress={handleGallery}
-            disabled={limitReached}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.galleryBtnIcon}>🖼️</Text>
-            <Text style={styles.galleryBtnText}>Upload from gallery</Text>
-          </TouchableOpacity>
-
-          {limitReached && (
-            <TouchableOpacity
-              style={styles.upgradeBtn}
-              onPress={() => navigation.getParent<any>()?.navigate('Profile', { screen: 'Paywall' })}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.upgradeBtnText}>✨  Upgrade to Premium</Text>
-            </TouchableOpacity>
-          )}
-        </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+        <SafeAreaView edges={['bottom']} />
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  screen: {
+  root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#0D1610',
   },
-  scroll: {
-    flexGrow: 1,
-    paddingBottom: 32,
+
+  // Dark hero
+  hero: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingBottom: 8,
   },
-  heroSection: {
+  heroContent: {
+    paddingTop: 8,
+    marginBottom: 8,
+  },
+  eyebrow: {
+    fontSize: 9,
+    fontFamily: 'Nunito-SemiBold',
+    color: '#6F943E',
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  heroTitle: {
+    fontSize: 42,
+    fontFamily: 'Cormorant-SemiBoldItalic',
+    color: '#FFFFFF',
+    lineHeight: 46,
+  },
+  frameWrap: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 24,
-    paddingBottom: 16,
-    height: 180,
   },
-  heroCircle: {
-    position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(45,106,79,0.08)',
-  },
-  heroInner: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: 'rgba(45,106,79,0.13)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroEmoji: {
-    fontSize: 52,
-  },
-  content: {
-    paddingHorizontal: 20,
-    gap: 18,
-  },
-  titleRow: {
+  tagRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 4,
   },
-  title: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 28,
-    color: colors.textPrimary,
-    letterSpacing: -0.5,
+  tag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(111,148,62,0.35)',
+    backgroundColor: 'rgba(111,148,62,0.07)',
   },
-  titleBadge: {
-    fontFamily: 'Nunito-ExtraBold',
+  tagText: {
     fontSize: 11,
-    color: '#fff',
-    backgroundColor: colors.accent,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    overflow: 'hidden',
-    letterSpacing: 0.5,
+    fontFamily: 'Nunito-SemiBold',
+    color: 'rgba(255,255,255,0.65)',
+    letterSpacing: 0.2,
   },
-  subtitle: {
-    fontFamily: 'Nunito-Regular',
-    fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 22,
-    marginTop: -8,
-  },
-  features: {
-    gap: 10,
-  },
-  featureChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+
+  // Cream sheet
+  sheet: {
+    backgroundColor: '#F5F1E8',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 4,
     gap: 12,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  featureIcon: {
-    fontSize: 22,
-  },
-  featureTitle: {
-    fontFamily: 'Nunito-Bold',
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-  featureDesc: {
-    fontFamily: 'Nunito-Regular',
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  quotaCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
+
+  // Quota
   quotaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
   },
   quotaLabel: {
-    fontFamily: 'Nunito-SemiBold',
-    fontSize: 14,
-    color: colors.textSecondary,
+    fontSize: 12,
+    fontFamily: 'Nunito-Regular',
+    color: '#9E9A94',
   },
-  quotaCount: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 3,
+  quotaTrack: {
+    height: 4,
+    backgroundColor: '#DDD4C7',
+    borderRadius: 2,
     overflow: 'hidden',
   },
-  progressFill: {
-    height: 6,
-    borderRadius: 3,
+  quotaFill: {
+    height: 4,
+    borderRadius: 2,
   },
   quotaWarning: {
-    fontFamily: 'Nunito-SemiBold',
     fontSize: 12,
-    color: colors.error,
+    fontFamily: 'Nunito-SemiBold',
+    color: '#C0392B',
   },
+
+  // CTAs
   cameraBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 20,
-    padding: 18,
-    flexDirection: 'row',
+    backgroundColor: '#111111',
+    borderRadius: 999,
+    paddingVertical: 17,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.32,
-    shadowRadius: 16,
-    elevation: 8,
   },
-  cameraBtnInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  cameraBtnIcon: {
-    fontSize: 28,
-  },
-  cameraBtnTitle: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 17,
-    color: '#fff',
-  },
-  cameraBtnSub: {
-    fontFamily: 'Nunito-Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.75)',
-    marginTop: 2,
-  },
-  cameraBtnArrow: {
-    color: '#fff',
-    fontSize: 20,
-    fontFamily: 'Nunito-Bold',
+  cameraBtnText: {
+    fontSize: 16,
+    fontFamily: 'Nunito-SemiBold',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   galleryBtn: {
-    flexDirection: 'row',
+    borderRadius: 999,
+    paddingVertical: 15,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingVertical: 16,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  galleryBtnIcon: {
-    fontSize: 20,
+    borderColor: '#DDD4C7',
+    backgroundColor: '#EEE7DA',
   },
   galleryBtnText: {
+    fontSize: 15,
     fontFamily: 'Nunito-SemiBold',
-    fontSize: 16,
-    color: colors.textPrimary,
+    color: '#6B6B5E',
   },
   btnDisabled: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
   upgradeBtn: {
-    backgroundColor: colors.accent,
-    borderRadius: 16,
-    paddingVertical: 16,
+    paddingVertical: 10,
     alignItems: 'center',
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
   },
   upgradeBtnText: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 16,
-    color: '#fff',
+    fontSize: 13,
+    fontFamily: 'Nunito-SemiBold',
+    color: '#6F943E',
+    textDecorationLine: 'underline',
   },
 });

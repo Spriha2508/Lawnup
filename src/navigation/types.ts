@@ -2,6 +2,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 
 // Auth Stack
 export type AuthStackParamList = {
+  Landing: undefined;
   Login: undefined;
   Signup: undefined;
   ForgotPassword: undefined;
@@ -11,6 +12,9 @@ export type AuthStackParamList = {
 export type OnboardingStackParamList = {
   Welcome: undefined;
   Location: undefined;
+  PlaceType: undefined;
+  SkillLevel: undefined;
+  PlantsType: undefined;
   Goal: undefined;
 };
 
@@ -52,12 +56,11 @@ export type ProfileStackParamList = {
   SubscriptionSuccess: { plan: string; expiresAt: string };
 };
 
-// Main Tab Navigator
+// Main Tab Navigator (4 tabs — AiDoctor accessible from Profile)
 export type MainTabParamList = {
   Home: undefined;
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Plants: NavigatorScreenParams<PlantsStackParamList>;
-  AiDoctor: NavigatorScreenParams<ChatStackParamList>;
   Profile: NavigatorScreenParams<ProfileStackParamList>;
 };
 

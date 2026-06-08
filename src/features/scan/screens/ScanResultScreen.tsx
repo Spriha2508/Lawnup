@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import type { StackNavigationProp, RouteProp } from '@react-navigation/stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useScanStore } from '../store/scanStore';
 import { usePlantsStore } from '../../my-plants/store/plantsStore';
@@ -18,13 +18,12 @@ import { PlantResultHero } from '../components/PlantResultHero';
 import { DiseaseCard } from '../components/DiseaseCard';
 import { SuggestedActionCard } from '../components/SuggestedActionCard';
 import { SavePlantModal } from '../components/SavePlantModal';
-import { colors } from '../../../constants/colors';
+// colors referenced inline — cream/olive palette
 import { logger } from '../../../shared/utils/logger';
 import { track } from '../../../services/analytics/posthog';
 import type { ScanStackParamList } from '../../../navigation/types';
 import type { UserPlantDoc } from '../../../types/firestore.types';
 
-const { width: SW } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'ScanResult'>;
 type Route = RouteProp<ScanStackParamList, 'ScanResult'>;
 
@@ -183,12 +182,10 @@ export const ScanResultScreen: React.FC = () => {
           {/* Disease section */}
           {hasDiseases && (
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionIcon}>⚠️</Text>
-                <Text style={styles.sectionTitle}>
-                  {scanResult.diseases.length} issue{scanResult.diseases.length > 1 ? 's' : ''} detected
-                </Text>
-              </View>
+              <Text style={styles.sectionEyebrow}>DIAGNOSIS</Text>
+              <Text style={styles.sectionTitle}>
+                {scanResult.diseases.length} issue{scanResult.diseases.length > 1 ? 's' : ''} detected
+              </Text>
               {scanResult.diseases.map((d, i) => (
                 <DiseaseCard key={d.name} disease={d} index={i} />
               ))}
@@ -198,11 +195,13 @@ export const ScanResultScreen: React.FC = () => {
           {/* Healthy badge */}
           {!hasDiseases && (
             <View style={styles.healthyBanner}>
-              <Text style={styles.healthyIcon}>🌟</Text>
-              <View>
-                <Text style={styles.healthyTitle}>Looking great!</Text>
+              <View style={styles.healthyIconWrap}>
+                <Text style={styles.healthyIcon}>✦</Text>
+              </View>
+              <View style={styles.healthyTextWrap}>
+                <Text style={styles.healthyTitle}>Looking great</Text>
                 <Text style={styles.healthySubtitle}>
-                  No diseases detected. Keep up the good care!
+                  No diseases detected — keep up the good care.
                 </Text>
               </View>
             </View>
@@ -210,10 +209,8 @@ export const ScanResultScreen: React.FC = () => {
 
           {/* Suggested actions */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionIcon}>💡</Text>
-              <Text style={styles.sectionTitle}>Care recommendations</Text>
-            </View>
+            <Text style={styles.sectionEyebrow}>CARE GUIDE</Text>
+            <Text style={styles.sectionTitle}>Recommendations</Text>
             {scanResult.suggestedActions.map((action, i) => (
               <SuggestedActionCard key={i} action={action} index={i} />
             ))}
@@ -231,13 +228,10 @@ export const ScanResultScreen: React.FC = () => {
             activeOpacity={0.82}
           >
             <View style={styles.aiDoctorLeft}>
-              <Text style={styles.aiDoctorIcon}>🤖</Text>
-              <View>
-                <Text style={styles.aiDoctorTitle}>Ask AI Doctor</Text>
-                <Text style={styles.aiDoctorSub}>
-                  Get personalised advice for {scanResult.commonName}
-                </Text>
-              </View>
+              <Text style={styles.aiDoctorLabel}>ASK AI DOCTOR</Text>
+              <Text style={styles.aiDoctorTitle}>
+                Get personalised advice for {scanResult.commonName}
+              </Text>
             </View>
             <Text style={styles.aiDoctorArrow}>→</Text>
           </TouchableOpacity>
@@ -257,7 +251,7 @@ export const ScanResultScreen: React.FC = () => {
             onPress={() => setModalVisible(true)}
             activeOpacity={0.88}
           >
-            <Text style={styles.saveBtnText}>🌿  Save this Plant</Text>
+            <Text style={styles.saveBtnText}>Save this plant  →</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -277,7 +271,7 @@ export const ScanResultScreen: React.FC = () => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F5F1E8',
   },
   backBtn: {
     position: 'absolute',
@@ -308,104 +302,108 @@ const styles = StyleSheet.create({
   reScanText: {
     color: '#fff',
     fontSize: 13,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
   },
   body: {
     padding: 20,
-    gap: 24,
+    gap: 28,
   },
   savedBanner: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: 'rgba(111,148,62,0.10)',
     borderRadius: 14,
     padding: 14,
-    borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderWidth: 1.5,
+    borderColor: 'rgba(111,148,62,0.25)',
   },
   savedBannerText: {
-    fontFamily: 'Nunito-Bold',
-    fontSize: 15,
-    color: colors.success,
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 14,
+    color: '#6F943E',
     textAlign: 'center',
   },
   section: {
-    gap: 12,
+    gap: 10,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  sectionIcon: {
-    fontSize: 18,
+  sectionEyebrow: {
+    fontSize: 10,
+    fontFamily: 'Nunito-SemiBold',
+    color: '#9E9A94',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 2,
   },
   sectionTitle: {
-    fontFamily: 'Nunito-Bold',
-    fontSize: 17,
-    color: colors.textPrimary,
+    fontFamily: 'Cormorant-SemiBold',
+    fontSize: 26,
+    color: '#111111',
+    lineHeight: 30,
+    marginBottom: 6,
   },
   healthyBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: '#F0FFF4',
+    backgroundColor: '#EEE7DA',
     borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#86EFAC',
+  },
+  healthyIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(111,148,62,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   healthyIcon: {
-    fontSize: 32,
+    fontSize: 20,
+    color: '#6F943E',
   },
+  healthyTextWrap: { flex: 1 },
   healthyTitle: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 16,
-    color: colors.success,
+    fontSize: 15,
+    color: '#111111',
+    marginBottom: 2,
   },
   healthySubtitle: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
+    color: '#6B6B5E',
+    lineHeight: 19,
   },
   aiDoctorCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primaryDark,
-    borderRadius: 18,
-    padding: 18,
-    shadowColor: colors.primaryDark,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
+    backgroundColor: '#1A2416',
+    borderRadius: 20,
+    padding: 20,
   },
   aiDoctorLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
     flex: 1,
+    gap: 6,
   },
-  aiDoctorIcon: {
-    fontSize: 28,
+  aiDoctorLabel: {
+    fontSize: 9,
+    fontFamily: 'Nunito-SemiBold',
+    color: '#6F943E',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   aiDoctorTitle: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 16,
-    color: '#fff',
-  },
-  aiDoctorSub: {
-    fontFamily: 'Nunito-Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.65)',
-    marginTop: 2,
+    fontFamily: 'Cormorant-SemiBold',
+    fontSize: 20,
+    color: '#FFFFFF',
+    lineHeight: 24,
+    paddingRight: 12,
   },
   aiDoctorArrow: {
-    color: '#fff',
+    color: 'rgba(255,255,255,0.5)',
     fontSize: 20,
-    fontFamily: 'Nunito-Bold',
-    marginLeft: 12,
+    fontFamily: 'Nunito-Regular',
+    flexShrink: 0,
   },
   ctaContainer: {
     position: 'absolute',
@@ -414,31 +412,26 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: 'rgba(248,250,245,0.95)',
+    backgroundColor: 'rgba(245,241,232,0.97)',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: 'rgba(200,196,188,0.6)',
   },
   saveBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 18,
-    height: 58,
+    backgroundColor: '#111111',
+    borderRadius: 999,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 10,
   },
   saveBtnText: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 17,
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 16,
     color: '#fff',
     letterSpacing: 0.2,
   },
   errorScreen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F5F1E8',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16,
@@ -450,17 +443,17 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontFamily: 'Nunito-Bold',
     fontSize: 18,
-    color: colors.textPrimary,
+    color: '#111111',
     textAlign: 'center',
   },
   errorBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 14,
+    backgroundColor: '#111111',
+    borderRadius: 999,
     paddingHorizontal: 28,
     paddingVertical: 14,
   },
   errorBtnText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 15,
     color: '#fff',
   },

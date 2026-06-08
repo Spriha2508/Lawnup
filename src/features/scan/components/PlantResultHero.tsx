@@ -1,10 +1,9 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
-import { colors } from '../../../constants/colors';
 import { ConfidenceBadge } from './ConfidenceBadge';
 
 const { width: SW } = Dimensions.get('window');
-const HERO_HEIGHT = 300;
+const HERO_HEIGHT = 360;
 
 interface PlantResultHeroProps {
   imageUri?: string | null;
@@ -20,111 +19,117 @@ export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
   scientificName,
   confidence,
   isHealthy,
-}) => {
-  return (
-    <View style={styles.hero}>
-      {/* Background image or gradient placeholder */}
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
-      ) : (
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.placeholderIcon}>🌿</Text>
-        </View>
-      )}
-
-      {/* Dark gradient scrim */}
-      <View style={styles.scrim} />
-
-      {/* Content overlay */}
-      <View style={styles.overlay}>
-        {/* Health pill */}
-        <View style={[
-          styles.healthPill,
-          { backgroundColor: isHealthy ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)' },
-        ]}>
-          <Text style={styles.healthText}>
-            {isHealthy ? '✓  Healthy' : '⚠  Needs care'}
-          </Text>
-        </View>
-
-        {/* Plant name */}
-        <Text style={styles.commonName} numberOfLines={2}>
-          {commonName}
-        </Text>
-        <Text style={styles.scientificName} numberOfLines={1}>
-          {scientificName}
-        </Text>
-
-        {/* Confidence */}
-        <View style={styles.confidenceRow}>
-          <ConfidenceBadge confidence={confidence} size="sm" />
-        </View>
+}) => (
+  <View style={styles.hero}>
+    {imageUri ? (
+      <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+    ) : (
+      <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
+        <Text style={styles.placeholderIcon}>🌿</Text>
       </View>
+    )}
+
+    {/* Gradient scrim — heavier at bottom */}
+    <View style={styles.scrimTop} />
+    <View style={styles.scrimBottom} />
+
+    {/* Content overlay */}
+    <View style={styles.overlay}>
+      <View style={[styles.healthPill, isHealthy ? styles.healthPillGreen : styles.healthPillRed]}>
+        <View style={[styles.healthDot, isHealthy ? styles.dotGreen : styles.dotRed]} />
+        <Text style={styles.healthText}>
+          {isHealthy ? 'Healthy' : 'Needs attention'}
+        </Text>
+      </View>
+
+      <Text style={styles.commonName} numberOfLines={2}>
+        {commonName}
+      </Text>
+      <Text style={styles.scientificName} numberOfLines={1}>
+        {scientificName}
+      </Text>
+
+      <ConfidenceBadge confidence={confidence} size="sm" />
     </View>
-  );
-};
+  </View>
+);
 
 const styles = StyleSheet.create({
   hero: {
     width: SW,
     height: HERO_HEIGHT,
-    position: 'relative',
-    backgroundColor: colors.primaryDark,
+    backgroundColor: '#0D1610',
   },
-  image: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  imagePlaceholder: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.primaryDark,
+  placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#1A2416',
   },
   placeholderIcon: {
     fontSize: 80,
   },
-  scrim: {
+  scrimTop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    // Gradient-like effect using a darker bottom
+    backgroundColor: 'rgba(0,0,0,0.08)',
+  },
+  scrimBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: HERO_HEIGHT * 0.65,
+    // Bottom-heavy scrim via solid overlay
+    backgroundColor: 'rgba(0,0,0,0.52)',
   },
   overlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 20,
-    paddingBottom: 24,
+    padding: 22,
+    paddingBottom: 26,
   },
   healthPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     alignSelf: 'flex-start',
-    borderRadius: 20,
+    borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 5,
-    marginBottom: 10,
+    marginBottom: 12,
   },
+  healthPillGreen: {
+    backgroundColor: 'rgba(111,148,62,0.75)',
+  },
+  healthPillRed: {
+    backgroundColor: 'rgba(192,57,43,0.75)',
+  },
+  healthDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  dotGreen: { backgroundColor: '#FFFFFF' },
+  dotRed:   { backgroundColor: '#FFB3B3' },
   healthText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 12,
     color: '#fff',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   commonName: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 28,
+    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontSize: 36,
     color: '#fff',
-    letterSpacing: -0.3,
-    lineHeight: 33,
+    lineHeight: 40,
     marginBottom: 4,
   },
   scientificName: {
     fontFamily: 'Nunito-Regular',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.75)',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.65)',
     fontStyle: 'italic',
-    marginBottom: 12,
-  },
-  confidenceRow: {
-    flexDirection: 'row',
+    marginBottom: 14,
   },
 });
