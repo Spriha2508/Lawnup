@@ -88,7 +88,6 @@ export const LocationScreen: React.FC = () => {
           entering={FadeInDown.delay(120).duration(450).springify()}
           style={styles.searchWrap}
         >
-          <Text style={styles.searchIcon}>🔎</Text>
           <TextInput
             style={styles.searchInput}
             placeholder="Search your city..."
@@ -197,18 +196,14 @@ const styles = StyleSheet.create({
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#EEE7DA',
     borderRadius: 16,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 4,
     marginBottom: 14,
-    shadowColor: '#1A1A08',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 1.5,
+    borderColor: '#DDD4C7',
   },
-  searchIcon: { fontSize: 16, marginRight: 8 },
   searchInput: {
     flex: 1,
     height: 44,
