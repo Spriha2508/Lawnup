@@ -18,7 +18,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCameraPermission } from '../hooks/useCameraPermission';
 import { useScanStore } from '../store/scanStore';
 import { ScanFrame, FRAME_SIZE } from '../components/ScanFrame';
-import { colors } from '../../../constants/colors';
 import { logger } from '../../../shared/utils/logger';
 import type { ScanStackParamList } from '../../../navigation/types';
 
@@ -107,13 +106,13 @@ export const CameraScreen: React.FC = () => {
       <View style={styles.permissionScreen}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
         <View style={styles.permissionContent}>
-          <Text style={styles.permEmoji}>📷</Text>
-          <Text style={styles.permTitle}>Allow camera access</Text>
+          <Text style={styles.permMark}>✦</Text>
+          <Text style={styles.permTitle}>Camera access</Text>
           <Text style={styles.permSubtitle}>
-            LawnUp needs your camera to identify plants and detect diseases.
+            To identify plants and diagnose disease, LawnUp needs access to your camera.
           </Text>
           <TouchableOpacity style={styles.permBtn} onPress={request} activeOpacity={0.88}>
-            <Text style={styles.permBtnText}>Allow Camera</Text>
+            <Text style={styles.permBtnText}>Allow Camera Access</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleClose} style={styles.permCancel}>
             <Text style={styles.permCancelText}>Not now</Text>
@@ -129,13 +128,13 @@ export const CameraScreen: React.FC = () => {
       <View style={styles.permissionScreen}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
         <View style={styles.permissionContent}>
-          <Text style={styles.permEmoji}>🚫</Text>
-          <Text style={styles.permTitle}>Camera access denied</Text>
+          <Text style={styles.permMark}>◇</Text>
+          <Text style={styles.permTitle}>Access denied</Text>
           <Text style={styles.permSubtitle}>
-            Please enable camera access in your device settings to use the scanner.
+            Open your device settings and enable camera access to continue scanning.
           </Text>
           <TouchableOpacity style={styles.permBtn} onPress={handleGallery} activeOpacity={0.88}>
-            <Text style={styles.permBtnText}>Use Gallery Instead</Text>
+            <Text style={styles.permBtnText}>Choose from Gallery</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleClose} style={styles.permCancel}>
             <Text style={styles.permCancelText}>Go back</Text>
@@ -158,7 +157,7 @@ export const CameraScreen: React.FC = () => {
 
         {/* Top bar */}
         <View style={[styles.topBar, { paddingTop: topPad }]}>
-          <Text style={styles.previewHint}>Use this photo?</Text>
+          <Text style={styles.previewHint}>Analyse this plant?</Text>
         </View>
 
         {/* Bottom actions */}
@@ -168,7 +167,7 @@ export const CameraScreen: React.FC = () => {
             onPress={handleRetake}
             activeOpacity={0.82}
           >
-            <Text style={styles.retakeBtnText}>↩ Retake</Text>
+            <Text style={styles.retakeBtnText}>← Retake</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -176,7 +175,7 @@ export const CameraScreen: React.FC = () => {
             onPress={handleUsePhoto}
             activeOpacity={0.88}
           >
-            <Text style={styles.usePhotoBtnText}>Use Photo →</Text>
+            <Text style={styles.usePhotoBtnText}>Analyse plant  →</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -207,7 +206,7 @@ export const CameraScreen: React.FC = () => {
             <Text style={styles.closeBtnText}>✕</Text>
           </TouchableOpacity>
 
-          <Text style={styles.hintText}>Center your plant in the frame</Text>
+          <Text style={styles.hintText}>Hold any leaf within the frame</Text>
 
           <TouchableOpacity
             onPress={() =>
@@ -216,8 +215,8 @@ export const CameraScreen: React.FC = () => {
             style={styles.flashBtn}
             hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
           >
-            <Text style={styles.flashBtnText}>
-              {flash === 'off' ? '⚡️' : flash === 'on' ? '🔦' : '⚡Auto'}
+            <Text style={[styles.flashBtnText, flash !== 'off' && styles.flashBtnOn]}>
+              {flash === 'auto' ? 'AUTO' : 'FLASH'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -237,7 +236,6 @@ export const CameraScreen: React.FC = () => {
             onPress={handleGallery}
             activeOpacity={0.75}
           >
-            <Text style={styles.sideBtnIcon}>🖼️</Text>
             <Text style={styles.sideBtnLabel}>Gallery</Text>
           </TouchableOpacity>
 
@@ -259,7 +257,6 @@ export const CameraScreen: React.FC = () => {
             onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
             activeOpacity={0.75}
           >
-            <Text style={styles.sideBtnIcon}>🔄</Text>
             <Text style={styles.sideBtnLabel}>Flip</Text>
           </TouchableOpacity>
         </View>
@@ -290,9 +287,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
-  permEmoji: {
-    fontSize: 64,
-    marginBottom: 8,
+  permMark: {
+    fontSize: 36,
+    color: '#6F943E',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   permTitle: {
     fontFamily: 'Nunito-ExtraBold',
@@ -309,17 +308,12 @@ const styles = StyleSheet.create({
   },
   permBtn: {
     marginTop: 8,
-    backgroundColor: colors.primary,
-    borderRadius: 18,
+    backgroundColor: '#6F943E',
+    borderRadius: 999,
     paddingHorizontal: 36,
     paddingVertical: 16,
     width: '100%',
     alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 8,
   },
   permBtnText: {
     fontFamily: 'Nunito-ExtraBold',
@@ -388,15 +382,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   flashBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 10,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   flashBtnText: {
-    fontSize: 14,
+    fontSize: 10,
+    fontFamily: 'Nunito-SemiBold',
+    color: 'rgba(255,255,255,0.55)',
+    letterSpacing: 1,
+  },
+  flashBtnOn: {
+    color: '#FFD60A',
   },
   // Bottom controls
   bottomBar: {
@@ -412,15 +412,12 @@ const styles = StyleSheet.create({
   },
   sideBtn: {
     alignItems: 'center',
-    gap: 4,
-  },
-  sideBtnIcon: {
-    fontSize: 24,
+    width: 64,
   },
   sideBtnLabel: {
     fontFamily: 'Nunito-SemiBold',
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.75)',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.82)',
   },
   captureBtn: {
     alignItems: 'center',
@@ -471,36 +468,32 @@ const styles = StyleSheet.create({
   },
   retakeBtn: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 999,
     height: 54,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   retakeBtnText: {
-    fontFamily: 'Nunito-Bold',
-    fontSize: 16,
-    color: '#fff',
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.9)',
   },
   usePhotoBtn: {
     flex: 2,
-    backgroundColor: colors.primary,
-    borderRadius: 16,
+    backgroundColor: '#111111',
+    borderRadius: 999,
     height: 54,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
   },
   usePhotoBtnText: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 17,
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 16,
     color: '#fff',
+    letterSpacing: 0.2,
   },
   captureFlash: {
     ...StyleSheet.absoluteFillObject as any,

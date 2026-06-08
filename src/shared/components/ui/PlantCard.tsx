@@ -95,9 +95,10 @@ const PLACEHOLDER_COLORS: [string, string][] = [
 const PlantPlaceholder: React.FC<{ name: string }> = ({ name }) => {
   const idx = name.charCodeAt(0) % PLACEHOLDER_COLORS.length;
   const [bgTop] = PLACEHOLDER_COLORS[idx];
+  const initial = name.charAt(0).toUpperCase();
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: bgTop, alignItems: 'center', justifyContent: 'center' }]}>
-      <Text style={{ fontSize: 40 }}>🌿</Text>
+      <Text style={{ fontSize: 32, fontFamily: 'Cormorant-SemiBoldItalic', color: 'rgba(0,0,0,0.25)' }}>{initial}</Text>
     </View>
   );
 };

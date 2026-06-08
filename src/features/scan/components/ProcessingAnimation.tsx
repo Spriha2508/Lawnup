@@ -79,6 +79,7 @@ export const ProcessingAnimation: React.FC<ProcessingAnimationProps> = ({ onComp
       {/* Stage message */}
       <Animated.View style={[styles.messageBox, { opacity: stageFade }]}>
         <Text style={styles.message}>{currentStage.message}</Text>
+        <Text style={styles.subMessage}>Your result will be ready shortly</Text>
       </Animated.View>
 
       {/* Dot indicators */}
@@ -132,8 +133,7 @@ const styles = StyleSheet.create({
   ring2: {
     width: RING_SIZE - 24,
     height: RING_SIZE - 24,
-    borderColor: colors.accent,
-    opacity: 0.5,
+    borderColor: 'rgba(111, 148, 62, 0.55)',
     borderTopColor: 'transparent',
     borderRightColor: 'transparent',
   },
@@ -151,7 +151,8 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   icon: {
-    fontSize: 32,
+    fontSize: 28,
+    color: 'rgba(255,255,255,0.9)',
   },
   messageBox: {
     marginTop: RING_SIZE / 2 + 24,
@@ -164,6 +165,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-SemiBold',
     textAlign: 'center',
     letterSpacing: 0.2,
+  },
+  subMessage: {
+    color: 'rgba(255,255,255,0.38)',
+    fontSize: 12,
+    fontFamily: 'Nunito-Regular',
+    textAlign: 'center',
+    marginTop: 8,
+    letterSpacing: 0.1,
   },
   dots: {
     flexDirection: 'row',

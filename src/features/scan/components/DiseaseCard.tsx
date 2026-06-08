@@ -37,23 +37,23 @@ export const DiseaseCard: React.FC<{ disease: DiseaseResult; index?: number }> =
         <View style={styles.body}>
           <Text style={styles.description}>{disease.description}</Text>
           {disease.treatment.biological && (
-            <TreatRow icon="🌿" label="Natural"    text={disease.treatment.biological} />
+            <TreatRow dotColor="#6F943E" label="Natural remedy" text={disease.treatment.biological} />
           )}
           {disease.treatment.chemical && (
-            <TreatRow icon="🧪" label="Chemical"   text={disease.treatment.chemical} />
+            <TreatRow dotColor="#9E9A94" label="Chemical treatment" text={disease.treatment.chemical} />
           )}
-          <TreatRow icon="🛡" label="Prevention" text={disease.treatment.prevention} />
+          <TreatRow dotColor="#B07000" label="Prevention" text={disease.treatment.prevention} />
         </View>
       )}
     </View>
   );
 };
 
-const TreatRow: React.FC<{ icon: string; label: string; text: string }> = ({ icon, label, text }) => (
+const TreatRow: React.FC<{ dotColor: string; label: string; text: string }> = ({ dotColor, label, text }) => (
   <View style={styles.treatRow}>
-    <Text style={styles.treatIcon}>{icon}</Text>
+    <View style={[styles.treatDot, { backgroundColor: dotColor }]} />
     <View style={styles.treatContent}>
-      <Text style={styles.treatLabel}>{label}</Text>
+      <Text style={[styles.treatLabel, { color: dotColor }]}>{label}</Text>
       <Text style={styles.treatText}>{text}</Text>
     </View>
   </View>
@@ -117,23 +117,26 @@ const styles = StyleSheet.create({
   },
   treatRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     backgroundColor: '#F5F1E8',
     borderRadius: 12,
     padding: 12,
+    alignItems: 'flex-start',
   },
-  treatIcon: {
-    fontSize: 16,
-    marginTop: 1,
+  treatDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 5,
+    flexShrink: 0,
   },
   treatContent: {
     flex: 1,
-    gap: 2,
+    gap: 3,
   },
   treatLabel: {
     fontFamily: 'Nunito-Bold',
     fontSize: 10,
-    color: '#6F943E',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },

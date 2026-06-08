@@ -107,9 +107,9 @@ export const simulateScanDelay = (): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, 2600));
 
 export const PROCESSING_STAGES = [
-  { message: 'Analyzing leaf structure...', icon: '🔬', durationMs: 700 },
-  { message: 'Identifying species...', icon: '🌿', durationMs: 700 },
-  { message: 'Checking plant health...', icon: '🩺', durationMs: 500 },
-  { message: 'Searching disease patterns...', icon: '🦠', durationMs: 400 },
-  { message: 'Generating care advice...', icon: '💡', durationMs: 300 },
+  { message: 'Reading leaf structure', icon: '✦', durationMs: 700 },
+  { message: 'Identifying the species', icon: '◆', durationMs: 700 },
+  { message: 'Assessing plant health', icon: '◇', durationMs: 500 },
+  { message: 'Scanning disease patterns', icon: '✦', durationMs: 400 },
+  { message: 'Preparing care advice', icon: '✧', durationMs: 300 },
 ];

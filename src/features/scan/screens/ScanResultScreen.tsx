@@ -184,7 +184,10 @@ export const ScanResultScreen: React.FC = () => {
             <View style={styles.section}>
               <Text style={styles.sectionEyebrow}>DIAGNOSIS</Text>
               <Text style={styles.sectionTitle}>
-                {scanResult.diseases.length} issue{scanResult.diseases.length > 1 ? 's' : ''} detected
+                {scanResult.diseases.length === 1 ? 'One concern found' : `${scanResult.diseases.length} concerns found`}
+              </Text>
+              <Text style={styles.recoveryNote}>
+                With the right care, your plant can fully recover.
               </Text>
               {scanResult.diseases.map((d, i) => (
                 <DiseaseCard key={d.name} disease={d} index={i} />
@@ -199,9 +202,9 @@ export const ScanResultScreen: React.FC = () => {
                 <Text style={styles.healthyIcon}>✦</Text>
               </View>
               <View style={styles.healthyTextWrap}>
-                <Text style={styles.healthyTitle}>Looking great</Text>
+                <Text style={styles.healthyTitle}>Your plant is thriving</Text>
                 <Text style={styles.healthySubtitle}>
-                  No diseases detected — keep up the good care.
+                  No concerns found. Your care is clearly working.
                 </Text>
               </View>
             </View>
@@ -210,7 +213,7 @@ export const ScanResultScreen: React.FC = () => {
           {/* Suggested actions */}
           <View style={styles.section}>
             <Text style={styles.sectionEyebrow}>CARE GUIDE</Text>
-            <Text style={styles.sectionTitle}>Recommendations</Text>
+            <Text style={styles.sectionTitle}>What to do next</Text>
             {scanResult.suggestedActions.map((action, i) => (
               <SuggestedActionCard key={i} action={action} index={i} />
             ))}
@@ -337,7 +340,14 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: '#111111',
     lineHeight: 30,
-    marginBottom: 6,
+    marginBottom: 4,
+  },
+  recoveryNote: {
+    fontFamily: 'Nunito-Regular',
+    fontSize: 13,
+    color: '#6F943E',
+    marginBottom: 10,
+    lineHeight: 18,
   },
   healthyBanner: {
     flexDirection: 'row',

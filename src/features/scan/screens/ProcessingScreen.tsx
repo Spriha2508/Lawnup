@@ -8,10 +8,10 @@ import {
   StatusBar,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import type { StackNavigationProp, RouteProp } from '@react-navigation/stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RouteProp } from '@react-navigation/native';
 import { useScanFlow } from '../hooks/useScanFlow';
 import { ProcessingAnimation } from '../components/ProcessingAnimation';
-import { colors } from '../../../constants/colors';
 import { logger } from '../../../shared/utils/logger';
 import type { ScanStackParamList } from '../../../navigation/types';
 
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: `${colors.primary}18`,
+    backgroundColor: 'rgba(111,148,62,0.07)',
     alignSelf: 'center',
     top: SH / 2 - 160,
   },

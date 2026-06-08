@@ -83,14 +83,13 @@ export const HomeScreen: React.FC = () => {
             onPress={() => navigation.navigate('Profile')}
           >
             <Text style={styles.avatarInitial}>
-              {user?.name ? user.name[0].toUpperCase() : '🌿'}
+              {user?.name ? user.name[0].toUpperCase() : 'G'}
             </Text>
           </Pressable>
         </Animated.View>
 
         {/* ── Search bar ────────────────────────────────────────────────── */}
         <Animated.View entering={FadeInDown.delay(60).duration(400)} style={styles.searchWrap}>
-          <Text style={styles.searchIcon}>🔍</Text>
           <Text style={styles.searchPlaceholder}>Search your greenhouse...</Text>
         </Animated.View>
 
@@ -157,7 +156,7 @@ export const HomeScreen: React.FC = () => {
         {plants.length === 0 && (
           <Animated.View entering={FadeInDown.delay(180).duration(400)} style={styles.emptyWrap}>
             <Text style={styles.emptyText}>
-              No plants yet. Scan one to get started! 🪴
+              Your first leaf awaits. Scan any plant to begin.
             </Text>
           </Animated.View>
         )}
@@ -240,7 +239,9 @@ const HomePlantCard: React.FC<{ plant: UserPlantDoc; onPress: () => void }> = ({
           />
         ) : (
           <View style={[StyleSheet.absoluteFill, styles.plantPlaceholder]}>
-            <Text style={styles.plantPlaceholderEmoji}>🌿</Text>
+            <Text style={styles.plantPlaceholderInitial}>
+              {plant.nickname.charAt(0).toUpperCase()}
+            </Text>
           </View>
         )}
         <View style={[styles.healthBadge, { backgroundColor: badge.bg }]}>
@@ -274,7 +275,7 @@ const CareRow: React.FC<{
     onPress={onPress}
   >
     <View style={styles.careIcon}>
-      <Text style={styles.careIconText}>💧</Text>
+      <Text style={styles.careIconText}>◆</Text>
     </View>
     <View style={styles.careText}>
       <Text style={styles.carePlantName}>Water {plant.nickname}</Text>
@@ -354,12 +355,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#EEE7DA',
     borderRadius: 999,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingVertical: 13,
     marginBottom: 20,
-    gap: 10,
   },
-  searchIcon: { fontSize: 16 },
   searchPlaceholder: {
     fontSize: 14,
     fontFamily: 'Nunito-Regular',
@@ -470,7 +469,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#E8E0D0',
   },
-  plantPlaceholderEmoji: { fontSize: 36 },
+  plantPlaceholderInitial: {
+    fontSize: 32,
+    fontFamily: 'Cormorant-SemiBoldItalic',
+    color: 'rgba(0,0,0,0.22)',
+  },
   healthBadge: {
     position: 'absolute',
     top: 8,
@@ -587,7 +590,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  careIconText: { fontSize: 16 },
+  careIconText: { fontSize: 12, color: '#6F943E' },
   careText: { flex: 1 },
   carePlantName: {
     fontSize: 14,

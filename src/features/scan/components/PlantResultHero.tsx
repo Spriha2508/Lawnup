@@ -25,7 +25,7 @@ export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
       <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
     ) : (
       <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
-        <Text style={styles.placeholderIcon}>🌿</Text>
+        <Text style={styles.placeholderMark}>✦</Text>
       </View>
     )}
 
@@ -65,8 +65,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#1A2416',
   },
-  placeholderIcon: {
-    fontSize: 80,
+  placeholderMark: {
+    fontSize: 40,
+    color: 'rgba(255,255,255,0.35)',
   },
   scrimTop: {
     ...StyleSheet.absoluteFillObject,

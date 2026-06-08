@@ -69,18 +69,18 @@ export const MyPlantsScreen: React.FC = () => {
       <SafeAreaView style={styles.root}>
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconWrap}>
-            <Text style={styles.emptyIcon}>🪴</Text>
+            <Text style={styles.emptyMark}>✦</Text>
           </View>
-          <Text style={styles.emptyTitle}>Your greenhouse is empty</Text>
+          <Text style={styles.emptyTitle}>Your greenhouse awaits</Text>
           <Text style={styles.emptySub}>
-            Scan a plant or add one manually to start tracking your green family.
+            Your greenhouse is waiting for its first resident. Scan any plant to begin.
           </Text>
           <TouchableOpacity
             style={styles.emptyBtn}
             onPress={() => navigation.navigate('Scan')}
             activeOpacity={0.8}
           >
-            <Text style={styles.emptyBtnText}>Scan a plant</Text>
+            <Text style={styles.emptyBtnText}>Scan your first plant  →</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -116,7 +116,6 @@ export const MyPlantsScreen: React.FC = () => {
         )}
         ListEmptyComponent={
           <Animated.View entering={FadeIn.duration(300)} style={styles.emptyFilter}>
-            <Text style={styles.emptyFilterIcon}>🔍</Text>
             <Text style={styles.emptyFilterText}>No plants match this filter</Text>
           </Animated.View>
         }
@@ -338,16 +337,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyIconWrap: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: DS.color.card,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(111,148,62,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(111,148,62,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    ...DS.shadow.card,
+    marginBottom: 24,
   },
-  emptyIcon: { fontSize: 48 },
+  emptyMark: {
+    fontSize: 28,
+    color: '#6F943E',
+  },
   emptyTitle: {
     fontSize: DS.type.h2.size,
     fontFamily: DS.type.h2.family,
@@ -377,9 +380,8 @@ const styles = StyleSheet.create({
   },
   emptyFilter: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 48,
   },
-  emptyFilterIcon: { fontSize: 32, marginBottom: 10 },
   emptyFilterText: {
     fontSize: DS.type.body.size,
     fontFamily: DS.type.body.family,

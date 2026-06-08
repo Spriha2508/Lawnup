@@ -1,14 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const ACTION_ICONS: Record<number, string> = {
-  0: '💧',
-  1: '☀️',
-  2: '🌱',
-  3: '🩺',
-  4: '🔄',
-};
-
 interface SuggestedActionCardProps {
   action: string;
   index: number;
@@ -16,8 +8,8 @@ interface SuggestedActionCardProps {
 
 export const SuggestedActionCard: React.FC<SuggestedActionCardProps> = ({ action, index }) => (
   <View style={styles.card}>
-    <View style={styles.iconBubble}>
-      <Text style={styles.icon}>{ACTION_ICONS[index] ?? '✅'}</Text>
+    <View style={styles.indexBubble}>
+      <Text style={styles.indexText}>{String(index + 1).padStart(2, '0')}</Text>
     </View>
     <Text style={styles.text}>{action}</Text>
   </View>
@@ -33,7 +25,7 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 8,
   },
-  iconBubble: {
+  indexBubble: {
     width: 40,
     height: 40,
     borderRadius: 12,
@@ -42,8 +34,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  icon: {
-    fontSize: 18,
+  indexText: {
+    fontFamily: 'Nunito-ExtraBold',
+    fontSize: 12,
+    color: '#6F943E',
+    letterSpacing: 0.5,
   },
   text: {
     flex: 1,
