@@ -142,18 +142,16 @@ export const ProfileScreen: React.FC = () => {
 
           {/* Badges */}
           <View style={styles.badgeRow}>
-            <View style={[styles.badge, styles.badgeGreen]}>
-              <Text style={[styles.badgeText, styles.badgeTextGreen]}>GREEN THUMB</Text>
-            </View>
-            {isPremium ? (
-              <View style={[styles.badge, styles.badgeAmber]}>
-                <Text style={[styles.badgeText, styles.badgeTextAmber]}>PREMIUM</Text>
-              </View>
-            ) : (
-              <View style={[styles.badge, styles.badgeAmber]}>
-                <Text style={[styles.badgeText, styles.badgeTextAmber]}>EARLY ADOPTER</Text>
+            {thriving >= 3 && (
+              <View style={[styles.badge, styles.badgeGreen]}>
+                <Text style={[styles.badgeText, styles.badgeTextGreen]}>GREEN THUMB</Text>
               </View>
             )}
+            <View style={[styles.badge, styles.badgeAmber]}>
+              <Text style={[styles.badgeText, styles.badgeTextAmber]}>
+                {isPremium ? 'PREMIUM' : 'EARLY ADOPTER'}
+              </Text>
+            </View>
           </View>
         </Animated.View>
 

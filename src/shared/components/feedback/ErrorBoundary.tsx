@@ -19,12 +19,12 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <View className="flex-1 items-center justify-center p-8 bg-background">
-          <Text style={{ fontSize: 48 }} className="mb-4">🌿</Text>
-          <Text className="text-text-primary text-xl font-nunito-bold text-center mb-2">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: '#1A2416' }}>
+          <Text style={{ fontSize: 36, marginBottom: 16, color: 'rgba(111,148,62,0.5)' }}>✦</Text>
+          <Text style={{ color: '#fff', fontSize: 20, fontFamily: 'Cormorant-SemiBold', textAlign: 'center', marginBottom: 8 }}>
             Something went wrong
           </Text>
-          <Text className="text-text-secondary text-sm text-center mb-8">
+          <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, textAlign: 'center', marginBottom: 32 }}>
             {this.state.error?.message ?? 'An unexpected error occurred.'}
           </Text>
           <Button

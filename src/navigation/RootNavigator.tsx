@@ -45,12 +45,6 @@ export const RootNavigator = memo(function RootNavigator() {
 
   const resolvedRef = useRef(false);
 
-  // ── DEBUG: mount/unmount tracking ──────────────────────────────────────────
-  useEffect(() => {
-    console.log('[MOUNT] RootNavigator');
-    return () => console.log('[UNMOUNT] RootNavigator');
-  }, []);
-
   // ── Firebase auth listener ─────────────────────────────────────────────────
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -65,15 +59,12 @@ export const RootNavigator = memo(function RootNavigator() {
       clearTimeout(timeout);
 
       if (!firebaseUser) {
-        console.log('[Auth] No Firebase user');
         setUser(null);
         return;
       }
 
-      console.log('[Auth] Firebase user:', firebaseUser.uid);
       try {
         const userDoc = await fetchUserWithRetry(firebaseUser);
-        console.log('[Auth] User doc ready, onboardingComplete:', userDoc.onboardingComplete);
         setUser(userDoc);
         identifyUser(userDoc.uid, {
           name:         userDoc.name,

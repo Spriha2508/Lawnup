@@ -45,9 +45,9 @@ const getDateLabel = (): string => {
 };
 
 function healthBadgeStyle(score: number) {
-  if (score >= 75) return { bg: '#D4EDD0', text: '#1B5E35' };
-  if (score >= 45) return { bg: '#FEF0C0', text: '#8B6000' };
-  return { bg: '#FDE8E8', text: '#8B1A1A' };
+  if (score >= 75) return { bg: 'rgba(111,148,62,0.14)', text: '#4A6E25' };
+  if (score >= 45) return { bg: 'rgba(176,112,0,0.12)',  text: '#7A5200' };
+  return { bg: 'rgba(192,57,43,0.10)', text: '#8B2010' };
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ export const HomeScreen: React.FC = () => {
               style={styles.aiBtn}
               onPress={() => navigation.navigate('Scan')}
             >
-              <Text style={styles.aiBtnText}>⬡  Start Scanner</Text>
+              <Text style={styles.aiBtnText}>Scan a leaf  →</Text>
             </Pressable>
           </TouchableOpacity>
         </Animated.View>
@@ -255,7 +255,7 @@ const HomePlantCard: React.FC<{ plant: UserPlantDoc; onPress: () => void }> = ({
         <View style={styles.plantStatusRow}>
           <View style={[
             styles.statusDot,
-            { backgroundColor: score >= 75 ? '#52B788' : score >= 45 ? '#F59E0B' : '#EF4444' },
+            { backgroundColor: score >= 75 ? '#6F943E' : score >= 45 ? '#B07000' : '#C0392B' },
           ]} />
           <Text style={styles.plantStatus}>{plant.healthStatus ?? 'Unknown'}</Text>
         </View>
@@ -359,6 +359,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 13,
     marginBottom: 20,
+    borderWidth: 1.5,
+    borderColor: '#DDD4C7',
   },
   searchPlaceholder: {
     fontSize: 14,
@@ -379,7 +381,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: 'rgba(82,183,136,0.08)',
+    backgroundColor: 'rgba(111,148,62,0.08)',
     top: -80,
     right: -60,
   },
@@ -562,15 +564,12 @@ const styles = StyleSheet.create({
 
   // Care section
   careCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#EEE7DA',
     borderRadius: 20,
     marginBottom: 28,
     overflow: 'hidden',
-    shadowColor: '#111111',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#DDD4C7',
   },
   careRow: {
     flexDirection: 'row',
@@ -580,8 +579,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   careRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#F2EEE8',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#DDD4C7',
   },
   careIcon: {
     width: 36,
