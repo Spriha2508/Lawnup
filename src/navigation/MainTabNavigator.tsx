@@ -139,7 +139,14 @@ const CustomTabBar: React.FC<BottomTabBarProps> = memo(({ state, navigation }) =
             tabKey={key}
             label={label}
             focused={focused}
-            onPress={() => navigation.navigate(key as string)}
+            onPress={() => {
+              if (key === 'Scan') {
+                // Skip ScanLanding — open camera immediately
+                (navigation as any).navigate('Scan', { screen: 'Camera' });
+              } else {
+                navigation.navigate(key as string);
+              }
+            }}
           />
         );
       })}

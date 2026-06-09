@@ -6,6 +6,8 @@ import { auth } from '../services/firebase/firebaseConfig';
 import { useAuthStore } from '../features/auth/store/authStore';
 import { ensureUserDoc } from '../features/auth/services/authService';
 import { identifyUser } from '../services/analytics/posthog';
+import { checkUsageLimit } from '../services/firebase/functions';
+import { useSubscriptionStore } from '../features/subscription/store/subscriptionStore';
 import { AuthNavigator } from './AuthNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { MainTabNavigator } from './MainTabNavigator';
@@ -66,6 +68,18 @@ export const RootNavigator = memo(function RootNavigator() {
       try {
         const userDoc = await fetchUserWithRetry(firebaseUser);
         setUser(userDoc);
+
+        // Sync subscription plan so scan limits reflect the user's plan
+        useSubscriptionStore.getState().setPlan(userDoc.subscription);
+
+        // Sync usage counts from server (non-blocking — local counts still work if this fails)
+        checkUsageLimit()
+          .then((usage) => {
+            useSubscriptionStore.getState().setUsage(usage.scansUsed, usage.aiChatsUsed);
+            useSubscriptionStore.getState().setLimits(usage.scanLimit, usage.aiChatLimit);
+          })
+          .catch(() => {});
+
         identifyUser(userDoc.uid, {
           name:         userDoc.name,
           subscription: userDoc.subscription,

@@ -17,6 +17,7 @@ import { CameraView } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useCameraPermission } from '../hooks/useCameraPermission';
 import { useScanStore } from '../store/scanStore';
+import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
 import { ScanFrame, FRAME_SIZE } from '../components/ScanFrame';
 import { logger } from '../../../shared/utils/logger';
 import type { ScanStackParamList } from '../../../navigation/types';
@@ -31,6 +32,8 @@ export const CameraScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { isGranted, isDenied, request } = useCameraPermission();
   const { setCapturedImageUri } = useScanStore();
+
+  const { canScan, scansUsed, scanLimit } = useSubscriptionStore();
 
   const cameraRef = useRef<CameraView>(null);
   const [facing, setFacing] = useState<'front' | 'back'>('back');
@@ -99,6 +102,33 @@ export const CameraScreen: React.FC = () => {
 
   const topPad = insets.top + (Platform.OS === 'android' ? 12 : 0);
   const bottomPad = insets.bottom + 12;
+
+  // ── Quota limit reached ──────────────────────────────────────────────────────
+  if (!canScan()) {
+    const limitLabel = scanLimit === -1 ? '' : ` (${scansUsed}/${scanLimit})`;
+    return (
+      <View style={styles.permissionScreen}>
+        <StatusBar barStyle="light-content" backgroundColor="#000" />
+        <View style={styles.permissionContent}>
+          <Text style={styles.permMark}>◆</Text>
+          <Text style={styles.permTitle}>Monthly limit reached{limitLabel}</Text>
+          <Text style={styles.permSubtitle}>
+            You've used all your free scans this month. Upgrade to continue identifying plants.
+          </Text>
+          <TouchableOpacity
+            style={styles.permBtn}
+            onPress={() => (navigation as any).getParent()?.getParent()?.navigate('Profile')}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.permBtnText}>View upgrade options</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleClose} style={styles.permCancel}>
+            <Text style={styles.permCancelText}>Go back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   // ── Permission: Not yet determined ──────────────────────────────────────────
   if (!isGranted && !isDenied) {

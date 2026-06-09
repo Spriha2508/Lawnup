@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import { compressImage } from '../../../shared/utils/imageCompressor';
 import { getMockScanResult, simulateScanDelay } from '../mocks/scanMocks';
 import { useScanStore } from '../store/scanStore';
+import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
+import { checkUsageLimit } from '../../../services/firebase/functions';
 import { logger } from '../../../shared/utils/logger';
 
 interface UseScanFlowResult {
@@ -43,6 +45,18 @@ export const useScanFlow = (): UseScanFlowResult => {
       if (!scanResult.isHealthy && scanResult.diseases.length > 0) {
         logger.scan.diseaseDetected(scanResult.commonName, scanResult.diseases[0].name);
       }
+
+      // Increment local scan count immediately for responsive UI
+      const subStore = useSubscriptionStore.getState();
+      subStore.setUsage(subStore.scansUsed + 1, subStore.chatsUsed);
+
+      // Sync authoritative count from server in background (non-blocking)
+      checkUsageLimit()
+        .then((usage) => {
+          useSubscriptionStore.getState().setUsage(usage.scansUsed, usage.aiChatsUsed);
+          useSubscriptionStore.getState().setLimits(usage.scanLimit, usage.aiChatLimit);
+        })
+        .catch(() => {});
 
       return scanResult.scanId;
     } catch (err) {
