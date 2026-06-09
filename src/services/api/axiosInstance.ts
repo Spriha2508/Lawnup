@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from 'axios';
-import { getAuth } from 'firebase/auth';
+import { auth } from '../firebase/firebaseConfig';
 
 const axiosInstance: AxiosInstance = axios.create({
   timeout: 30000,
@@ -9,7 +9,7 @@ const axiosInstance: AxiosInstance = axios.create({
 // Inject Firebase ID token on every request
 axiosInstance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const user = getAuth().currentUser;
+    const user = auth.currentUser;
     if (user) {
       const token = await user.getIdToken();
       config.headers.Authorization = `Bearer ${token}`;

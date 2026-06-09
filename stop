@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+#  LawnUp — stop
+#  Kills the Expo tunnel server started by ./start
+#
+#  Usage:  ./stop
+# ─────────────────────────────────────────────────────────────────────────────
+set -uo pipefail
+
+PID_FILE="/tmp/lawnup.pid"
+
+GRN='\033[0;32m' RED='\033[0;31m' CYN='\033[0;36m' BLD='\033[1m' NC='\033[0m'
+
+say() { printf "${CYN}${BLD}▸${NC}  %s\n" "$*"; }
+ok()  { printf "${GRN}${BLD}✓${NC}  %s\n" "$*"; }
+
+echo ""
+say "Stopping LawnUp dev server..."
+
+# ── Kill by saved PID ─────────────────────────────────────────────────────────
+if [[ -f "$PID_FILE" ]]; then
+  PID=$(cat "$PID_FILE" 2>/dev/null || true)
+  if [[ -n "$PID" ]] && kill -0 "$PID" 2>/dev/null; then
+    kill -TERM "$PID" 2>/dev/null || true
+    sleep 1
+    # Force if still alive
+    kill -0 "$PID" 2>/dev/null && kill -KILL "$PID" 2>/dev/null || true
+    ok "Stopped Expo process (PID $PID)"
+  fi
+  rm -f "$PID_FILE"
+fi
+
+# ── Kill anything else related ────────────────────────────────────────────────
+pkill -f "expo start"  2>/dev/null && ok "Stopped expo start"  || true
+pkill -f "ngrok start" 2>/dev/null && ok "Stopped ngrok"       || true
+pkill -f "metro"       2>/dev/null && ok "Stopped Metro"       || true
+
+# ── Free port 8081 if still occupied ─────────────────────────────────────────
+PID_PORT=$(lsof -ti :8081 2>/dev/null | head -1 || true)
+if [[ -n "$PID_PORT" ]]; then
+  kill -TERM "$PID_PORT" 2>/dev/null || true
+  ok "Freed port 8081"
+fi
+
+echo ""
+ok "All done. Run ./start to launch again."
+echo ""

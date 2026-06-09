@@ -18,7 +18,7 @@ interface InputProps extends TextInputProps {
   isPassword?: boolean;
 }
 
-const webOutlineNone = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {};
+const webOutline = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {};
 
 export const Input: React.FC<InputProps> = memo(({
   label,
@@ -32,9 +32,7 @@ export const Input: React.FC<InputProps> = memo(({
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-
-  const borderColor = error ? '#DC2626' : isFocused ? '#6F943E' : '#DDD4C7';
+  const [isFocused,    setIsFocused]    = useState(false);
 
   const handleFocus = useCallback((e: any) => {
     setIsFocused(true);
@@ -46,17 +44,25 @@ export const Input: React.FC<InputProps> = memo(({
     onBlurProp?.(e);
   }, [onBlurProp]);
 
-  const togglePassword = useCallback(() => setShowPassword(p => !p), []);
+  const togglePassword = useCallback(() => setShowPassword(v => !v), []);
+
+  // Derive border color — only this property changes on focus/error.
+  // Background, elevation, shadow are NEVER mutated by focus state.
+  const borderColor = error
+    ? '#DC2626'
+    : isFocused
+      ? '#6F943E'
+      : '#DDD4C7';
 
   return (
     <View style={styles.wrapper}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label ? <Text style={styles.label}>{label}</Text> : null}
 
-      <View style={[styles.inputRow, { borderColor }, isFocused && styles.inputRowFocused]}>
-        {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+      <View style={[styles.row, { borderColor }]}>
+        {leftIcon ? <View style={styles.iconLeft}>{leftIcon}</View> : null}
 
         <TextInput
-          style={styles.textInput}
+          style={[styles.input, webOutline as object]}
           placeholderTextColor="#B0ACA6"
           secureTextEntry={isPassword && !showPassword}
           onFocus={handleFocus}
@@ -73,12 +79,12 @@ export const Input: React.FC<InputProps> = memo(({
             <Text style={styles.showBtnText}>{showPassword ? 'Hide' : 'Show'}</Text>
           </TouchableOpacity>
         ) : (
-          rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>
+          rightIcon ? <View style={styles.iconRight}>{rightIcon}</View> : null
         )}
       </View>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      {hint && !error && <Text style={styles.hintText}>{hint}</Text>}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {hint && !error ? <Text style={styles.hintText}>{hint}</Text> : null}
     </View>
   );
 });
@@ -88,61 +94,52 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    color: '#4A4640',
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Nunito-SemiBold',
+    color: '#6B6763',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
-  inputRow: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
+    // Static background — never changes, no Android repaint on focus
     backgroundColor: '#EDE6D8',
-    borderRadius: 20,
+    borderRadius: 16,
     paddingHorizontal: 18,
     height: 54,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
-    elevation: 0, // always present so Android never creates/destroys hardware layer on focus
+    // elevation and shadow deliberately absent — no GPU layer events
   },
-  inputRowFocused: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#6F943E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  textInput: {
+  input: {
     flex: 1,
     color: '#111111',
     fontSize: 15,
     fontFamily: 'Nunito-Regular',
     paddingVertical: 0,
-    ...(webOutlineNone as object),
   },
-  leftIcon: { marginRight: 10 },
-  rightIcon: { marginLeft: 10 },
+  iconLeft:  { marginRight: 10 },
+  iconRight: { marginLeft: 10 },
   showBtn: {
     marginLeft: 8,
     paddingVertical: 4,
   },
   showBtnText: {
-    color: '#6F943E',
     fontSize: 13,
     fontFamily: 'Nunito-SemiBold',
+    color: '#6F943E',
   },
   errorText: {
-    color: '#DC2626',
     fontSize: 12,
     fontFamily: 'Nunito-Regular',
+    color: '#DC2626',
     marginTop: 5,
   },
   hintText: {
-    color: '#9E9A94',
     fontSize: 12,
     fontFamily: 'Nunito-Regular',
+    color: '#9E9A94',
     marginTop: 5,
   },
 });

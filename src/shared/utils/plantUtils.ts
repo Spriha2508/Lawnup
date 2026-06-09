@@ -29,6 +29,20 @@ export const buildReminderMessage = (nickname: string, type: ReminderType): stri
   return template.replace('{nickname}', nickname);
 };
 
+/**
+ * 0-100 health score: blends health status + watering overdue penalty.
+ * Used by the plant card badge.
+ */
+export const computeHealthScore = (plant: UserPlantDoc): number => {
+  let score = 100;
+  if (plant.healthStatus === 'Needs Attention') score -= 22;
+  if (plant.healthStatus === 'Critical')        score -= 58;
+  const nextWater = getNextWaterDate(plant);
+  const daysLate  = Math.max(0, Math.floor((Date.now() - nextWater.getTime()) / 86_400_000));
+  score -= Math.min(daysLate * 6, 25);
+  return Math.max(5, Math.min(100, Math.round(score)));
+};
+
 export const getDaysSince = (date: Date): number => {
   const diffMs = new Date().getTime() - date.getTime();
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));

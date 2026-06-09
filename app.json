@@ -22,6 +22,7 @@
       }
     },
     "android": {
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#F8FAF5"
@@ -34,14 +35,12 @@
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "POST_NOTIFICATIONS"
-      ],
-      "googleServicesFile": "./google-services.json"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
       [
         "expo-camera",
         { "cameraPermission": "LawnUp needs camera access to scan your plants." }
@@ -66,10 +65,7 @@
         }
       ]
     ],
-    "experiments": {
-      "typedRoutes": false
-    },
-    "extra": {
+"extra": {
       "eas": { "projectId": "YOUR_EAS_PROJECT_ID" }
     }
   }

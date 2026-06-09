@@ -47,3 +47,9 @@ export const usePlantsStore = create<PlantsState>((set, get) => ({
     return plants.find((p) => p.plantId === selectedPlantId)?.nickname ?? null;
   },
 }));
+
+// Preview-mode window bridge — stripped by tree-shaking in production
+if (process.env.EXPO_PUBLIC_APP_ENV === 'preview' && typeof window !== 'undefined') {
+  (window as any).__plantsStoreSetPlants = (plants: UserPlantDoc[]) =>
+    usePlantsStore.setState({ plants });
+}

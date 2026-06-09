@@ -1,16 +1,27 @@
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Do not initialize notifications in Expo Go — getExpoPushTokenAsync requires
+// a standalone or dev-client build with configured credentials.
+const isExpoGo = __DEV__ && Constants.appOwnership === 'expo';
+
+if (!isExpoGo) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert:  true,
+      shouldShowBanner: true,
+      shouldShowList:   true,
+      shouldPlaySound:  true,
+      shouldSetBadge:   false,
+    }),
+  });
+}
 
 export const registerForPushNotifications = async (uid: string): Promise<string | null> => {
+  if (isExpoGo) return null;
+
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
 
@@ -21,11 +32,9 @@ export const registerForPushNotifications = async (uid: string): Promise<string 
 
   if (finalStatus !== 'granted') return null;
 
-  // Expo push token (works with Firebase FCM via Expo's push gateway)
   const tokenData = await Notifications.getExpoPushTokenAsync();
   const token = tokenData.data;
 
-  // Persist to user doc for server-side FCM sends
   await updateDoc(doc(db, `users/${uid}`), { fcmToken: token });
 
   return token;
@@ -33,10 +42,12 @@ export const registerForPushNotifications = async (uid: string): Promise<string 
 
 export const setupNotificationListeners = (
   onForeground: (notification: Notifications.Notification) => void,
-  onTap: (response: Notifications.NotificationResponse) => void
+  onTap: (response: Notifications.NotificationResponse) => void,
 ) => {
+  if (isExpoGo) return () => {};
+
   const foregroundSub = Notifications.addNotificationReceivedListener(onForeground);
-  const tapSub = Notifications.addNotificationResponseReceivedListener(onTap);
+  const tapSub        = Notifications.addNotificationResponseReceivedListener(onTap);
   return () => {
     foregroundSub.remove();
     tapSub.remove();

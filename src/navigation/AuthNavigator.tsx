@@ -1,16 +1,42 @@
-import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
-import { LoginScreen } from '../features/auth/screens/LoginScreen';
-import { SignupScreen } from '../features/auth/screens/SignupScreen';
+import React, { memo, useState, useCallback, useEffect, useMemo } from 'react';
+import { BackHandler } from 'react-native';
+import { AuthNavigationContext, type AuthRouteName } from './AuthNavigationContext';
+import { LandingScreen }       from '../features/auth/screens/LandingScreen';
+import { LoginScreen }         from '../features/auth/screens/LoginScreen';
+import { SignupScreen }        from '../features/auth/screens/SignupScreen';
 import { ForgotPasswordScreen } from '../features/auth/screens/ForgotPasswordScreen';
-import type { AuthStackParamList } from './types';
 
-const Stack = createStackNavigator<AuthStackParamList>();
+export const AuthNavigator = memo(function AuthNavigator() {
+  const [stack, setStack] = useState<AuthRouteName[]>(['Landing']);
 
-export const AuthNavigator: React.FC = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Login" component={LoginScreen} />
-    <Stack.Screen name="Signup" component={SignupScreen} />
-    <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-  </Stack.Navigator>
-);
+  const navigate = useCallback((route: AuthRouteName) => {
+    setStack(prev => [...prev, route]);
+  }, []);
+
+  const goBack = useCallback(() => {
+    setStack(prev => (prev.length > 1 ? prev.slice(0, -1) : prev));
+  }, []);
+
+  const current = stack[stack.length - 1];
+  const canGoBack = stack.length > 1;
+
+  // Stable context value — only changes when navigate/goBack references change (never, due to useCallback [])
+  const contextValue = useMemo(() => ({ navigate, goBack }), [navigate, goBack]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (canGoBack) { goBack(); return true; }
+      return false;
+    });
+    return () => sub.remove();
+  }, [canGoBack, goBack]);
+
+  return (
+    <AuthNavigationContext.Provider value={contextValue}>
+      {current === 'Landing'        && <LandingScreen />}
+      {current === 'Login'          && <LoginScreen />}
+      {current === 'Signup'         && <SignupScreen />}
+      {current === 'ForgotPassword' && <ForgotPasswordScreen />}
+    </AuthNavigationContext.Provider>
+  );
+});

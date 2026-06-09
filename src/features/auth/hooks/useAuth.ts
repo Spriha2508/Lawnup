@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { signUpWithEmail, signInWithEmail, sendPasswordReset } from '../services/authService';
 import { identifyUser, track } from '../../../services/analytics/posthog';
@@ -6,11 +6,14 @@ import { getErrorMessage } from '../../../shared/utils/errorHandler';
 import type { SignupFormData, LoginFormData } from '../types';
 
 export const useAuth = () => {
-  const { setUser, signOut } = useAuthStore();
+  const setUser = useAuthStore(state => state.setUser);
+  const signOut = useAuthStore(state => state.signOut);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSignUp = async (data: SignupFormData) => {
+  const clearError = useCallback(() => setError(null), []);
+
+  const handleSignUp = useCallback(async (data: SignupFormData) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -23,9 +26,9 @@ export const useAuth = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setUser]);
 
-  const handleSignIn = async (data: LoginFormData) => {
+  const handleSignIn = useCallback(async (data: LoginFormData) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -38,9 +41,9 @@ export const useAuth = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setUser]);
 
-  const handlePasswordReset = async (email: string) => {
+  const handlePasswordReset = useCallback(async (email: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -52,12 +55,12 @@ export const useAuth = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   return {
     isLoading,
     error,
-    clearError: () => setError(null),
+    clearError,
     signUp: handleSignUp,
     signIn: handleSignIn,
     resetPassword: handlePasswordReset,
