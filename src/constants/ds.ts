@@ -19,9 +19,9 @@ export const DS = {
     inkFaint:      '#C8C8BC',   // placeholders, disabled
 
     // Brand / accent
-    forest:        '#2D6A4F',   // primary green
-    forestDark:    '#1C3520',   // add-button, dark CTA
-    forestLight:   '#52B788',   // softer accent
+    forest:        '#6F943E',   // primary green
+    forestDark:    '#111111',   // add-button, dark CTA
+    forestLight:   '#A7C47C',   // softer accent
 
     // Interactive
     filterActive:  '#1C1C18',   // selected filter pill bg

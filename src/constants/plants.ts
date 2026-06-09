@@ -34,19 +34,19 @@ export const NICKNAME_SUGGESTIONS: Record<string, string[]> = {
 // Reminder message templates — nickname is injected at runtime
 export const REMINDER_MESSAGES = {
   water: [
-    '{nickname} is thirsty today 🌿',
+    '{nickname} is thirsty today',
     'Time to water {nickname}! The soil looks dry.',
-    '{nickname} is waiting for a drink 💧',
+    '{nickname} is waiting for a drink',
   ],
   fertilize: [
-    '{nickname} could use some nutrients today 🌱',
+    '{nickname} could use some nutrients today',
     'Feed {nickname} today for healthy growth!',
   ],
   repot: [
-    '{nickname} may be ready for a bigger home 🪴',
+    '{nickname} may be ready for a bigger home',
     "Give {nickname} more room to grow!",
   ],
   custom: [
-    "{nickname} needs your attention today 🌿",
+    "{nickname} needs your attention today",
   ],
 } as const;

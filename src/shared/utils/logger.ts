@@ -100,7 +100,7 @@ function print(ns: Namespace, level: LogLevel, message: string, data?: unknown):
 // ── App lifecycle ──────────────────────────────────────────────────────────────
 const app = {
   launched: () =>
-    print('APP', 'event', '🚀 App launched'),
+    print('APP', 'event', 'App launched'),
 
   background: () =>
     print('APP', 'info', '⏸  App backgrounded'),
@@ -112,7 +112,7 @@ const app = {
     print('APP', 'debug', `App state → ${state}`),
 
   error: (message: string, err?: unknown) => {
-    print('APP', 'error', `💥 ${message}`, err);
+    print('APP', 'error', `[FATAL] ${message}`, err);
   },
 
   warn: (message: string, data?: unknown) =>
@@ -125,19 +125,19 @@ const app = {
 // ── Auth ───────────────────────────────────────────────────────────────────────
 const auth = {
   signUp: (email: string) =>
-    print('AUTH', 'event', `✅ Sign up: ${email}`),
+    print('AUTH', 'event', `Sign up: ${email}`),
 
   login: (email: string, method: string = 'email') =>
-    print('AUTH', 'event', `🔐 Login: ${email} (${method})`),
+    print('AUTH', 'event', `Login: ${email} (${method})`),
 
   logout: (uid?: string) =>
-    print('AUTH', 'event', `👋 Logout${uid ? `: ${uid}` : ''}`),
+    print('AUTH', 'event', `Logout${uid ? `: ${uid}` : ''}`),
 
   sessionRestored: (uid: string) =>
-    print('AUTH', 'info', `🔄 Session restored: ${uid}`),
+    print('AUTH', 'info', `Session restored: ${uid}`),
 
   tokenRefreshed: () =>
-    print('AUTH', 'debug', '🔑 Token refreshed'),
+    print('AUTH', 'debug', 'Token refreshed'),
 
   error: (action: string, err: unknown) =>
     print('AUTH', 'error', `Auth error [${action}]`, err),
@@ -149,7 +149,7 @@ const auth = {
 // ── Plant scan ─────────────────────────────────────────────────────────────────
 const scan = {
   started: () =>
-    print('SCAN', 'event', '📷 Scan started'),
+    print('SCAN', 'event', 'Scan started'),
 
   imageSelected: (source: 'camera' | 'gallery') =>
     print('SCAN', 'info', `Image selected from ${source}`),
@@ -158,13 +158,13 @@ const scan = {
     print('SCAN', 'info', `Uploading image (${sizeKb}kb)...`),
 
   completed: (plantName: string, confidence: number) =>
-    print('SCAN', 'event', `✅ Scan complete: ${plantName} (${Math.round(confidence * 100)}% confidence)`),
+    print('SCAN', 'event', `Scan complete: ${plantName} (${Math.round(confidence * 100)}% confidence)`),
 
   diseaseDetected: (plantName: string, disease: string) =>
     print('SCAN', 'warn', `⚠ Disease detected on ${plantName}: ${disease}`),
 
   nicknamed: (species: string, nickname: string) =>
-    print('SCAN', 'event', `💚 Plant nicknamed: "${nickname}" (${species})`),
+    print('SCAN', 'event', `Plant nicknamed: "${nickname}" (${species})`),
 
   nicknameSkipped: (species: string) =>
     print('SCAN', 'info', `Nickname skipped for ${species}`),
@@ -173,13 +173,13 @@ const scan = {
     print('SCAN', 'error', `Scan failed: ${reason}`, err),
 
   quotaExceeded: () =>
-    print('SCAN', 'warn', '🔒 Scan quota exceeded — upgrade required'),
+    print('SCAN', 'warn', 'Scan quota exceeded — upgrade required'),
 };
 
 // ── AI chat ────────────────────────────────────────────────────────────────────
 const ai = {
   chatStarted: (plantNickname?: string) =>
-    print('AI', 'event', `💬 Chat started${plantNickname ? ` with ${plantNickname}` : ''}`),
+    print('AI', 'event', `Chat started${plantNickname ? ` with ${plantNickname}` : ''}`),
 
   messageSent: (charCount: number, plantNickname?: string) =>
     print('AI', 'debug', `→ User message (${charCount} chars)${plantNickname ? ` about ${plantNickname}` : ''}`),
@@ -188,13 +188,13 @@ const ai = {
     print('AI', 'debug', `← AI response (${tokensUsed} tokens, ${charsRemaining} chats remaining)`),
 
   moderated: (reason: string) =>
-    print('AI', 'warn', `🛡 Message moderated: ${reason}`),
+    print('AI', 'warn', `Message moderated: ${reason}`),
 
   memoryUpdated: (plantNickname: string) =>
-    print('AI', 'debug', `🧠 Memory updated for ${plantNickname}`),
+    print('AI', 'debug', `Memory updated for ${plantNickname}`),
 
   quotaExceeded: () =>
-    print('AI', 'warn', '🔒 Chat quota exceeded — upgrade required'),
+    print('AI', 'warn', 'Chat quota exceeded — upgrade required'),
 
   error: (err: unknown) =>
     print('AI', 'error', 'AI response failed', err),
@@ -216,16 +216,16 @@ const api = {
     print('API', 'warn', `⏱ Timeout: ${endpoint} (${timeoutMs}ms)`),
 
   offline: () =>
-    print('API', 'warn', '📵 Device appears to be offline'),
+    print('API', 'warn', 'Device appears to be offline'),
 
   online: () =>
-    print('API', 'info', '📶 Network reconnected'),
+    print('API', 'info', 'Network reconnected'),
 };
 
 // ── Firebase ───────────────────────────────────────────────────────────────────
 const firebase = {
   initialized: () =>
-    print('FIREBASE', 'info', '🔥 Firebase initialized'),
+    print('FIREBASE', 'info', 'Firebase initialized'),
 
   functionCalled: (name: string) =>
     print('FIREBASE', 'debug', `→ Function: ${name}`),
@@ -252,13 +252,13 @@ const firebase = {
 // ── Payment ────────────────────────────────────────────────────────────────────
 const payment = {
   initiated: (plan: string, amount: number) =>
-    print('PAYMENT', 'event', `💳 Payment initiated: ${plan} (₹${amount})`),
+    print('PAYMENT', 'event', `Payment initiated: ${plan} (Rs.${amount})`),
 
   sessionCreated: (orderId: string) =>
     print('PAYMENT', 'info', `Order created: ${orderId}`),
 
   success: (orderId: string, plan: string) =>
-    print('PAYMENT', 'event', `✅ Payment success: ${orderId} → ${plan}`),
+    print('PAYMENT', 'event', `Payment success: ${orderId} -> ${plan}`),
 
   failed: (orderId: string, reason?: string) =>
     print('PAYMENT', 'error', `✗ Payment failed: ${orderId}${reason ? ` — ${reason}` : ''}`),
@@ -267,7 +267,7 @@ const payment = {
     print('PAYMENT', 'warn', `↩ Payment cancelled: ${orderId}`),
 
   verifying: (orderId: string) =>
-    print('PAYMENT', 'info', `🔄 Verifying payment: ${orderId}`),
+    print('PAYMENT', 'info', `Verifying payment: ${orderId}`),
 
   webhookReceived: (event: string) =>
     print('PAYMENT', 'debug', `Webhook: ${event}`),
@@ -276,19 +276,19 @@ const payment = {
 // ── Reminders ──────────────────────────────────────────────────────────────────
 const reminder = {
   scheduled: (nickname: string, type: string, date: string) =>
-    print('REMINDER', 'event', `📅 Reminder set: ${nickname} — ${type} on ${date}`),
+    print('REMINDER', 'event', `Reminder set: ${nickname} — ${type} on ${date}`),
 
   triggered: (nickname: string, type: string) =>
-    print('REMINDER', 'event', `🔔 Reminder triggered: ${nickname} — ${type}`),
+    print('REMINDER', 'event', `Reminder triggered: ${nickname} — ${type}`),
 
   dismissed: (reminderId: string) =>
     print('REMINDER', 'info', `Reminder dismissed: ${reminderId}`),
 
   permissionDenied: () =>
-    print('REMINDER', 'warn', '🔕 Notification permission denied'),
+    print('REMINDER', 'warn', 'Notification permission denied'),
 
   tokenRegistered: () =>
-    print('REMINDER', 'info', '📲 FCM token registered'),
+    print('REMINDER', 'info', 'FCM token registered'),
 
   error: (context: string, err: unknown) =>
     print('REMINDER', 'error', `Reminder error [${context}]`, err),
@@ -311,7 +311,7 @@ function installGlobalHandlers(): void {
   if (typeof ErrorUtils !== 'undefined') {
     const originalHandler = ErrorUtils.getGlobalHandler();
     ErrorUtils.setGlobalHandler((err: Error, isFatal?: boolean) => {
-      print('ERROR', 'error', `${isFatal ? '💥 FATAL' : '⚠ Unhandled'} JS error: ${err?.message}`, {
+      print('ERROR', 'error', `${isFatal ? 'FATAL' : 'Unhandled'} JS error: ${err?.message}`, {
         stack: err?.stack,
         isFatal,
       });
@@ -328,7 +328,7 @@ function installGlobalHandlers(): void {
     // The ErrorUtils handler above will catch them via the native bridge
   }
 
-  print('APP', 'debug', '🛡 Global error handlers installed');
+  print('APP', 'debug', 'Global error handlers installed');
 }
 
 // ── Public logger object ──────────────────────────────────────────────────────
