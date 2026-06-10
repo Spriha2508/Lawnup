@@ -1,38 +1,46 @@
-import * as functions from 'firebase-functions';
+// PARKED (launch decision 2026-06-10): not exported from index.ts.
+// In-app subscriptions use RevenueCat + Play Billing; kept for future web checkout.
+import { onRequest } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
+import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 import * as crypto from 'crypto';
 
 const db = admin.firestore();
 
+const CASHFREE_WEBHOOK_SECRET = defineSecret('CASHFREE_WEBHOOK_SECRET');
+
 // Cashfree sends webhooks as HTTP POST with HMAC-SHA256 signature
-export const cashfreeWebhook = functions
-  .region('asia-south1')
-  .https.onRequest(async (req, res) => {
+export const cashfreeWebhook = onRequest(
+  { secrets: [CASHFREE_WEBHOOK_SECRET], region: 'asia-south1' },
+  async (req, res) => {
     if (req.method !== 'POST') {
       res.status(405).send('Method Not Allowed');
       return;
     }
 
-    const cfSecret = functions.config().cashfree?.webhook_secret;
+    const cfSecret = CASHFREE_WEBHOOK_SECRET.value();
     const timestamp = req.headers['x-webhook-timestamp'] as string;
     const receivedSignature = req.headers['x-webhook-signature'] as string;
 
     if (!timestamp || !receivedSignature) {
-      functions.logger.warn('Missing Cashfree webhook headers');
+      logger.warn('Missing Cashfree webhook headers');
       res.status(400).send('Bad Request');
       return;
     }
 
-    // Verify HMAC-SHA256 signature
-    const body = JSON.stringify(req.body);
-    const signaturePayload = `${timestamp}${body}`;
+    // Verify HMAC-SHA256 signature over the RAW request body Cashfree signed.
+    // Re-serializing req.body with JSON.stringify produces different bytes
+    // (key order / spacing) and breaks verification — use req.rawBody.
+    const rawBody = (req as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
+    const signaturePayload = `${timestamp}${rawBody}`;
     const expectedSignature = crypto
       .createHmac('sha256', cfSecret)
       .update(signaturePayload)
       .digest('base64');
 
     if (expectedSignature !== receivedSignature) {
-      functions.logger.error('Invalid Cashfree webhook signature');
+      logger.error('Invalid Cashfree webhook signature');
       res.status(401).send('Unauthorized');
       return;
     }
@@ -42,7 +50,7 @@ export const cashfreeWebhook = functions
     const orderId: string = event?.data?.order?.order_id ?? '';
     const paymentId: string = event?.data?.payment?.cf_payment_id ?? '';
 
-    functions.logger.info('Cashfree webhook received', { eventType, orderId });
+    logger.info('Cashfree webhook received', { eventType, orderId });
 
     try {
       if (eventType === 'PAYMENT_SUCCESS_WEBHOOK') {
@@ -52,12 +60,12 @@ export const cashfreeWebhook = functions
       } else if (eventType === 'SUBSCRIPTION_CANCELLED') {
         await handleSubscriptionCancelled(orderId);
       } else {
-        functions.logger.info('Unhandled webhook event type', { eventType });
+        logger.info('Unhandled webhook event type', { eventType });
       }
 
       res.status(200).send('OK');
     } catch (err) {
-      functions.logger.error('Webhook processing error', err);
+      logger.error('Webhook processing error', err);
       res.status(500).send('Internal Server Error');
     }
   });
@@ -71,7 +79,7 @@ const handlePaymentSuccess = async (orderId: string, paymentId: string) => {
     .get();
 
   if (subSnap.empty) {
-    functions.logger.warn('No subscription found for orderId', { orderId });
+    logger.warn('No subscription found for orderId', { orderId });
     return;
   }
 
@@ -101,10 +109,10 @@ const handlePaymentSuccess = async (orderId: string, paymentId: string) => {
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  batch.update(db.collection('usage').doc(uid), {
-    scanLimit: 20,
+  batch.set(db.collection('usage').doc(uid), {
+    scanLimit: -1,
     aiChatLimit: -1,
-  });
+  }, { merge: true });
 
   batch.update(db.collection('users').doc(uid), {
     subscription: 'premium',
@@ -113,7 +121,7 @@ const handlePaymentSuccess = async (orderId: string, paymentId: string) => {
 
   await batch.commit();
 
-  functions.logger.info('Subscription activated via webhook', { uid, orderId });
+  logger.info('Subscription activated via webhook', { uid, orderId });
 };
 
 const handlePaymentFailed = async (orderId: string) => {
@@ -157,5 +165,5 @@ const handleSubscriptionCancelled = async (orderId: string) => {
 
   await batch.commit();
 
-  functions.logger.info('Subscription cancelled via webhook', { uid, orderId });
+  logger.info('Subscription cancelled via webhook', { uid, orderId });
 };

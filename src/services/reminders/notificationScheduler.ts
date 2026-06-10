@@ -1,0 +1,156 @@
+// Phase 8 — Local notification scheduling infrastructure.
+// Uses expo-notifications for local (on-device) scheduling.
+// No server push required — entirely client-side.
+
+import * as Notifications from 'expo-notifications';
+import type { UserPlantDoc } from '../../types/firestore.types';
+import { getWaterInfo, generateWateringMessage } from './reminderService';
+import type { WeatherData } from '../weather/weatherService';
+
+export type LocalReminderType =
+  | 'water'
+  | 'fertilize'
+  | 'disease_followup'
+  | 'heat_alert'
+  | 'humidity_alert';
+
+export interface ReminderPayload {
+  type: LocalReminderType;
+  plantId: string;
+  plantNickname: string;
+  message: string;
+  scheduledFor: Date;
+  weatherTriggered?: boolean;
+}
+
+const ID_PREFIX = 'lawnup_';
+
+// Configure foreground notification behaviour once at module level
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
+
+// ── Permission ─────────────────────────────────────────────────────────────────
+
+export async function requestNotificationPermission(): Promise<boolean> {
+  try {
+    const { status: existing } = await Notifications.getPermissionsAsync();
+    if (existing === 'granted') return true;
+    const { status } = await Notifications.requestPermissionsAsync();
+    return status === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+export async function hasNotificationPermission(): Promise<boolean> {
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    return status === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+// ── Scheduling ─────────────────────────────────────────────────────────────────
+
+export async function scheduleWateringReminder(
+  plant: UserPlantDoc,
+  weather?: WeatherData | null,
+): Promise<string | null> {
+  try {
+    const permitted = await hasNotificationPermission();
+    if (!permitted) return null;
+
+    // Rain today → skip watering reminder
+    if (weather?.isRaining) return null;
+
+    const waterInfo = getWaterInfo(plant);
+    if (waterInfo.status === 'ok' && waterInfo.daysUntil > 3) return null;
+
+    // Determine fire time: next water date or 5 min from now if overdue
+    let triggerDate = new Date(
+      plant.lastWateredAt.toDate().getTime() +
+        plant.wateringFrequencyDays * 86_400_000,
+    );
+    if (triggerDate <= new Date()) {
+      triggerDate = new Date(Date.now() + 5 * 60_000);
+    }
+
+    const message = generateWateringMessage(plant, weather);
+    const id = `${ID_PREFIX}water_${plant.plantId}`;
+
+    await cancelReminderById(id);
+
+    await Notifications.scheduleNotificationAsync({
+      identifier: id,
+      content: {
+        title: plant.nickname,
+        body: message,
+        data: { plantId: plant.plantId, type: 'water' } as Record<string, unknown>,
+        sound: false,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: triggerDate,
+      },
+    });
+
+    return id;
+  } catch {
+    return null;
+  }
+}
+
+// ── Cancellation ────────────────────────────────────────────────────────────────
+
+export async function cancelReminderById(id: string): Promise<void> {
+  try {
+    await Notifications.cancelScheduledNotificationAsync(id);
+  } catch {}
+}
+
+export async function cancelPlantReminders(plantId: string): Promise<void> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    const plantNotifs = all.filter(n => n.identifier.includes(plantId));
+    await Promise.all(plantNotifs.map(n => cancelReminderById(n.identifier)));
+  } catch {}
+}
+
+// ── Query ───────────────────────────────────────────────────────────────────────
+
+export async function getPendingReminders(): Promise<ReminderPayload[]> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    return all
+      .filter(n => n.identifier.startsWith(ID_PREFIX))
+      .map(n => {
+        const data = (n.content.data ?? {}) as Record<string, string>;
+        const triggerMs = (n.trigger as { value?: number })?.value ?? Date.now();
+        return {
+          type: (data.type ?? 'water') as LocalReminderType,
+          plantId: data.plantId ?? '',
+          plantNickname: n.content.title ?? '',
+          message: n.content.body ?? '',
+          scheduledFor: new Date(triggerMs),
+        };
+      });
+  } catch {
+    return [];
+  }
+}
+
+export async function isReminderScheduled(plantId: string): Promise<boolean> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    return all.some(n => n.identifier.includes(plantId));
+  } catch {
+    return false;
+  }
+}

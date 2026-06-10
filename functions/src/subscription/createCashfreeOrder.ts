@@ -1,33 +1,41 @@
-import * as functions from 'firebase-functions';
+// PARKED (launch decision 2026-06-10): not exported from index.ts.
+// In-app subscriptions use RevenueCat + Play Billing; this is kept for a
+// future website checkout flow.
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import axios from 'axios';
 import { requireAuth } from '../middleware/authMiddleware';
 
 const db = admin.firestore();
 
+const CASHFREE_APP_ID = defineSecret('CASHFREE_APP_ID');
+const CASHFREE_SECRET_KEY = defineSecret('CASHFREE_SECRET_KEY');
+
 const PLAN_AMOUNTS: Record<string, number> = {
-  monthly: 9900,   // ₹99/month in paise
-  annual: 79900,   // ₹799/year in paise
+  monthly: 19900,   // ₹199/month in paise
+  annual: 199000,   // ₹1990/year in paise
 };
 
-export const createCashfreeOrder = functions
-  .region('asia-south1')
-  .https.onCall(async (data: { planType: 'monthly' | 'annual' }, context) => {
-    const uid = requireAuth(context);
+export const createCashfreeOrder = onCall(
+  { secrets: [CASHFREE_APP_ID, CASHFREE_SECRET_KEY] },
+  async (request) => {
+    const data = request.data as { planType: 'monthly' | 'annual' };
+    const uid = requireAuth(request);
 
     if (!PLAN_AMOUNTS[data.planType]) {
-      throw new functions.https.HttpsError('invalid-argument', 'Invalid plan type.');
+      throw new HttpsError('invalid-argument', 'Invalid plan type.');
     }
 
     const userSnap = await db.collection('users').doc(uid).get();
     const user = userSnap.data();
-    if (!user) throw new functions.https.HttpsError('not-found', 'User not found.');
+    if (!user) throw new HttpsError('not-found', 'User not found.');
 
     const orderId = `LAWNUP_${uid.slice(0, 8)}_${Date.now()}`;
     const amount = PLAN_AMOUNTS[data.planType] / 100; // Cashfree uses rupees, not paise
 
-    const cfAppId = functions.config().cashfree?.app_id;
-    const cfSecretKey = functions.config().cashfree?.secret_key;
+    const cfAppId = CASHFREE_APP_ID.value();
+    const cfSecretKey = CASHFREE_SECRET_KEY.value();
     const cfBaseUrl = 'https://api.cashfree.com/pg';
 
     const orderPayload = {
@@ -42,7 +50,8 @@ export const createCashfreeOrder = functions
       },
       order_meta: {
         return_url: `lawnup://subscription/success?order_id=${orderId}`,
-        notify_url: `https://asia-south1-${functions.config().firebase?.project_id}.cloudfunctions.net/cashfreeWebhook`,
+        // GCLOUD_PROJECT is set automatically in the Functions runtime
+        notify_url: `https://asia-south1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/cashfreeWebhook`,
       },
     };
 

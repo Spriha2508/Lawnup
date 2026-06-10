@@ -1,192 +1,98 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Animated, View, Text, StyleSheet } from 'react-native';
-import { PROCESSING_STAGES } from '../mocks/scanMocks';
 
-interface ProcessingAnimationProps {
-  onComplete?: () => void;
-}
+// Calm, ambient processing orb — purely visual. Messaging and progress live in
+// ProcessingScreen so there is a single, uncluttered message area. Kept to a few
+// gentle loops (one slow arc rotation + a soft core breathe) to read premium and
+// intelligent without feeling busy or draining frames.
+export const ProcessingAnimation: React.FC = () => {
+  const spin = useRef(new Animated.Value(0)).current;
+  const breathe = useRef(new Animated.Value(0)).current;
 
-export const ProcessingAnimation: React.FC<ProcessingAnimationProps> = ({ onComplete }) => {
-  const ring1 = useRef(new Animated.Value(0)).current;
-  const ring2 = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.92)).current;
-  const iconFade = useRef(new Animated.Value(1)).current;
-  const [stageIndex, setStageIndex] = useState(0);
-  const [stageFade] = useState(new Animated.Value(1));
-
-  // Rotating rings
   useEffect(() => {
-    const r1 = Animated.loop(
-      Animated.timing(ring1, { toValue: 1, duration: 2200, useNativeDriver: true })
+    const spinAnim = Animated.loop(
+      Animated.timing(spin, { toValue: 1, duration: 3200, useNativeDriver: true }),
     );
-    const r2 = Animated.loop(
-      Animated.timing(ring2, { toValue: 1, duration: 1600, useNativeDriver: true })
-    );
-    const pulse = Animated.loop(
+    const breatheAnim = Animated.loop(
       Animated.sequence([
-        Animated.timing(scale, { toValue: 1.06, duration: 700, useNativeDriver: true }),
-        Animated.timing(scale, { toValue: 0.92, duration: 700, useNativeDriver: true }),
-      ])
+        Animated.timing(breathe, { toValue: 1, duration: 1400, useNativeDriver: true }),
+        Animated.timing(breathe, { toValue: 0, duration: 1400, useNativeDriver: true }),
+      ]),
     );
-    r1.start();
-    r2.start();
-    pulse.start();
-    return () => { r1.stop(); r2.stop(); pulse.stop(); };
-  }, [ring1, ring2, scale]);
+    spinAnim.start();
+    breatheAnim.start();
+    return () => { spinAnim.stop(); breatheAnim.stop(); };
+  }, [spin, breathe]);
 
-  // Cycle through stage messages
-  useEffect(() => {
-    let idx = 0;
-    let accumulatedMs = 0;
-
-    const timers: ReturnType<typeof setTimeout>[] = PROCESSING_STAGES.map((stage) => {
-      const t = setTimeout(() => {
-        Animated.sequence([
-          Animated.timing(stageFade, { toValue: 0, duration: 180, useNativeDriver: true }),
-          Animated.timing(stageFade, { toValue: 1, duration: 220, useNativeDriver: true }),
-        ]).start();
-        setStageIndex(idx);
-        idx++;
-      }, accumulatedMs);
-      accumulatedMs += stage.durationMs;
-      return t;
-    });
-
-    return () => timers.forEach(clearTimeout);
-  }, [stageFade]);
-
-  const spin1 = ring1.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-  const spin2 = ring2.interpolate({ inputRange: [0, 1], outputRange: ['360deg', '0deg'] });
-
-  const currentStage = PROCESSING_STAGES[stageIndex] ?? PROCESSING_STAGES[PROCESSING_STAGES.length - 1];
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const coreScale = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.04] });
+  const haloOpacity = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.7] });
 
   return (
     <View style={styles.container}>
-      {/* Outer glow rings */}
-      <View style={styles.glowRing} />
-      <View style={[styles.glowRing, styles.glowRing2]} />
+      {/* Soft ambient halos */}
+      <Animated.View style={[styles.halo, { opacity: haloOpacity }]} />
+      <View style={styles.haloOuter} />
 
-      {/* Rotating arc rings */}
-      <Animated.View style={[styles.ring, styles.ring1, { transform: [{ rotate: spin1 }] }]} />
-      <Animated.View style={[styles.ring, styles.ring2, { transform: [{ rotate: spin2 }] }]} />
+      {/* Single slow arc — open top/right edge reads as motion, not a busy spinner */}
+      <Animated.View style={[styles.arc, { transform: [{ rotate }] }]} />
 
-      {/* Core circle */}
-      <Animated.View style={[styles.core, { transform: [{ scale }] }]}>
-        <Text style={styles.icon}>{currentStage.icon}</Text>
+      {/* Breathing core */}
+      <Animated.View style={[styles.core, { transform: [{ scale: coreScale }] }]}>
+        <Text style={styles.icon}>✦</Text>
       </Animated.View>
-
-      {/* Stage message */}
-      <Animated.View style={[styles.messageBox, { opacity: stageFade }]}>
-        <Text style={styles.message}>{currentStage.message}</Text>
-        <Text style={styles.subMessage}>Your result will be ready shortly</Text>
-      </Animated.View>
-
-      {/* Dot indicators */}
-      <View style={styles.dots}>
-        {PROCESSING_STAGES.map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.dot,
-              i <= stageIndex ? styles.dotActive : styles.dotInactive,
-            ]}
-          />
-        ))}
-      </View>
     </View>
   );
 };
 
-const RING_SIZE = 140;
+const RING = 132;
 
 const styles = StyleSheet.create({
   container: {
+    width: RING + 56,
+    height: RING + 56,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  glowRing: {
+  halo: {
     position: 'absolute',
-    width: RING_SIZE + 60,
-    height: RING_SIZE + 60,
-    borderRadius: (RING_SIZE + 60) / 2,
-    backgroundColor: 'rgba(45, 106, 79, 0.08)',
+    width: RING + 30,
+    height: RING + 30,
+    borderRadius: (RING + 30) / 2,
+    backgroundColor: 'rgba(111,148,62,0.10)',
   },
-  glowRing2: {
-    width: RING_SIZE + 100,
-    height: RING_SIZE + 100,
-    borderRadius: (RING_SIZE + 100) / 2,
-    backgroundColor: 'rgba(45, 106, 79, 0.04)',
-  },
-  ring: {
+  haloOuter: {
     position: 'absolute',
-    borderRadius: RING_SIZE / 2,
+    width: RING + 56,
+    height: RING + 56,
+    borderRadius: (RING + 56) / 2,
+    backgroundColor: 'rgba(111,148,62,0.045)',
+  },
+  arc: {
+    position: 'absolute',
+    width: RING,
+    height: RING,
+    borderRadius: RING / 2,
     borderWidth: 2,
-  },
-  ring1: {
-    width: RING_SIZE,
-    height: RING_SIZE,
-    borderColor: 'rgba(111,148,62,0.6)',
-    borderStyle: 'dashed',
-    opacity: 0.7,
-  },
-  ring2: {
-    width: RING_SIZE - 24,
-    height: RING_SIZE - 24,
-    borderColor: 'rgba(111, 148, 62, 0.55)',
+    borderColor: 'rgba(127,176,105,0.7)',
     borderTopColor: 'transparent',
     borderRightColor: 'transparent',
   },
   core: {
-    width: RING_SIZE - 56,
-    height: RING_SIZE - 56,
-    borderRadius: (RING_SIZE - 56) / 2,
+    width: RING - 64,
+    height: RING - 64,
+    borderRadius: (RING - 64) / 2,
     backgroundColor: '#6F943E',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#6F943E',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 18,
+    elevation: 10,
   },
   icon: {
-    fontSize: 28,
-    color: 'rgba(255,255,255,0.9)',
-  },
-  messageBox: {
-    marginTop: RING_SIZE / 2 + 24,
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  message: {
-    color: '#fff',
-    fontSize: 17,
-    fontFamily: 'Nunito-SemiBold',
-    textAlign: 'center',
-    letterSpacing: 0.2,
-  },
-  subMessage: {
-    color: 'rgba(255,255,255,0.38)',
-    fontSize: 12,
-    fontFamily: 'Nunito-Regular',
-    textAlign: 'center',
-    marginTop: 8,
-    letterSpacing: 0.1,
-  },
-  dots: {
-    flexDirection: 'row',
-    marginTop: 20,
-    gap: 6,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  dotActive: {
-    backgroundColor: 'rgba(111,148,62,0.8)',
-  },
-  dotInactive: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    fontSize: 26,
+    color: 'rgba(255,255,255,0.92)',
   },
 });

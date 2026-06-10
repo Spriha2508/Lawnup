@@ -1,74 +1,248 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Image,
   Animated,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CameraView } from 'expo-camera';
+import type { CameraMountError } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useCameraPermission } from '../hooks/useCameraPermission';
 import { useScanStore } from '../store/scanStore';
 import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
 import { ScanFrame, FRAME_SIZE } from '../components/ScanFrame';
+import { analyzeImageQuality } from '../../../shared/utils/imageQuality';
+import type { ImageQualityResult } from '../../../shared/utils/imageQuality';
 import { logger } from '../../../shared/utils/logger';
 import type { ScanStackParamList } from '../../../navigation/types';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'Camera'>;
-
 type FlashMode = 'off' | 'on' | 'auto';
+
+// Scan guidance tips — rotate through these during the live view
+const SCAN_TIPS = [
+  'Include the full plant — leaves, stem, and overall shape',
+  'Natural daylight gives the most accurate results',
+  'Hold steady and move close — blurry photos reduce accuracy',
+  'Keep affected leaves clearly visible in the frame',
+  'Avoid harsh backlighting — step into shade if needed',
+  'Include the pot if possible — it helps with context',
+];
+
+// How long a quality warning stays before resuming tip rotation (ms)
+const QUALITY_WARN_DURATION = 4000;
+// How long the capture button stays dimmed after a poor-quality rejection (ms)
+const CAPTURE_LOCK_DURATION = 2500;
 
 export const CameraScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { isGranted, isDenied, request } = useCameraPermission();
   const { setCapturedImageUri } = useScanStore();
-
-  const { canScan, scansUsed, scanLimit } = useSubscriptionStore();
+  const isUsageHydrated = useSubscriptionStore(s => s.isUsageHydrated);
+  // Weekly gate (free: 3/week; premium bypasses). Functions are stable store refs;
+  // call them at render / via getState() rather than putting them in dep arrays.
+  const canScanThisWeek = useSubscriptionStore(s => s.canScanThisWeek);
 
   const cameraRef = useRef<CameraView>(null);
   const [facing, setFacing] = useState<'front' | 'back'>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState(false);
+  const [mountError, setMountError] = useState<string | null>(null);
 
-  // Flash animation on capture
+  // Quality state
+  const [qualityResult, setQualityResult] = useState<ImageQualityResult | null>(null);
+  const [showingQualityWarn, setShowingQualityWarn] = useState(false);
+  const [captureLocked, setCaptureLocked] = useState(false); // dim button after rejection
+
+  // Tip / quality message area
+  const [tipIndex, setTipIndex] = useState(0);
+  const tipFade = useRef(new Animated.Value(1)).current;
+  const qualityWarnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const captureLockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const captureFlash = useRef(new Animated.Value(0)).current;
+  const captureScale = useRef(new Animated.Value(1)).current;
+  const previewFade  = useRef(new Animated.Value(0)).current;
 
+  // Quality pill opacity (fades in when quality result is available)
+  const qualityPillOpacity = useRef(new Animated.Value(0)).current;
+
+  // ── [CAMERA_MOUNT] lifecycle ────────────────────────────────────────────────
+  useEffect(() => {
+    if (__DEV__) console.log('[CAMERA_MOUNT] CameraScreen mounted');
+    return () => {
+      if (__DEV__) console.log('[CAMERA_MOUNT] CameraScreen unmounted');
+      if (qualityWarnTimer.current) clearTimeout(qualityWarnTimer.current);
+      if (captureLockTimer.current) clearTimeout(captureLockTimer.current);
+    };
+  }, []);
+
+  // ── [CAMERA_PERMISSION] permission/hydration log ───────────────────────────
+  useEffect(() => {
+    if (__DEV__) {
+      console.log(
+        `[CAMERA_PERMISSION] isGranted=${isGranted} | isDenied=${isDenied}` +
+          ` | isUsageHydrated=${isUsageHydrated} | canScanThisWeek=${useSubscriptionStore.getState().canScanThisWeek()}`,
+      );
+    }
+  }, [isGranted, isDenied, isUsageHydrated]);
+
+  // ── Tip rotation (pauses while showing quality warning) ───────────────────
+  useEffect(() => {
+    if (showingQualityWarn) return;
+    const interval = setInterval(() => {
+      Animated.sequence([
+        Animated.timing(tipFade, { toValue: 0, duration: 300, useNativeDriver: true }),
+        Animated.timing(tipFade, { toValue: 1, duration: 400, useNativeDriver: true }),
+      ]).start();
+      setTipIndex((i) => (i + 1) % SCAN_TIPS.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [showingQualityWarn, tipFade]);
+
+  // ── Preview crossfade — fades the captured photo in after the shutter flash ──
+  useEffect(() => {
+    if (capturedUri) {
+      previewFade.setValue(0);
+      Animated.timing(previewFade, { toValue: 1, duration: 240, useNativeDriver: true }).start();
+    }
+  }, [capturedUri, previewFade]);
+
+  // ── Capture button press feedback ───────────────────────────────────────────
+  const onCapturePressIn = useCallback(() => {
+    Animated.spring(captureScale, { toValue: 0.9, useNativeDriver: true, speed: 40, bounciness: 0 }).start();
+  }, [captureScale]);
+  const onCapturePressOut = useCallback(() => {
+    Animated.spring(captureScale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 6 }).start();
+  }, [captureScale]);
+
+  // ── Camera callbacks ────────────────────────────────────────────────────────
+  const handleCameraReady = useCallback(() => {
+    setIsCameraReady(true);
+    if (__DEV__) console.log('[CAMERA_READY] Camera preview initialised and live');
+  }, []);
+
+  const handleMountError = useCallback((error: CameraMountError) => {
+    setMountError(error.message);
+    if (__DEV__) console.error('[CAMERA_ERROR] Mount error:', error.message);
+    logger.scan.failed('Camera mount error', error);
+  }, []);
+
+  // ── Show quality warning in the tip area ───────────────────────────────────
+  const triggerQualityWarning = useCallback(
+    (result: ImageQualityResult) => {
+      if (qualityWarnTimer.current) clearTimeout(qualityWarnTimer.current);
+      if (captureLockTimer.current) clearTimeout(captureLockTimer.current);
+
+      setShowingQualityWarn(true);
+      setCaptureLocked(true);
+
+      // Fade the tip text out → in with new message
+      Animated.sequence([
+        Animated.timing(tipFade, { toValue: 0, duration: 120, useNativeDriver: true }),
+        Animated.timing(tipFade, { toValue: 1, duration: 220, useNativeDriver: true }),
+      ]).start();
+
+      qualityWarnTimer.current = setTimeout(() => {
+        setShowingQualityWarn(false);
+        // Fade back to tip
+        Animated.sequence([
+          Animated.timing(tipFade, { toValue: 0, duration: 150, useNativeDriver: true }),
+          Animated.timing(tipFade, { toValue: 1, duration: 300, useNativeDriver: true }),
+        ]).start();
+      }, QUALITY_WARN_DURATION);
+
+      captureLockTimer.current = setTimeout(() => {
+        setCaptureLocked(false);
+      }, CAPTURE_LOCK_DURATION);
+    },
+    [tipFade],
+  );
+
+  // ── Show quality pill (good/acceptable) ────────────────────────────────────
+  const showQualityPill = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(qualityPillOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.delay(2200),
+      Animated.timing(qualityPillOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start();
+  }, [qualityPillOpacity]);
+
+  // ── Capture ─────────────────────────────────────────────────────────────────
   const handleCapture = useCallback(async () => {
-    if (!cameraRef.current || isCapturing) return;
+    if (!cameraRef.current || isCapturing || !isCameraReady || captureLocked) return;
+    if (__DEV__) console.log('[CAMERA_READY] Capture triggered');
     setIsCapturing(true);
 
-    // Flash overlay animation
     Animated.sequence([
       Animated.timing(captureFlash, { toValue: 1, duration: 60, useNativeDriver: true }),
       Animated.timing(captureFlash, { toValue: 0, duration: 300, useNativeDriver: true }),
     ]).start();
+
+    let photoUri: string | null = null;
 
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.85,
         shutterSound: false,
       } as Parameters<typeof cameraRef.current.takePictureAsync>[0]);
-      if (photo?.uri) {
-        setCapturedUri(photo.uri);
-        logger.scan.imageSelected('camera');
+
+      if (!photo?.uri) return;
+      photoUri = photo.uri;
+
+      // ── Quality analysis ──────────────────────────────────────────────────
+      const quality = await analyzeImageQuality(photoUri);
+
+      if (__DEV__) {
+        console.log('[ImageQuality]', {
+          level: quality.level,
+          issue: quality.issue,
+          thumbBytes: quality.metrics.thumbBytes,
+          blurScore: quality.metrics.blurScore,
+          brightnessScore: quality.metrics.brightnessScore,
+          overallScore: quality.metrics.overallScore,
+        });
       }
+
+      setQualityResult(quality);
+
+      if (quality.level === 'poor') {
+        // Block — guide user to retake
+        triggerQualityWarning(quality);
+        FileSystem.deleteAsync(photoUri, { idempotent: true }).catch(() => {});
+        photoUri = null;
+        return;
+      }
+
+      // Acceptable or good — show quality pill then proceed to preview
+      showQualityPill();
+      setCapturedUri(photoUri);
+      logger.scan.imageSelected('camera');
+
     } catch (err) {
+      if (__DEV__) console.error('[CAMERA_ERROR] Capture/analysis failed:', err);
       logger.scan.failed('Capture failed', err);
+      if (photoUri) {
+        FileSystem.deleteAsync(photoUri, { idempotent: true }).catch(() => {});
+      }
     } finally {
       setIsCapturing(false);
     }
-  }, [isCapturing, captureFlash]);
+  }, [isCapturing, isCameraReady, captureLocked, captureFlash, triggerQualityWarning, showQualityPill]);
 
   const handleGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -94,41 +268,40 @@ export const CameraScreen: React.FC = () => {
 
   const handleRetake = () => {
     setCapturedUri(null);
+    setQualityResult(null);
   };
+  const handleClose = () => navigation.goBack();
 
-  const handleClose = () => {
-    navigation.goBack();
-  };
-
-  const topPad = insets.top + (Platform.OS === 'android' ? 12 : 0);
+  const topPad    = insets.top + (Platform.OS === 'android' ? 12 : 0);
   const bottomPad = insets.bottom + 12;
 
-  // ── Quota limit reached ──────────────────────────────────────────────────────
-  if (!canScan()) {
-    const limitLabel = scanLimit === -1 ? '' : ` (${scansUsed}/${scanLimit})`;
-    return (
-      <View style={styles.permissionScreen}>
-        <StatusBar barStyle="light-content" backgroundColor="#000" />
-        <View style={styles.permissionContent}>
-          <Text style={styles.permMark}>◆</Text>
-          <Text style={styles.permTitle}>Monthly limit reached{limitLabel}</Text>
-          <Text style={styles.permSubtitle}>
-            You've used all your free scans this month. Upgrade to continue identifying plants.
-          </Text>
-          <TouchableOpacity
-            style={styles.permBtn}
-            onPress={() => (navigation as any).getParent()?.getParent()?.navigate('Profile')}
-            activeOpacity={0.88}
-          >
-            <Text style={styles.permBtnText}>View upgrade options</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleClose} style={styles.permCancel}>
-            <Text style={styles.permCancelText}>Go back</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+  // ── Derived display values ──────────────────────────────────────────────────
+
+  // Tip area: show quality warning message or regular rotating tip
+  const tipText = showingQualityWarn && qualityResult
+    ? qualityResult.feedback
+    : SCAN_TIPS[tipIndex % SCAN_TIPS.length];
+  const tipIsWarning = showingQualityWarn && qualityResult?.level === 'poor';
+
+  // Quality status pill (shown briefly after a good/acceptable capture)
+  const pillText = qualityResult
+    ? qualityResult.level === 'good'
+      ? '✓  Sharp · Good lighting'
+      : qualityResult.issue === 'too_dark'
+      ? '⚠  Low light'
+      : qualityResult.issue === 'blurry'
+      ? '⚠  Hold steady'
+      : '◎  Acceptable'
+    : '';
+
+  const pillColor =
+    qualityResult?.level === 'good'
+      ? 'rgba(123,198,126,0.90)'   // green
+      : 'rgba(255,176,32,0.90)';   // amber
+
+  // Capture button: dimmed while analysing or locked after rejection
+  const captureDisabled = isCapturing || !isCameraReady || captureLocked;
+  const captureOpacity  = captureDisabled ? 0.45 : 1;
 
   // ── Permission: Not yet determined ──────────────────────────────────────────
   if (!isGranted && !isDenied) {
@@ -180,31 +353,44 @@ export const CameraScreen: React.FC = () => {
       <View style={styles.fullScreen}>
         <StatusBar barStyle="light-content" hidden />
 
-        <Image source={{ uri: capturedUri }} style={styles.previewImage} resizeMode="cover" />
-
-        {/* Dark overlay */}
+        <Animated.Image
+          source={{ uri: capturedUri }}
+          style={[styles.previewImage, { opacity: previewFade }]}
+          resizeMode="cover"
+        />
         <View style={styles.previewOverlay} />
 
-        {/* Top bar */}
         <View style={[styles.topBar, { paddingTop: topPad }]}>
+          <TouchableOpacity
+            onPress={handleRetake}
+            style={styles.closeBtn}
+            hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+          >
+            <Text style={styles.closeBtnText}>✕</Text>
+          </TouchableOpacity>
           <Text style={styles.previewHint}>Analyse this plant?</Text>
+          <View style={{ width: 36 }} />
         </View>
 
-        {/* Bottom actions */}
-        <View style={[styles.previewActions, { paddingBottom: bottomPad }]}>
-          <TouchableOpacity
-            style={styles.retakeBtn}
-            onPress={handleRetake}
-            activeOpacity={0.82}
+        {/* Quality badge in preview */}
+        {qualityResult && (
+          <View
+            style={[
+              styles.previewQualityBadge,
+              { backgroundColor: qualityResult.level === 'good' ? 'rgba(123,198,126,0.85)' : 'rgba(255,176,32,0.85)' },
+            ]}
           >
+            <Text style={styles.previewQualityText}>
+              {qualityResult.level === 'good' ? '✓  Sharp · Good lighting' : '◎  Acceptable quality'}
+            </Text>
+          </View>
+        )}
+
+        <View style={[styles.previewActions, { paddingBottom: bottomPad }]}>
+          <TouchableOpacity style={styles.retakeBtn} onPress={handleRetake} activeOpacity={0.82}>
             <Text style={styles.retakeBtnText}>← Retake</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.usePhotoBtn}
-            onPress={handleUsePhoto}
-            activeOpacity={0.88}
-          >
+          <TouchableOpacity style={styles.usePhotoBtn} onPress={handleUsePhoto} activeOpacity={0.88}>
             <Text style={styles.usePhotoBtnText}>Analyse plant  →</Text>
           </TouchableOpacity>
         </View>
@@ -213,19 +399,25 @@ export const CameraScreen: React.FC = () => {
   }
 
   // ── Camera live view ─────────────────────────────────────────────────────────
+  // CameraView mounts immediately when permissions are confirmed.
+  // Hydration loading and quota limits render as overlays so the camera
+  // hardware initialises without delay (prevents Android black-screen).
+  const limitReached = isUsageHydrated && !canScanThisWeek();
+
   return (
     <View style={styles.fullScreen}>
       <StatusBar barStyle="light-content" hidden />
 
-      {/* Camera */}
       <CameraView
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         facing={facing}
         flash={flash}
+        onCameraReady={handleCameraReady}
+        onMountError={handleMountError}
       />
 
-      {/* Top dark letterbox */}
+      {/* Top letterbox */}
       <View style={[styles.letterboxTop, { height: (SH - FRAME_SIZE) / 2 }]}>
         <View style={[styles.topBar, { paddingTop: topPad }]}>
           <TouchableOpacity
@@ -236,12 +428,10 @@ export const CameraScreen: React.FC = () => {
             <Text style={styles.closeBtnText}>✕</Text>
           </TouchableOpacity>
 
-          <Text style={styles.hintText}>Hold any leaf within the frame</Text>
+          <Text style={styles.hintText}>Scan your plant</Text>
 
           <TouchableOpacity
-            onPress={() =>
-              setFlash((f) => (f === 'off' ? 'on' : f === 'on' ? 'auto' : 'off'))
-            }
+            onPress={() => setFlash((f) => (f === 'off' ? 'on' : f === 'on' ? 'auto' : 'off'))}
             style={styles.flashBtn}
             hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
           >
@@ -252,36 +442,49 @@ export const CameraScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Scan frame (center) */}
+      {/* Scan frame */}
       <View style={styles.frameContainer}>
         <ScanFrame active />
       </View>
 
-      {/* Bottom dark letterbox */}
+      {/* Quality status pill — fades in after a capture attempt */}
+      <Animated.View
+        style={[styles.qualityPill, { opacity: qualityPillOpacity, backgroundColor: pillColor }]}
+        pointerEvents="none"
+      >
+        <Text style={styles.qualityPillText}>{pillText}</Text>
+      </Animated.View>
+
+      {/* Tip / quality warning area */}
+      <Animated.View
+        style={[styles.tipContainer, { opacity: tipFade }]}
+        pointerEvents="none"
+      >
+        <Text style={[styles.tipText, tipIsWarning && styles.tipWarning]}>
+          {tipText}
+        </Text>
+      </Animated.View>
+
+      {/* Bottom letterbox */}
       <View style={[styles.letterboxBottom, { height: (SH - FRAME_SIZE) / 2 }]}>
         <View style={[styles.bottomBar, { paddingBottom: bottomPad }]}>
-          {/* Gallery button */}
-          <TouchableOpacity
-            style={styles.sideBtn}
-            onPress={handleGallery}
-            activeOpacity={0.75}
-          >
+          <TouchableOpacity style={styles.sideBtn} onPress={handleGallery} activeOpacity={0.75}>
             <Text style={styles.sideBtnLabel}>Gallery</Text>
           </TouchableOpacity>
 
-          {/* Capture button */}
           <TouchableOpacity
-            style={[styles.captureBtn, isCapturing && { opacity: 0.7 }]}
+            style={[styles.captureBtn, { opacity: captureOpacity }]}
             onPress={handleCapture}
-            disabled={isCapturing}
-            activeOpacity={0.85}
+            onPressIn={onCapturePressIn}
+            onPressOut={onCapturePressOut}
+            disabled={captureDisabled}
+            activeOpacity={1}
           >
-            <View style={styles.captureBtnOuter}>
+            <Animated.View style={[styles.captureBtnOuter, { transform: [{ scale: captureScale }] }]}>
               <View style={styles.captureBtnInner} />
-            </View>
+            </Animated.View>
           </TouchableOpacity>
 
-          {/* Flip button */}
           <TouchableOpacity
             style={styles.sideBtn}
             onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
@@ -297,6 +500,49 @@ export const CameraScreen: React.FC = () => {
         style={[styles.captureFlash, { opacity: captureFlash }]}
         pointerEvents="none"
       />
+
+      {/* ── Mount error overlay ──────────────────────────────────────────────── */}
+      {mountError && (
+        <View style={styles.overlayFull}>
+          <Text style={styles.overlayMark}>◇</Text>
+          <Text style={styles.overlayTitle}>Camera unavailable</Text>
+          <Text style={styles.overlaySubtitle}>{mountError}</Text>
+          <TouchableOpacity style={styles.overlayBtn} onPress={handleGallery} activeOpacity={0.88}>
+            <Text style={styles.overlayBtnText}>Choose from Gallery</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleClose} style={styles.permCancel}>
+            <Text style={styles.permCancelText}>Go back</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ── Usage hydration spinner ──────────────────────────────────────────── */}
+      {!isUsageHydrated && !mountError && (
+        <View style={styles.overlayLoading} pointerEvents="none">
+          <ActivityIndicator size="small" color="#6F943E" />
+        </View>
+      )}
+
+      {/* ── Quota limit overlay ──────────────────────────────────────────────── */}
+      {limitReached && !mountError && (
+        <View style={styles.overlayFull}>
+          <Text style={styles.overlayMark}>◆</Text>
+          <Text style={styles.overlayTitle}>Weekly limit reached</Text>
+          <Text style={styles.overlaySubtitle}>
+            You've used all 3 free scans this week. Upgrade to Premium for unlimited plant identification.
+          </Text>
+          <TouchableOpacity
+            style={styles.overlayBtn}
+            onPress={() => (navigation as any).getParent()?.getParent()?.navigate('Profile', { screen: 'Paywall' })}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.overlayBtnText}>View upgrade options</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleClose} style={styles.permCancel}>
+            <Text style={styles.permCancelText}>Go back</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -350,15 +596,12 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#fff',
   },
-  permCancel: {
-    paddingVertical: 8,
-  },
+  permCancel: { paddingVertical: 8 },
   permCancelText: {
     fontFamily: 'Nunito-Regular',
     fontSize: 15,
     color: 'rgba(255,255,255,0.5)',
   },
-  // Letterboxes
   letterboxTop: {
     position: 'absolute',
     top: 0,
@@ -373,7 +616,6 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: 'rgba(0,0,0,0.62)',
   },
-  // Scan frame area
   frameContainer: {
     position: 'absolute',
     top: (SH - FRAME_SIZE) / 2,
@@ -383,7 +625,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Top controls
+  // Quality status pill — appears briefly after each capture attempt
+  qualityPill: {
+    position: 'absolute',
+    top: (SH - FRAME_SIZE) / 2 - 38,
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  qualityPillText: {
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 12,
+    color: '#fff',
+    letterSpacing: 0.2,
+  },
+  // Tip / quality warning text below scan frame
+  tipContainer: {
+    position: 'absolute',
+    top: (SH - FRAME_SIZE) / 2 + FRAME_SIZE + 14,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  tipText: {
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.70)',
+    textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+  tipWarning: {
+    color: '#FFB020',
+    fontSize: 14,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -425,10 +701,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.55)',
     letterSpacing: 1,
   },
-  flashBtnOn: {
-    color: '#FFD60A',
-  },
-  // Bottom controls
+  flashBtnOn: { color: '#FFD60A' },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -468,7 +741,6 @@ const styles = StyleSheet.create({
     borderRadius: 29,
     backgroundColor: '#fff',
   },
-  // Preview
   previewImage: {
     ...StyleSheet.absoluteFillObject as any,
     width: SW,
@@ -483,6 +755,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'Nunito-Bold',
     fontSize: 17,
+    color: '#fff',
+  },
+  previewQualityBadge: {
+    position: 'absolute',
+    top: 90,
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  previewQualityText: {
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 13,
     color: '#fff',
   },
   previewActions: {
@@ -528,5 +813,53 @@ const styles = StyleSheet.create({
   captureFlash: {
     ...StyleSheet.absoluteFillObject as any,
     backgroundColor: '#fff',
+  },
+  // Overlays drawn on top of the mounted CameraView
+  overlayLoading: {
+    ...StyleSheet.absoluteFillObject as any,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overlayFull: {
+    ...StyleSheet.absoluteFillObject as any,
+    backgroundColor: 'rgba(10,15,10,0.94)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 16,
+  },
+  overlayMark: {
+    fontSize: 36,
+    color: '#6F943E',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  overlayTitle: {
+    fontFamily: 'Nunito-ExtraBold',
+    fontSize: 22,
+    color: '#fff',
+    textAlign: 'center',
+  },
+  overlaySubtitle: {
+    fontFamily: 'Nunito-Regular',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.65)',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  overlayBtn: {
+    marginTop: 8,
+    backgroundColor: '#6F943E',
+    borderRadius: 999,
+    paddingHorizontal: 36,
+    paddingVertical: 16,
+    width: '100%',
+    alignItems: 'center',
+  },
+  overlayBtnText: {
+    fontFamily: 'Nunito-ExtraBold',
+    fontSize: 17,
+    color: '#fff',
   },
 });

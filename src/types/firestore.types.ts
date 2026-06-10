@@ -37,6 +37,16 @@ export interface UserPlantDoc {
   notes?: string;
   location?: string;
   addedFromScanId?: string;
+  // Phase 6 — My Garden extended structure
+  scanDate?: string;             // ISO date string from scan
+  scanConfidence?: number;       // 0–1 confidence from Plant.id at scan time
+  city?: string;                 // city at time of scan
+  weatherSnapshot?: {
+    tempC: number;
+    humidity: number;
+    conditionId: number;
+  };
+  remindersEnabled?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

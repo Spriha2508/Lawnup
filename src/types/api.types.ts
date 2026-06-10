@@ -1,18 +1,38 @@
-import { DiseaseResult } from './firestore.types';
-
 // Firebase Function request/response shapes
 
 export interface ProcessPlantScanRequest {
   imageBase64: string;
+  extraImagesBase64?: string[];
+}
+
+// Structured Plant.id data returned by the server. Presentation logic
+// (name normalization, care guide, confidence labels) lives client-side
+// in src/services/api/plantIdentification.ts.
+export interface ProcessPlantScanSuggestion {
+  name: string;            // latin/scientific name
+  probability: number;
+  commonNames: string[];
+  watering?: { min?: number; max?: number };
+}
+
+export interface ProcessPlantScanDisease {
+  name: string;
+  probability: number;
+  description?: string;
+  treatment?: {
+    prevention?: string[];
+    chemical?: string[];
+    biological?: string[];
+  };
 }
 
 export interface ProcessPlantScanResponse {
   scanId: string;
-  plantName: string;
-  confidence: number;
-  isHealthy: boolean;
-  diseases: DiseaseResult[];
-  suggestedActions: string[];
+  imageUrl: string;
+  isPlantProbability: number;
+  isHealthyBinary: boolean;
+  suggestions: ProcessPlantScanSuggestion[];
+  diseases: ProcessPlantScanDisease[];
 }
 
 export interface GenerateAIResponseRequest {
@@ -61,7 +81,7 @@ export interface CheckUsageLimitResponse {
   aiChatLimit: number;
   aiChatsRemaining: number;
   plan: 'free' | 'premium';
-  resetDate: string; // ISO date of next monthly reset
+  resetDate: string; // ISO date of next weekly reset (Monday)
   isOverLimit: boolean;
 }
 

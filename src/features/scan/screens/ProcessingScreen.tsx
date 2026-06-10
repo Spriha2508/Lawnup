@@ -8,34 +8,85 @@ import {
   Dimensions,
   Animated,
   StatusBar,
+  Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RouteProp } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useScanFlow } from '../hooks/useScanFlow';
 import { ProcessingAnimation } from '../components/ProcessingAnimation';
-import { validatePlantImage } from '../../../services/validation/plantValidation';
 import { logger } from '../../../shared/utils/logger';
+import { UpgradePrompt } from '../../subscription/components/UpgradePrompt';
 import type { ScanStackParamList } from '../../../navigation/types';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'Processing'>;
 type Route = RouteProp<ScanStackParamList, 'Processing'>;
 
-type Phase = 'validating' | 'scanning' | 'not_plant';
+const PROCESSING_MESSAGES = [
+  'Identifying the species',
+  'Checking plant health',
+  'Building your care guide',
+];
+
+type Phase = 'validating' | 'scanning' | 'not_plant' | 'scan_failed' | 'limit_reached';
 
 export const ProcessingScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const { imageUri } = route.params;
+  const insets = useSafeAreaInsets();
+  const { imageUri, extraUris } = route.params;
 
-  const { runScan } = useScanFlow();
+  const { runScan, cancelScan } = useScanFlow();
   const hasStarted = useRef(false);
   const [phase, setPhase] = useState<Phase>('validating');
+  const [failDetails, setFailDetails] = useState<string | null>(null);
+  const [msgIdx, setMsgIdx] = useState(0);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const msgOpacity = useRef(new Animated.Value(1)).current;
+  const msgTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressTimer = useRef<ReturnType<typeof Animated.timing> | null>(null);
+
+  // Cancel any in-flight scan when the screen unmounts (e.g. back gesture)
+  useEffect(() => {
+    return () => {
+      cancelScan();
+      if (msgTimer.current) clearInterval(msgTimer.current);
+      progressTimer.current?.stop();
+    };
+  }, [cancelScan]);
+
+  // Cycle messages + animate progress bar during scanning phase
+  useEffect(() => {
+    if (phase !== 'scanning') return;
+
+    progressAnim.setValue(0);
+    progressTimer.current = Animated.timing(progressAnim, {
+      toValue: 0.92,
+      duration: 5200,
+      useNativeDriver: false,
+    });
+    progressTimer.current.start();
+
+    // Crossfade each message swap so the copy never pops abruptly
+    msgTimer.current = setInterval(() => {
+      Animated.timing(msgOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
+        setMsgIdx(i => (i + 1) % PROCESSING_MESSAGES.length);
+        Animated.timing(msgOpacity, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+      });
+    }, 1900);
+
+    return () => {
+      if (msgTimer.current) clearInterval(msgTimer.current);
+      progressTimer.current?.stop();
+    };
+  }, [phase, progressAnim, msgOpacity]);
 
   const contentOpacity = useRef(new Animated.Value(0)).current;
-  const retryOpacity   = useRef(new Animated.Value(0)).current;
+  const retryOpacity    = useRef(new Animated.Value(0)).current;
+  const failedOpacity   = useRef(new Animated.Value(0)).current;
 
   // Fade content in on mount
   useEffect(() => {
@@ -65,21 +116,10 @@ export const ProcessingScreen: React.FC = () => {
     if (hasStarted.current) return;
     hasStarted.current = true;
 
-    // ── Step 1: Validate the image contains a real plant ─────────────────────
-    // Does NOT consume quota. Only proceeds if validation passes.
-    const validation = await validatePlantImage(imageUri);
-
-    if (!validation.isPlant) {
-      logger.scan.failed(
-        `Plant not detected (confidence ${(validation.confidence * 100).toFixed(0)}%)`,
-      );
-      transitionToRetry();
-      return;
-    }
-
-    // ── Step 2: Run identification scan (quota consumed here) ─────────────────
+    // Single comprehensive scan — handles is_plant detection, classification,
+    // health assessment, and disease detection in one API call.
     setPhase('scanning');
-    const scanId = await runScan(imageUri);
+    const { scanId, error: scanError } = await runScan(imageUri, extraUris);
 
     if (scanId) {
       Animated.timing(contentOpacity, {
@@ -89,21 +129,41 @@ export const ProcessingScreen: React.FC = () => {
       }).start(() => {
         navigation.replace('ScanResult', { scanId });
       });
+    } else if (scanError === 'not_plant') {
+      // identifyPlant detected is_plant < 0.5 — not a plant image
+      logger.scan.failed('not_plant_detected');
+      transitionToRetry();
+    } else if (scanError === 'scan_limit_reached') {
+      setPhase('limit_reached');
     } else {
-      logger.scan.failed('useScanFlow returned null');
-      navigation.goBack();
+      logger.scan.failed(`runScan failed: ${scanError ?? 'unknown'}`);
+      setFailDetails(scanError);
+      Animated.timing(contentOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        setPhase('scan_failed');
+        Animated.timing(failedOpacity, {
+          toValue: 1,
+          duration: 320,
+          useNativeDriver: true,
+        }).start();
+      });
     }
-  }, [imageUri, runScan, navigation, contentOpacity, transitionToRetry]);
+  }, [imageUri, extraUris, runScan, navigation, contentOpacity, transitionToRetry, failedOpacity]);
 
   useEffect(() => {
     startFlow();
   }, [startFlow]);
 
   const handleRetake = useCallback(() => {
+    cancelScan();
     navigation.goBack();
-  }, [navigation]);
+  }, [navigation, cancelScan]);
 
   const handleGallery = useCallback(async () => {
+    cancelScan();
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -114,7 +174,7 @@ export const ProcessingScreen: React.FC = () => {
       // Replace current Processing screen so back button returns to Camera
       navigation.replace('Processing', { imageUri: result.assets[0].uri });
     }
-  }, [navigation]);
+  }, [navigation, cancelScan]);
 
   return (
     <View style={styles.screen}>
@@ -126,18 +186,51 @@ export const ProcessingScreen: React.FC = () => {
           source={{ uri: imageUri }}
           style={styles.bgImage}
           resizeMode="cover"
-          blurRadius={14}
+          blurRadius={10}
         />
       )}
       <View style={styles.darkOverlay} />
       <View style={styles.centerGlow} />
 
+      {/* ── Cancel button (always visible during active processing) ──────── */}
+      {phase !== 'not_plant' && phase !== 'scan_failed' && phase !== 'limit_reached' && (
+        <TouchableOpacity
+          style={[styles.cancelBtn, { top: insets.top + (Platform.OS === 'android' ? 12 : 8) }]}
+          onPress={handleRetake}
+          hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.cancelBtnText}>✕</Text>
+        </TouchableOpacity>
+      )}
+
       {/* ── Processing animation (validating + scanning) ────────────────────── */}
-      {phase !== 'not_plant' && (
+      {phase !== 'not_plant' && phase !== 'scan_failed' && (
         <Animated.View style={[styles.content, { opacity: contentOpacity }]}>
           <ProcessingAnimation />
           {phase === 'validating' && (
-            <Text style={styles.validatingHint}>Checking image…</Text>
+            <Text style={styles.validatingHint}>Preparing your photo</Text>
+          )}
+          {phase === 'scanning' && (
+            <>
+              <Animated.Text style={[styles.scanningMsg, { opacity: msgOpacity }]}>
+                {PROCESSING_MESSAGES[msgIdx]}
+              </Animated.Text>
+              <View style={styles.progressTrack}>
+                <Animated.View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: progressAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0%', '100%'],
+                      }),
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={styles.trustLine}>Analyzing leaves, shape & health</Text>
+            </>
           )}
         </Animated.View>
       )}
@@ -147,12 +240,24 @@ export const ProcessingScreen: React.FC = () => {
         <Animated.View style={[styles.retryContent, { opacity: retryOpacity }]}>
           <Text style={styles.retryMark}>✦</Text>
           <Text style={styles.retryTitle}>
-            We couldn't clearly detect{'\n'}a plant in this image.
+            No plant clearly detected
           </Text>
           <Text style={styles.retryHint}>
-            Try a closer shot with the leaf{'\n'}
-            filling most of the frame.
+            For best results, try:
           </Text>
+          <View style={styles.retryTips}>
+            {[
+              'Move closer so the plant fills the frame',
+              'Use natural daylight — avoid dim rooms',
+              'Include the full plant, not just one leaf',
+              'Hold steady to avoid blur',
+            ].map((tip, i) => (
+              <View key={i} style={styles.retryTipRow}>
+                <Text style={styles.retryTipDot}>·</Text>
+                <Text style={styles.retryTipText}>{tip}</Text>
+              </View>
+            ))}
+          </View>
 
           <View style={styles.retryActions}>
             <TouchableOpacity
@@ -161,6 +266,58 @@ export const ProcessingScreen: React.FC = () => {
               activeOpacity={0.82}
             >
               <Text style={styles.btnRetakeText}>Retake photo</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.btnGallery}
+              onPress={handleGallery}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.btnGalleryText}>Choose from gallery</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      )}
+
+      {/* ── Daily limit reached — upgrade prompt ──────────────────────────── */}
+      <UpgradePrompt
+        visible={phase === 'limit_reached'}
+        context="scan_limit"
+        onUpgrade={() => {
+          cancelScan();
+          navigation.getParent<any>()?.navigate('Profile', { screen: 'Paywall' });
+        }}
+        onDismiss={() => {
+          cancelScan();
+          navigation.goBack();
+        }}
+      />
+
+      {/* ── API / identification failure ────────────────────────────────────── */}
+      {phase === 'scan_failed' && (
+        <Animated.View style={[styles.retryContent, { opacity: failedOpacity }]}>
+          <Text style={styles.retryMark}>◇</Text>
+          <Text style={styles.retryTitle}>
+            Scan didn't complete
+          </Text>
+          <Text style={styles.retryHint}>
+            {failDetails?.includes('offline') || failDetails?.includes('connection')
+              ? 'No internet connection — check your signal and try again.'
+              : failDetails?.includes('timed out')
+              ? 'The request timed out — your connection may be slow. Try again.'
+              : 'Something went wrong on our end. Try again or use a different photo.'}
+          </Text>
+          {__DEV__ && failDetails && (
+            <Text style={styles.failDebug} numberOfLines={4}>{failDetails}</Text>
+          )}
+
+          <View style={styles.retryActions}>
+            <TouchableOpacity
+              style={styles.btnRetake}
+              onPress={handleRetake}
+              activeOpacity={0.82}
+            >
+              <Text style={styles.btnRetakeText}>Try again</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -204,6 +361,22 @@ const styles = StyleSheet.create({
     top: SH / 2 - 160,
   },
 
+  cancelBtn: {
+    position: 'absolute',
+    left: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtnText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    fontFamily: 'Nunito-Bold',
+  },
+
   // Processing phases
   content: {
     alignItems: 'center',
@@ -215,6 +388,35 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-Regular',
     color: 'rgba(255,255,255,0.30)',
     letterSpacing: 0.3,
+  },
+  scanningMsg: {
+    marginTop: 28,
+    fontSize: 17,
+    fontFamily: 'Nunito-SemiBold',
+    color: 'rgba(255,255,255,0.88)',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  progressTrack: {
+    marginTop: 18,
+    width: 184,
+    height: 3,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: '#7FB069',
+  },
+  trustLine: {
+    marginTop: 14,
+    fontSize: 12,
+    fontFamily: 'Nunito-Regular',
+    color: 'rgba(255,255,255,0.34)',
+    letterSpacing: 0.3,
+    textAlign: 'center',
   },
 
   // not_plant retry
@@ -241,7 +443,30 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.42)',
     textAlign: 'center',
     lineHeight: 21,
-    marginBottom: 44,
+    marginBottom: 12,
+  },
+  retryTips: {
+    alignSelf: 'stretch',
+    gap: 6,
+    marginBottom: 32,
+    paddingHorizontal: 8,
+  },
+  retryTipRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  retryTipDot: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.30)',
+    lineHeight: 22,
+  },
+  retryTipText: {
+    fontSize: 13,
+    fontFamily: 'Nunito-Regular',
+    color: 'rgba(255,255,255,0.55)',
+    lineHeight: 22,
+    flex: 1,
   },
   retryActions: {
     width: '100%',
@@ -268,5 +493,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Nunito-SemiBold',
     color: 'rgba(255,255,255,0.45)',
+  },
+  failDebug: {
+    marginTop: 12,
+    marginBottom: -8,
+    fontSize: 10,
+    fontFamily: 'Nunito-Regular',
+    color: 'rgba(255,180,100,0.70)',
+    textAlign: 'center',
+    lineHeight: 14,
   },
 });

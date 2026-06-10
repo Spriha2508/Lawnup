@@ -143,3 +143,5 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 });
+
+Input.displayName = 'Input';

@@ -1,9 +1,14 @@
-import * as functions from 'firebase-functions';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
+import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 import axios from 'axios';
 import { requireAuth } from '../middleware/authMiddleware';
 
 const db = admin.firestore();
+
+// Set once with: firebase functions:secrets:set OPENWEATHER_KEY
+const OPENWEATHER_KEY = defineSecret('OPENWEATHER_KEY');
 
 interface WeatherResult {
   city: string;
@@ -20,12 +25,12 @@ interface WeatherResult {
 // 3-hour cache per city — shared across all users in that city
 const CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 
-export const fetchWeather = functions
-  .region('asia-south1')
-  .https.onCall(async (data: { city?: string }, context): Promise<WeatherResult> => {
-    requireAuth(context);
+export const fetchWeather = onCall(
+  { secrets: [OPENWEATHER_KEY] },
+  async (request): Promise<WeatherResult> => {
+    requireAuth(request);
 
-    const city = (data?.city ?? 'Delhi').trim();
+    const city = ((request.data as { city?: string })?.city ?? 'Delhi').trim();
 
     // Check cache
     const cacheRef = db.collection('cache').doc(`weather_${city.toLowerCase().replace(/\s+/g, '_')}`);
@@ -39,9 +44,9 @@ export const fetchWeather = functions
       }
     }
 
-    const owmKey = functions.config().openweather?.key;
+    const owmKey = OPENWEATHER_KEY.value();
     if (!owmKey) {
-      throw new functions.https.HttpsError('internal', 'Weather service not configured.');
+      throw new HttpsError('internal', 'Weather service not configured.');
     }
 
     try {
@@ -71,10 +76,10 @@ export const fetchWeather = functions
     } catch (err: unknown) {
       // City not found or OWM error — return safe defaults
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        throw new functions.https.HttpsError('not-found', `City "${city}" not found. Try a major Indian city name.`);
+        throw new HttpsError('not-found', `City "${city}" not found. Try a major Indian city name.`);
       }
-      functions.logger.error('fetchWeather failed', { city, err });
-      throw new functions.https.HttpsError('internal', 'Weather service temporarily unavailable.');
+      logger.error('fetchWeather failed', { city, err });
+      throw new HttpsError('internal', 'Weather service temporarily unavailable.');
     }
   });
 

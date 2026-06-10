@@ -1,10 +1,13 @@
 import React, { memo, useEffect, useRef } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import Constants from 'expo-constants';
 import { createStackNavigator } from '@react-navigation/stack';
 import { onAuthStateChanged } from '@firebase/auth';
 import { auth } from '../services/firebase/firebaseConfig';
 import { useAuthStore } from '../features/auth/store/authStore';
 import { ensureUserDoc } from '../features/auth/services/authService';
+import { usePlantsStore } from '../features/my-plants/store/plantsStore';
+import { subscribeToUserPlants } from '../features/my-plants/services/plantService';
 import { identifyUser } from '../services/analytics/posthog';
 import { checkUsageLimit } from '../services/firebase/functions';
 import { useSubscriptionStore } from '../features/subscription/store/subscriptionStore';
@@ -46,6 +49,19 @@ export const RootNavigator = memo(function RootNavigator() {
   const setLoading      = useAuthStore(state => state.setLoading);
 
   const resolvedRef = useRef(false);
+  const plantsUnsubRef = useRef<(() => void) | null>(null);
+
+  // ── Boot diagnostic: confirm the Plant.id key reached the runtime ───────────
+  // Logs length + prefix only (never the full key). If length is 0 here, the
+  // device is running a stale bundle or .env wasn't picked up — reload the app.
+  useEffect(() => {
+    const key = (Constants.expoConfig?.extra?.plantIdKey as string | undefined) ?? '';
+    if (key.length > 0) {
+      console.log(`[ApiKeys] plantIdKey resolved — length: ${key.length}, prefix: ${key.slice(0, 6)}`);
+    } else {
+      console.warn('[ApiKeys] plantIdKey EMPTY at runtime — client scanning will fail. Reload the app after `expo start --clear`.');
+    }
+  }, []);
 
   // ── Firebase auth listener ─────────────────────────────────────────────────
   useEffect(() => {
@@ -62,6 +78,12 @@ export const RootNavigator = memo(function RootNavigator() {
 
       if (!firebaseUser) {
         setUser(null);
+        // Stop the plants subscription and clear cached garden on sign-out
+        plantsUnsubRef.current?.();
+        plantsUnsubRef.current = null;
+        usePlantsStore.getState().setPlants([]);
+        // Ensure stale persisted counts don't affect the next sign-in
+        useSubscriptionStore.getState().setUsageHydrated(false);
         return;
       }
 
@@ -69,16 +91,39 @@ export const RootNavigator = memo(function RootNavigator() {
         const userDoc = await fetchUserWithRetry(firebaseUser);
         setUser(userDoc);
 
-        // Sync subscription plan so scan limits reflect the user's plan
+        // Live-sync the user's garden from Firestore into the plants store
+        plantsUnsubRef.current?.();
+        plantsUnsubRef.current = subscribeToUserPlants(firebaseUser.uid, (plants) => {
+          usePlantsStore.getState().setPlants(plants);
+        });
+
+        // Sync subscription plan so limits reflect the user's plan
         useSubscriptionStore.getState().setPlan(userDoc.subscription);
 
-        // Sync usage counts from server (non-blocking — local counts still work if this fails)
+        // Clear any stale AsyncStorage counts before the server tells us the truth.
+        // Cameras gate renders behind isUsageHydrated so users see a spinner, never
+        // a false "limit reached", while this resolves.
+        useSubscriptionStore.getState().resetUsage();
+        console.log('[UsageHydration] resetUsage — uid:', firebaseUser.uid, '— awaiting server sync');
+
         checkUsageLimit()
           .then((usage) => {
+            console.log('[UsageHydration] resolved —', {
+              uid: firebaseUser.uid,
+              scansUsed: usage.scansUsed,
+              scanLimit: usage.scanLimit,
+              aiChatsUsed: usage.aiChatsUsed,
+              plan: usage.plan,
+            });
             useSubscriptionStore.getState().setUsage(usage.scansUsed, usage.aiChatsUsed);
             useSubscriptionStore.getState().setLimits(usage.scanLimit, usage.aiChatLimit);
+            useSubscriptionStore.getState().setUsageHydrated(true);
           })
-          .catch(() => {});
+          .catch((err) => {
+            console.warn('[UsageHydration] checkUsageLimit failed — failing open:', err?.message);
+            // Fail open: let the user scan; server will re-validate on next call
+            useSubscriptionStore.getState().setUsageHydrated(true);
+          });
 
         identifyUser(userDoc.uid, {
           name:         userDoc.name,
@@ -94,6 +139,8 @@ export const RootNavigator = memo(function RootNavigator() {
     return () => {
       clearTimeout(timeout);
       unsubscribe();
+      plantsUnsubRef.current?.();
+      plantsUnsubRef.current = null;
     };
   }, [setUser, setLoading]);
 

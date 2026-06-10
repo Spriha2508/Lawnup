@@ -1,135 +1,102 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, View, StyleSheet, Dimensions } from 'react-native';
+
 const { width: SW } = Dimensions.get('window');
-export const FRAME_SIZE = SW * 0.72;
-const CORNER = 28;
-const BORDER = 3;
-const CORNER_COLOR = '#6F943E';
-const LINE_COLOR = 'rgba(111, 148, 62, 0.7)';
+export const FRAME_SIZE = SW * 0.74;
+
+const CORNER = 32;
+const BORDER = 2.5;
+const CORNER_COLOR = '#FFFFFF';        // neutral white guides read calmer/premium over a live feed
+const SWEEP_COLOR = 'rgba(127,176,105,0.55)'; // soft brand-green sweep
 
 interface ScanFrameProps {
   active?: boolean;
 }
 
+// Calm, premium framing guides: four rounded corner brackets that breathe
+// gently in opacity, plus a single slow, soft light sweep that signals
+// "intelligent scanning" without the noisy sci-fi scan-line look.
 export const ScanFrame: React.FC<ScanFrameProps> = ({ active = true }) => {
-  const scanLine = useRef(new Animated.Value(0)).current;
-  const pulse = useRef(new Animated.Value(1)).current;
+  const breathe = useRef(new Animated.Value(0)).current;
+  const sweep = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!active) return;
 
-    // Scanning line — moves top to bottom, loops
-    const lineAnim = Animated.loop(
+    const breatheAnim = Animated.loop(
       Animated.sequence([
-        Animated.timing(scanLine, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scanLine, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
+        Animated.timing(breathe, { toValue: 1, duration: 1800, useNativeDriver: true }),
+        Animated.timing(breathe, { toValue: 0, duration: 1800, useNativeDriver: true }),
+      ]),
     );
 
-    // Subtle corner pulse
-    const pulseAnim = Animated.loop(
+    // One slow, gentle pass — long pause at the ends keeps it unobtrusive
+    const sweepAnim = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1.04,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ])
+        Animated.timing(sweep, { toValue: 1, duration: 2600, useNativeDriver: true }),
+        Animated.delay(900),
+        Animated.timing(sweep, { toValue: 0, duration: 0, useNativeDriver: true }),
+        Animated.delay(500),
+      ]),
     );
 
-    lineAnim.start();
-    pulseAnim.start();
+    breatheAnim.start();
+    sweepAnim.start();
+    return () => { breatheAnim.stop(); sweepAnim.stop(); };
+  }, [active, breathe, sweep]);
 
-    return () => {
-      lineAnim.stop();
-      pulseAnim.stop();
-    };
-  }, [active, scanLine, pulse]);
-
-  const lineTranslateY = scanLine.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, FRAME_SIZE - 2],
-  });
+  const cornerOpacity = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0.95] });
+  const sweepTranslateY = sweep.interpolate({ inputRange: [0, 1], outputRange: [6, FRAME_SIZE - 24] });
+  const sweepOpacity = sweep.interpolate({ inputRange: [0, 0.12, 0.88, 1], outputRange: [0, 0.9, 0.9, 0] });
 
   return (
-    <Animated.View
-      style={[styles.frame, { width: FRAME_SIZE, height: FRAME_SIZE, transform: [{ scale: pulse }] }]}
-    >
-      {/* ── Corners ── */}
-      {/* Top-left */}
-      <View style={[styles.corner, styles.topLeft]}>
-        <View style={[styles.cornerH, { backgroundColor: CORNER_COLOR }]} />
-        <View style={[styles.cornerV, { backgroundColor: CORNER_COLOR }]} />
-      </View>
-      {/* Top-right */}
-      <View style={[styles.corner, styles.topRight]}>
-        <View style={[styles.cornerH, { backgroundColor: CORNER_COLOR }]} />
-        <View style={[styles.cornerV, { backgroundColor: CORNER_COLOR }]} />
-      </View>
-      {/* Bottom-left */}
-      <View style={[styles.corner, styles.bottomLeft]}>
-        <View style={[styles.cornerH, { backgroundColor: CORNER_COLOR }]} />
-        <View style={[styles.cornerV, { backgroundColor: CORNER_COLOR }]} />
-      </View>
-      {/* Bottom-right */}
-      <View style={[styles.corner, styles.bottomRight]}>
-        <View style={[styles.cornerH, { backgroundColor: CORNER_COLOR }]} />
-        <View style={[styles.cornerV, { backgroundColor: CORNER_COLOR }]} />
-      </View>
+    <View style={[styles.frame, { width: FRAME_SIZE, height: FRAME_SIZE }]} pointerEvents="none">
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: cornerOpacity }]}>
+        <View style={[styles.corner, styles.topLeft]}>
+          <View style={styles.cornerH} />
+          <View style={styles.cornerV} />
+        </View>
+        <View style={[styles.corner, styles.topRight]}>
+          <View style={styles.cornerH} />
+          <View style={styles.cornerV} />
+        </View>
+        <View style={[styles.corner, styles.bottomLeft]}>
+          <View style={styles.cornerH} />
+          <View style={styles.cornerV} />
+        </View>
+        <View style={[styles.corner, styles.bottomRight]}>
+          <View style={styles.cornerH} />
+          <View style={styles.cornerV} />
+        </View>
+      </Animated.View>
 
-      {/* ── Scanning line ── */}
       {active && (
         <Animated.View
-          style={[
-            styles.scanLine,
-            { transform: [{ translateY: lineTranslateY }] },
-          ]}
+          style={[styles.sweep, { opacity: sweepOpacity, transform: [{ translateY: sweepTranslateY }] }]}
         >
-          <View style={styles.scanLineSolid} />
-          <View style={[styles.scanLineGlow, { backgroundColor: LINE_COLOR }]} />
+          <View style={styles.sweepLine} />
+          <View style={styles.sweepGlow} />
         </Animated.View>
       )}
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  frame: {
-    position: 'relative',
-  },
-  corner: {
-    position: 'absolute',
-    width: CORNER,
-    height: CORNER,
-  },
+  frame: { position: 'relative' },
+  corner: { position: 'absolute', width: CORNER, height: CORNER },
   topLeft: { top: 0, left: 0 },
   topRight: { top: 0, right: 0, transform: [{ scaleX: -1 }] },
   bottomLeft: { bottom: 0, left: 0, transform: [{ scaleY: -1 }] },
-  bottomRight: {
-    bottom: 0,
-    right: 0,
-    transform: [{ scaleX: -1 }, { scaleY: -1 }],
-  },
+  bottomRight: { bottom: 0, right: 0, transform: [{ scaleX: -1 }, { scaleY: -1 }] },
   cornerH: {
     position: 'absolute',
     top: 0,
     left: 0,
     width: CORNER,
     height: BORDER,
-    borderRadius: BORDER / 2,
+    borderRadius: BORDER,
+    backgroundColor: CORNER_COLOR,
   },
   cornerV: {
     position: 'absolute',
@@ -137,23 +104,25 @@ const styles = StyleSheet.create({
     left: 0,
     width: BORDER,
     height: CORNER,
-    borderRadius: BORDER / 2,
-  },
-  scanLine: {
-    position: 'absolute',
-    left: 8,
-    right: 8,
-    height: 2,
-  },
-  scanLineSolid: {
-    height: 2,
+    borderRadius: BORDER,
     backgroundColor: CORNER_COLOR,
-    borderRadius: 1,
   },
-  scanLineGlow: {
-    height: 20,
-    marginTop: -18,
+  sweep: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    height: 2,
+  },
+  sweepLine: {
+    height: 1.5,
+    borderRadius: 1,
+    backgroundColor: SWEEP_COLOR,
+  },
+  sweepGlow: {
+    height: 16,
+    marginTop: -15,
     borderRadius: 10,
-    opacity: 0.25,
+    backgroundColor: SWEEP_COLOR,
+    opacity: 0.18,
   },
 });

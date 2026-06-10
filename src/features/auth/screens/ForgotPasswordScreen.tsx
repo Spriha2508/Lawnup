@@ -1,10 +1,29 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useAuthNavigation } from '../../../navigation/AuthNavigationContext';
-import { AuthCard } from '../components/AuthCard';
-import { Input } from '../../../shared/components/ui/Input';
-import { Button } from '../../../shared/components/ui/Button';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
+import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
+import { useAuthNavigation } from '@navigation/AuthNavigationContext';
+import { Input } from '@shared/components/ui/Input';
+import { PressableScale } from '@shared/components/motion/PressableScale';
+import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
 import { useAuth } from '../hooks/useAuth';
+import { theme } from '@constants/designSystem';
+
+const { color: C, spacing: S, typography: T, radii: R, motion: M } = theme;
+
+const LeafMark: React.FC = () => (
+  <Svg width={30} height={30} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill={C.primary} opacity={0.9} />
+    <Path d="M12 3V21" stroke={C.canvas} strokeWidth={1.3} strokeLinecap="round" />
+  </Svg>
+);
+
+const CheckMark: React.FC = () => (
+  <Svg width={34} height={34} viewBox="0 0 24 24" fill="none">
+    <Path d="M5 12.5L10 17.5L19 7" stroke={C.primary} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
 
 export const ForgotPasswordScreen: React.FC = () => {
   const { goBack } = useAuthNavigation();
@@ -18,171 +37,113 @@ export const ForgotPasswordScreen: React.FC = () => {
     if (success) setSent(true);
   };
 
-  if (sent) {
-    return (
-      <AuthCard>
-        <View style={styles.successContainer}>
-          <Text style={styles.successEmoji}>✦</Text>
-          <Text style={styles.successTitle}>Check your inbox</Text>
-          <Text style={styles.successBody}>
-            We've sent a reset link to{' '}
-            <Text style={styles.emailHighlight}>{email}</Text>.{' '}
-            Check your spam folder if you don't see it.
-          </Text>
-          <Button
-            label="Back to Sign In"
-            onPress={() => goBack()}
-            fullWidth
-            size="lg"
-            style={styles.backButton}
-          />
-        </View>
-      </AuthCard>
-    );
-  }
-
   return (
-    <AuthCard>
-      {/* Back link */}
-      <TouchableOpacity style={styles.backRow} onPress={() => goBack()}>
-        <Text style={styles.backText}>← Back</Text>
-      </TouchableOpacity>
+    <View style={styles.root}>
+      <FloatingLeaves />
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        {/* dim space above — the card slides up like a sheet */}
+        <View style={styles.spacer} />
 
-      {/* Brand mark */}
-      <View style={styles.iconBadge}>
-        <Text style={styles.iconEmoji}>◇</Text>
-      </View>
+        <Animated.View entering={FadeInUp.duration(M.duration.expressive).springify().damping(20)} style={styles.sheet}>
+          <View style={styles.grabber} />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Reset password</Text>
-        <Text style={styles.subtitle}>
-          Enter your email and we'll send you a reset link.
-        </Text>
-      </View>
+          {sent ? (
+            <Animated.View entering={FadeIn.duration(M.duration.standard)} style={styles.successWrap}>
+              <View style={styles.badge}><CheckMark /></View>
+              <Text style={styles.title}>Check your inbox</Text>
+              <Text style={styles.body}>
+                We've sent a reset link to <Text style={styles.emailHi}>{email}</Text>.{' '}
+                Check spam if you don't see it.
+              </Text>
+              <PressableScale style={styles.cta} onPress={() => goBack()}>
+                <Text style={styles.ctaText}>Back to Sign In</Text>
+              </PressableScale>
+            </Animated.View>
+          ) : (
+            <>
+              <View style={styles.badge}><LeafMark /></View>
+              <Text style={styles.title}>Reset password</Text>
+              <Text style={styles.body}>Enter your email and we'll send you a reset link.</Text>
 
-      {/* Error banner */}
-      {error && (
-        <TouchableOpacity
-          onPress={clearError}
-          style={styles.errorBanner}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.errorText}>{error}</Text>
-        </TouchableOpacity>
-      )}
+              {error ? (
+                <TouchableOpacity onPress={clearError} style={styles.errorBanner} activeOpacity={0.7}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </TouchableOpacity>
+              ) : null}
 
-      <Input
-        label="Email"
-        placeholder="you@example.com"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoComplete="email"
-      />
+              <View style={styles.formGap}>
+                <Input
+                  label="Email"
+                  placeholder="you@plant.co"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                />
+              </View>
 
-      <Button
-        label="Send Reset Link"
-        onPress={handleReset}
-        loading={isLoading}
-        disabled={!email.trim()}
-        fullWidth
-        size="lg"
-        style={styles.ctaButton}
-      />
-    </AuthCard>
+              <PressableScale
+                style={[styles.cta, (!email.trim() || isLoading) && styles.ctaDisabled]}
+                onPress={handleReset}
+                disabled={!email.trim() || isLoading}
+              >
+                <Text style={styles.ctaText}>{isLoading ? 'Sending…' : 'Send Reset Link'}</Text>
+              </PressableScale>
+
+              <PressableScale style={styles.backLink} onPress={() => goBack()} to={0.92}>
+                <Text style={styles.backLinkText}>← Back to Sign In</Text>
+              </PressableScale>
+            </>
+          )}
+        </Animated.View>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  backRow: {
-    marginBottom: 24,
+  root: { flex: 1, backgroundColor: C.canvas },
+  safe: { flex: 1, justifyContent: 'flex-end' },
+  spacer: { flex: 1 },
+
+  sheet: {
+    backgroundColor: C.card,
+    borderTopLeftRadius: R.sheet,
+    borderTopRightRadius: R.sheet,
+    paddingHorizontal: 28,
+    paddingTop: S.md,
+    paddingBottom: 36,
+    ...theme.shadows.lg,
   },
-  backText: {
-    color: '#6F943E',
-    fontSize: 14,
-    fontFamily: 'Nunito-SemiBold',
-    fontWeight: '600',
+  grabber: {
+    alignSelf: 'center', width: 40, height: 4, borderRadius: 2,
+    backgroundColor: C.border, marginBottom: S['2xl'],
   },
-  iconBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: 'rgba(111,148,62,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
+
+  badge: {
+    width: 64, height: 64, borderRadius: R.xl,
+    backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center',
+    marginBottom: S['2xl'],
   },
-  iconEmoji: {
-    fontSize: 32,
-  },
-  header: {
-    marginBottom: 28,
-  },
-  title: {
-    fontSize: 26,
-    fontFamily: 'Nunito-ExtraBold',
-    fontWeight: '800',
-    color: '#1B1B1B',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    fontFamily: 'Nunito-Regular',
-    color: '#6B7280',
-    lineHeight: 22,
-  },
+  title: { ...T.h2, color: C.textPrimary, marginBottom: S.sm },
+  body: { ...T.bodyStrong, fontFamily: theme.fonts.sans, color: C.textSecondary, lineHeight: 22, marginBottom: S['2xl'] },
+
   errorBanner: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    marginBottom: 16,
+    backgroundColor: C.criticalBg, borderWidth: 1, borderColor: '#FECACA',
+    borderRadius: R.md, paddingHorizontal: S.md, paddingVertical: 11, marginBottom: S.lg,
   },
-  errorText: {
-    color: '#DC2626',
-    fontSize: 13,
-    fontFamily: 'Nunito-Regular',
-    lineHeight: 18,
-  },
-  ctaButton: {
-    marginTop: 8,
-  },
-  // Success state
-  successContainer: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  successEmoji: {
-    fontSize: 48,
-    marginBottom: 20,
-    color: 'rgba(111,148,62,0.5)',
-  },
-  successTitle: {
-    fontSize: 26,
-    fontFamily: 'Nunito-ExtraBold',
-    fontWeight: '800',
-    color: '#1B1B1B',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  successBody: {
-    fontSize: 15,
-    fontFamily: 'Nunito-Regular',
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
-  },
-  emailHighlight: {
-    color: '#6F943E',
-    fontFamily: 'Nunito-SemiBold',
-    fontWeight: '600',
-  },
-  backButton: {
-    width: '100%',
-  },
+  errorText: { ...T.caption, fontSize: 13, color: C.criticalFg, lineHeight: 18 },
+
+  formGap: { marginBottom: S.sm },
+
+  cta: { backgroundColor: C.inkBtn, borderRadius: R.pill, paddingVertical: 17, alignItems: 'center', marginTop: S.sm },
+  ctaDisabled: { opacity: 0.35 },
+  ctaText: { ...T.button, color: C.onInkBtn, fontFamily: theme.fonts.sansMedium },
+
+  backLink: { alignSelf: 'center', marginTop: S.xl, paddingVertical: S.sm },
+  backLinkText: { ...T.label, fontSize: 13, color: C.textSecondary },
+
+  successWrap: { alignItems: 'center' },
+  emailHi: { color: C.primary, fontFamily: theme.fonts.sansMedium },
 });

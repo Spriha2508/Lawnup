@@ -1,64 +1,110 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
-import { ConfidenceBadge } from './ConfidenceBadge';
 
-const { width: SW } = Dimensions.get('window');
-const HERO_HEIGHT = 360;
+const { width: SW, height: SH } = Dimensions.get('window');
+const HERO_HEIGHT = Math.round(SH * 0.56);
 
 interface PlantResultHeroProps {
   imageUri?: string | null;
   commonName: string;
   scientificName: string;
+  indianAlternate?: string;
   confidence: number;
   isHealthy: boolean;
+}
+
+function confColor(v: number): string {
+  if (v >= 0.70) return '#6F943E';
+  if (v >= 0.50) return '#B07000';
+  return '#9E9A94';
 }
 
 export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
   imageUri,
   commonName,
   scientificName,
+  indianAlternate,
   confidence,
   isHealthy,
-}) => (
-  <View style={styles.hero}>
-    {imageUri ? (
-      <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-    ) : (
-      <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
-        <Text style={styles.placeholderMark}>✦</Text>
+}) => {
+  const lowConfidence = confidence < 0.50;
+  const col = confColor(confidence);
+
+  return (
+    <View style={[styles.hero, { height: HERO_HEIGHT }]}>
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
+          <Text style={styles.placeholderMark}>✦</Text>
+        </View>
+      )}
+
+      {/* Multi-layer gradient approximation — top stays clear, bottom goes dark */}
+      <View style={styles.scrim1} />
+      <View style={[styles.scrimLayer, { height: HERO_HEIGHT * 0.80, backgroundColor: 'rgba(0,0,0,0.22)' }]} />
+      <View style={[styles.scrimLayer, { height: HERO_HEIGHT * 0.58, backgroundColor: 'rgba(0,0,0,0.42)' }]} />
+      <View style={[styles.scrimLayer, { height: HERO_HEIGHT * 0.36, backgroundColor: 'rgba(0,0,0,0.55)' }]} />
+
+      {/* Health status pill — top of image, tag style */}
+      {!lowConfidence && (
+        <View style={[
+          styles.healthPill,
+          isHealthy ? styles.healthPillGreen : styles.healthPillAmber,
+        ]}>
+          <View style={[styles.healthDot, isHealthy ? styles.dotGreen : styles.dotAmber]} />
+          <Text style={styles.healthText}>
+            {isHealthy ? 'Healthy' : 'Needs attention'}
+          </Text>
+        </View>
+      )}
+
+      {/* Bottom content overlay */}
+      <View style={styles.overlay}>
+        {/* Uncertainty notice for low-confidence — replaces name */}
+        {lowConfidence && (
+          <Text style={styles.uncertainNotice}>
+            Low confidence — try a well-lit, close-up photo for better results
+          </Text>
+        )}
+
+        {/* For medium confidence (0.50–0.69), show a brief qualifier */}
+        {!lowConfidence && confidence < 0.70 && (
+          <Text style={styles.confidencePrefix}>This may be</Text>
+        )}
+
+        {/* Primary plant name */}
+        {!lowConfidence && (
+          <Text style={styles.commonName} numberOfLines={2}>{commonName}</Text>
+        )}
+
+        {/* Indian vernacular name */}
+        {indianAlternate && indianAlternate !== commonName && !lowConfidence && (
+          <Text style={styles.indianAlternate}>Also known as {indianAlternate}</Text>
+        )}
+
+        {/* Scientific name + confidence % in one line */}
+        <View style={styles.metaRow}>
+          <Text style={styles.scientificName} numberOfLines={1}>{scientificName}</Text>
+          <View style={[
+            styles.confPill,
+            { backgroundColor: col + '28', borderColor: col + '55' },
+          ]}>
+            <Text style={[styles.confPct, { color: col === '#9E9A94' ? 'rgba(255,255,255,0.45)' : col }]}>
+              {Math.round(confidence * 100)}%
+            </Text>
+          </View>
+        </View>
       </View>
-    )}
-
-    {/* Gradient scrim — heavier at bottom */}
-    <View style={styles.scrimTop} />
-    <View style={styles.scrimBottom} />
-
-    {/* Content overlay */}
-    <View style={styles.overlay}>
-      <View style={[styles.healthPill, isHealthy ? styles.healthPillGreen : styles.healthPillRed]}>
-        <View style={[styles.healthDot, isHealthy ? styles.dotGreen : styles.dotRed]} />
-        <Text style={styles.healthText}>
-          {isHealthy ? 'Healthy' : 'Needs attention'}
-        </Text>
-      </View>
-
-      <Text style={styles.commonName} numberOfLines={2}>
-        {commonName}
-      </Text>
-      <Text style={styles.scientificName} numberOfLines={1}>
-        {scientificName}
-      </Text>
-
-      <ConfidenceBadge confidence={confidence} size="sm" />
     </View>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   hero: {
     width: SW,
-    height: HERO_HEIGHT,
     backgroundColor: '#0D1610',
+    overflow: 'hidden',
   },
   placeholder: {
     alignItems: 'center',
@@ -66,71 +112,110 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A2416',
   },
   placeholderMark: {
-    fontSize: 40,
-    color: 'rgba(255,255,255,0.35)',
+    fontSize: 48,
+    color: 'rgba(255,255,255,0.25)',
   },
-  scrimTop: {
+
+  // Gradient scrim layers (stacked, each covering a different height from bottom)
+  scrim1: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(0,0,0,0.06)',
   },
-  scrimBottom: {
+  scrimLayer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: HERO_HEIGHT * 0.65,
-    // Bottom-heavy scrim via solid overlay
-    backgroundColor: 'rgba(0,0,0,0.52)',
   },
+
+  // Health pill — top-left corner of image
+  healthPill: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  healthPillGreen: { backgroundColor: 'rgba(50,90,20,0.82)' },
+  healthPillAmber: { backgroundColor: 'rgba(100,60,0,0.78)' },
+  healthDot: { width: 6, height: 6, borderRadius: 3 },
+  dotGreen:  { backgroundColor: '#A7C47C' },
+  dotAmber:  { backgroundColor: '#FFD580' },
+  healthText: {
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 12,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+
+  // Bottom text overlay
   overlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 22,
-    paddingBottom: 26,
+    paddingHorizontal: 22,
+    paddingBottom: 28,
+    paddingTop: 8,
+    gap: 4,
   },
-  healthPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    marginBottom: 12,
+  uncertainNotice: {
+    fontFamily: 'Nunito-Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.45)',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    marginBottom: 4,
   },
-  healthPillGreen: {
-    backgroundColor: 'rgba(111,148,62,0.75)',
-  },
-  healthPillRed: {
-    backgroundColor: 'rgba(192,57,43,0.75)',
-  },
-  healthDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  dotGreen: { backgroundColor: '#FFFFFF' },
-  dotRed:   { backgroundColor: '#FFB3B3' },
-  healthText: {
-    fontFamily: 'Nunito-SemiBold',
-    fontSize: 12,
-    color: '#fff',
-    letterSpacing: 0.2,
+  confidencePrefix: {
+    fontFamily: 'Nunito-Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.50)',
+    fontStyle: 'italic',
+    marginBottom: 0,
   },
   commonName: {
     fontFamily: 'Cormorant-SemiBoldItalic',
-    fontSize: 36,
-    color: '#fff',
-    lineHeight: 40,
+    fontSize: 46,
+    color: '#FFFFFF',
+    lineHeight: 50,
+    letterSpacing: -0.5,
     marginBottom: 4,
+  },
+  indianAlternate: {
+    fontFamily: 'Nunito-Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.48)',
+    fontStyle: 'italic',
+    marginBottom: 2,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 6,
   },
   scientificName: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: 'rgba(255,255,255,0.65)',
+    color: 'rgba(255,255,255,0.55)',
     fontStyle: 'italic',
-    marginBottom: 14,
+    flex: 1,
+    paddingRight: 10,
+  },
+  confPill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  confPct: {
+    fontFamily: 'Nunito-ExtraBold',
+    fontSize: 12,
+    letterSpacing: 0.2,
   },
 });

@@ -8,9 +8,7 @@ interface SuggestedActionCardProps {
 
 export const SuggestedActionCard: React.FC<SuggestedActionCardProps> = ({ action, index }) => (
   <View style={styles.card}>
-    <View style={styles.indexBubble}>
-      <Text style={styles.indexText}>{String(index + 1).padStart(2, '0')}</Text>
-    </View>
+    <Text style={styles.indexText}>{String(index + 1).padStart(2, '0')}</Text>
     <Text style={styles.text}>{action}</Text>
   </View>
 );
@@ -18,33 +16,29 @@ export const SuggestedActionCard: React.FC<SuggestedActionCardProps> = ({ action
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: '#EEE7DA',
-    borderRadius: 14,
-    padding: 14,
-    gap: 12,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    gap: 16,
     marginBottom: 8,
-  },
-  indexBubble: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(111,148,62,0.10)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
+    borderWidth: 1,
+    borderColor: '#DDD4C7',
   },
   indexText: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 12,
+    fontFamily: 'Cormorant-SemiBold',
+    fontSize: 18,
     color: '#6F943E',
-    letterSpacing: 0.5,
+    lineHeight: 22,
+    marginTop: 1,
+    minWidth: 22,
   },
   text: {
     flex: 1,
-    fontFamily: 'Nunito-SemiBold',
-    fontSize: 14,
-    color: '#111111',
-    lineHeight: 20,
+    fontFamily: 'Nunito-Regular',
+    fontSize: 15,
+    color: '#2A2A22',
+    lineHeight: 22,
   },
 });

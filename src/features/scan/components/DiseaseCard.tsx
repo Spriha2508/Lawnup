@@ -22,7 +22,12 @@ export const DiseaseCard: React.FC<{ disease: DiseaseResult; index?: number }> =
         activeOpacity={0.75}
       >
         <View style={styles.headerLeft}>
-          <Text style={styles.name}>{disease.name}</Text>
+          {/* Soften disease name language at moderate confidence */}
+          <Text style={styles.name}>
+            {disease.probability < 0.55
+              ? `Possible signs of ${disease.name}`
+              : disease.name}
+          </Text>
           <View style={[styles.severityBadge, { backgroundColor: sv.bg }]}>
             <View style={[styles.dot, { backgroundColor: sv.color }]} />
             <Text style={[styles.severityText, { color: sv.color }]}>

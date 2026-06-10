@@ -5,10 +5,11 @@ export const config = {
   ENABLE_SUBSCRIPTIONS: true,
   ENABLE_POSTHOG: true,
 
-  // Quota defaults
-  FREE_SCAN_LIMIT: 2,
-  FREE_CHAT_LIMIT: 10,
-  PREMIUM_SCAN_LIMIT: 20,
+  // Scan quotas live in src/features/subscription/constants/plans.ts
+  // (FREE_WEEKLY_SCAN_LIMIT) — single source of truth, mirrored server-side.
+
+  // AI chat quota defaults (AI Doctor ships v1.1)
+  FREE_CHAT_LIMIT: 20,
   PREMIUM_CHAT_LIMIT: -1, // unlimited
 
   // AI

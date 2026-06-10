@@ -7,21 +7,31 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Input } from '../../../shared/components/ui/Input';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { Input } from '@shared/components/ui/Input';
+import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
+import { PressableScale } from '@shared/components/motion/PressableScale';
+import { LeafBurst } from '@shared/components/motion/LeafBurst';
 import { useAuth } from '../hooks/useAuth';
-import { useAuthNavigation } from '../../../navigation/AuthNavigationContext';
+import { useAuthNavigation } from '@navigation/AuthNavigationContext';
+import { theme } from '@constants/designSystem';
+
+const { width: W, height: H } = Dimensions.get('window');
+const { color: C, spacing: S, typography: T, radii: R, motion: M } = theme;
 
 // iOS only — plain View on Android to avoid keyboard layout conflicts
 const KAV: React.FC<{ children: React.ReactNode }> =
   Platform.OS === 'ios'
     ? ({ children }) => (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-          {children}
-        </KeyboardAvoidingView>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">{children}</KeyboardAvoidingView>
       )
     : ({ children }) => <View style={{ flex: 1 }}>{children}</View>;
+
+const stagger = (i: number) =>
+  FadeInDown.delay(80 + i * M.stagger.base).duration(M.duration.expressive).springify().damping(18);
 
 export const SignupScreen: React.FC = () => {
   const { navigate: authNavigate, goBack: authGoBack } = useAuthNavigation();
@@ -30,9 +40,11 @@ export const SignupScreen: React.FC = () => {
   const [name,     setName]     = useState('');
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
+  const [burstKey, setBurstKey] = useState(0);
 
   const handleSignup = useCallback(async () => {
     if (!name.trim() || !email.trim() || !password) return;
+    setBurstKey(k => k + 1);
     await signUp({ name: name.trim(), email: email.trim().toLowerCase(), password });
   }, [name, email, password, signUp]);
 
@@ -40,12 +52,13 @@ export const SignupScreen: React.FC = () => {
   const goLogin = useCallback(() => authNavigate('Login'), [authNavigate]);
 
   const canSubmit =
-    name.trim().length > 0 &&
-    email.trim().length > 0 &&
-    password.length >= 6;
+    name.trim().length > 0 && email.trim().length > 0 && password.length >= 6;
 
   return (
     <View style={styles.root}>
+      <View style={styles.blobGreen} />
+      <FloatingLeaves />
+
       <KAV>
         <SafeAreaView style={styles.flex} edges={['top']}>
           <ScrollView
@@ -54,252 +67,124 @@ export const SignupScreen: React.FC = () => {
             contentContainerStyle={styles.scroll}
             bounces={false}
           >
-            {/* Back */}
-            <Pressable style={styles.backBtn} onPress={goBack} hitSlop={8}>
+            <PressableScale style={styles.backBtn} onPress={goBack} hitSlop={8} to={0.9}>
               <Text style={styles.backText}>← Back</Text>
-            </Pressable>
+            </PressableScale>
 
-            {/* Heading */}
-            <View style={styles.header}>
+            <Animated.View entering={stagger(0)} style={styles.header}>
               <Text style={styles.eyebrow}>Create account</Text>
               <Text style={styles.headline}>
                 Let's grow{'\n'}
                 <Text style={styles.headlineAccent}>together.</Text>
               </Text>
-              <Text style={styles.subtitle}>
-                Free forever. No credit card required.
-              </Text>
-            </View>
+              <Text style={styles.subtitle}>Free forever. No credit card required.</Text>
+            </Animated.View>
 
-            {/* Error */}
             {error ? (
               <Pressable onPress={clearError} style={styles.errorBanner}>
                 <Text style={styles.errorText}>{error}</Text>
               </Pressable>
             ) : null}
 
-            {/* Form */}
             <View style={styles.form}>
-              <Input
-                label="Full name"
-                placeholder="Spriha Roy"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                autoComplete="name"
-                autoFocus={false}
-                returnKeyType="next"
-              />
-              <Input
-                label="Email"
-                placeholder="you@plant.co"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoFocus={false}
-                returnKeyType="next"
-              />
-              <Input
-                label="Password"
-                placeholder="Min. 6 characters"
-                value={password}
-                onChangeText={setPassword}
-                isPassword
-                autoFocus={false}
-                returnKeyType="done"
-                onSubmitEditing={handleSignup}
-              />
+              <Animated.View entering={stagger(1)}>
+                <Input label="Full name" placeholder="Spriha Roy" value={name} onChangeText={setName}
+                  autoCapitalize="words" autoComplete="name" autoFocus={false} returnKeyType="next" />
+              </Animated.View>
+              <Animated.View entering={stagger(2)}>
+                <Input label="Email" placeholder="you@plant.co" value={email} onChangeText={setEmail}
+                  keyboardType="email-address" autoCapitalize="none" autoComplete="email" autoFocus={false} returnKeyType="next" />
+              </Animated.View>
+              <Animated.View entering={stagger(3)}>
+                <Input label="Password" placeholder="Min. 6 characters" value={password} onChangeText={setPassword}
+                  isPassword autoFocus={false} returnKeyType="done" onSubmitEditing={handleSignup} />
+              </Animated.View>
             </View>
 
-            {/* Primary CTA */}
-            <Pressable
-              style={[styles.cta, (!canSubmit || isLoading) && styles.ctaDisabled]}
-              onPress={handleSignup}
-              disabled={!canSubmit || isLoading}
-            >
-              <Text style={styles.ctaText}>
-                {isLoading ? 'Creating account…' : 'Create account'}
-              </Text>
-            </Pressable>
+            <Animated.View entering={stagger(4)}>
+              <PressableScale
+                style={[styles.cta, (!canSubmit || isLoading) && styles.ctaDisabled]}
+                onPress={handleSignup}
+                disabled={!canSubmit || isLoading}
+              >
+                <Text style={styles.ctaText}>{isLoading ? 'Creating account…' : 'Create account'}</Text>
+              </PressableScale>
+            </Animated.View>
 
-            {/* Divider */}
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>or</Text>
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Social options */}
             <View style={styles.socialRow}>
-              <Pressable style={styles.socialPill}>
+              <PressableScale style={styles.socialPill}>
                 <Text style={styles.socialText}>Apple</Text>
-              </Pressable>
-              <Pressable style={styles.socialPill}>
+              </PressableScale>
+              <PressableScale style={styles.socialPill}>
                 <Text style={styles.socialText}>Google</Text>
-              </Pressable>
+              </PressableScale>
             </View>
 
-            {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an account?  </Text>
-              <Pressable onPress={goLogin} hitSlop={8}>
+              <PressableScale onPress={goLogin} hitSlop={8} to={0.9}>
                 <Text style={styles.footerLink}>Sign in</Text>
-              </Pressable>
+              </PressableScale>
             </View>
           </ScrollView>
         </SafeAreaView>
       </KAV>
+
+      <LeafBurst playKey={burstKey} origin={{ x: W / 2, y: H * 0.5 }} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    // Solid background — no translucent blobs, no compositing layers
-    backgroundColor: '#F5F1E8',
+  root: { flex: 1, backgroundColor: C.canvas },
+  blobGreen: {
+    position: 'absolute',
+    width: W * 0.7, height: W * 0.5, borderRadius: W * 0.35,
+    backgroundColor: 'rgba(160,195,120,0.16)', top: -W * 0.22, right: -W * 0.12,
   },
-  flex:   { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 28,
-    paddingTop: 8,
-    paddingBottom: 40,
-  },
+  flex: { flex: 1 },
+  scroll: { flexGrow: 1, paddingHorizontal: 28, paddingTop: S.sm, paddingBottom: S['4xl'] },
 
-  // ── Navigation ──────────────────────────────────────────────────────────────
-  backBtn: {
-    alignSelf: 'flex-start',
-    paddingVertical: 6,
-    marginBottom: 36,
-  },
-  backText: {
-    fontSize: 15,
-    fontFamily: 'Nunito-Regular',
-    color: '#9E9A94',
-  },
+  backBtn: { alignSelf: 'flex-start', paddingVertical: S.xs + 2, marginBottom: 36 },
+  backText: { ...T.bodyStrong, fontFamily: theme.fonts.sans, color: C.textMuted },
 
-  // ── Heading ─────────────────────────────────────────────────────────────────
-  header:       { marginBottom: 36 },
-  eyebrow: {
-    fontSize: 11,
-    fontFamily: 'Nunito-SemiBold',
-    color: '#9E9A94',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 12,
-  },
-  headline: {
-    fontSize: 38,
-    fontFamily: 'Cormorant-SemiBold',
-    color: '#111111',
-    lineHeight: 44,
-    marginBottom: 10,
-  },
-  headlineAccent: {
-    fontFamily: 'Cormorant-SemiBoldItalic',
-    color: '#6F943E',
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'Nunito-Regular',
-    color: '#9E9A94',
-    lineHeight: 20,
-  },
+  header: { marginBottom: 36 },
+  eyebrow: { ...T.label, color: C.textMuted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: S.md },
+  headline: { ...T.display, fontFamily: theme.fonts.serifMedium, fontSize: 38, lineHeight: 44, color: C.textPrimary, marginBottom: S.sm + 2 },
+  headlineAccent: { fontFamily: theme.fonts.serifMediumItalic, color: C.primary },
+  subtitle: { ...T.bodyMd, color: C.textMuted },
 
-  // ── Error ───────────────────────────────────────────────────────────────────
   errorBanner: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
+    backgroundColor: C.criticalBg, borderWidth: 1, borderColor: '#FECACA',
+    borderRadius: R.md, padding: S.md, marginBottom: S.lg,
   },
-  errorText: {
-    fontSize: 13,
-    fontFamily: 'Nunito-Regular',
-    color: '#DC2626',
-  },
+  errorText: { ...T.caption, fontSize: 13, color: C.criticalFg },
 
-  // ── Form ────────────────────────────────────────────────────────────────────
-  form: { marginBottom: 24 },
+  form: { marginBottom: S['2xl'] },
 
-  // ── CTA ─────────────────────────────────────────────────────────────────────
-  cta: {
-    backgroundColor: '#111111',
-    borderRadius: 999,
-    paddingVertical: 17,
-    alignItems: 'center',
-    marginBottom: 28,
-    // No elevation, no shadow — stable across Android focus states
-  },
-  ctaDisabled: {
-    backgroundColor: '#C8C8BC',
-  },
-  ctaText: {
-    fontSize: 16,
-    fontFamily: 'Nunito-SemiBold',
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
+  cta: { backgroundColor: C.inkBtn, borderRadius: R.pill, paddingVertical: 17, alignItems: 'center', marginBottom: 28 },
+  ctaDisabled: { backgroundColor: C.textFaint },
+  ctaText: { ...T.button, color: C.onInkBtn, fontFamily: theme.fonts.sansMedium },
 
-  // ── Divider ─────────────────────────────────────────────────────────────────
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#DDD4C7',
-  },
-  dividerText: {
-    fontSize: 12,
-    fontFamily: 'Nunito-Regular',
-    color: '#C4C0BA',
-    letterSpacing: 1,
-  },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: S.md, marginBottom: S.xl },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: C.border },
+  dividerText: { ...T.caption, color: C.textFaint, letterSpacing: 1 },
 
-  // ── Social ──────────────────────────────────────────────────────────────────
-  socialRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 36,
-  },
+  socialRow: { flexDirection: 'row', gap: S.md, marginBottom: 36 },
   socialPill: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
-    backgroundColor: '#EEE7DA',
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DDD4C7',
+    flex: 1, paddingVertical: S.lg - 2, alignItems: 'center',
+    backgroundColor: C.surface, borderRadius: R.pill,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: C.border,
   },
-  socialText: {
-    fontSize: 14,
-    fontFamily: 'Nunito-SemiBold',
-    color: '#4A4640',
-  },
+  socialText: { ...T.bodyMd, fontFamily: theme.fonts.sansMedium, color: C.textSecondary },
 
-  // ── Footer ──────────────────────────────────────────────────────────────────
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    fontFamily: 'Nunito-Regular',
-    color: '#9E9A94',
-  },
-  footerLink: {
-    fontSize: 14,
-    fontFamily: 'Nunito-Bold',
-    color: '#6F943E',
-  },
+  footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  footerText: { ...T.bodyMd, color: C.textMuted },
+  footerLink: { ...T.bodyMd, fontFamily: theme.fonts.sansBold, color: C.primary },
 });

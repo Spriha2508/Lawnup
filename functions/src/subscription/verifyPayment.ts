@@ -1,22 +1,29 @@
-import * as functions from 'firebase-functions';
+// PARKED (launch decision 2026-06-10): not exported from index.ts.
+// In-app subscriptions use RevenueCat + Play Billing; kept for future web checkout.
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
+import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 import axios from 'axios';
 import { requireAuth } from '../middleware/authMiddleware';
 
 const db = admin.firestore();
 
-export const verifyPayment = functions
-  .region('asia-south1')
-  .https.onCall(
-    async (data: { orderId: string; planType: 'monthly' | 'annual' }, context) => {
-      const uid = requireAuth(context);
+const CASHFREE_APP_ID = defineSecret('CASHFREE_APP_ID');
+const CASHFREE_SECRET_KEY = defineSecret('CASHFREE_SECRET_KEY');
+
+export const verifyPayment = onCall(
+  { secrets: [CASHFREE_APP_ID, CASHFREE_SECRET_KEY] },
+  async (request) => {
+      const data = request.data as { orderId: string; planType: 'monthly' | 'annual' };
+      const uid = requireAuth(request);
 
       if (!data.orderId) {
-        throw new functions.https.HttpsError('invalid-argument', 'orderId is required.');
+        throw new HttpsError('invalid-argument', 'orderId is required.');
       }
 
-      const cfAppId = functions.config().cashfree?.app_id;
-      const cfSecretKey = functions.config().cashfree?.secret_key;
+      const cfAppId = CASHFREE_APP_ID.value();
+      const cfSecretKey = CASHFREE_SECRET_KEY.value();
       const cfBaseUrl = 'https://api.cashfree.com/pg';
 
       // Server-side verification — never trust the client's payment status
@@ -30,7 +37,7 @@ export const verifyPayment = functions
 
       const orderData = orderRes.data;
       if (orderData.order_status !== 'PAID') {
-        throw new functions.https.HttpsError('failed-precondition', 'Payment not completed.');
+        throw new HttpsError('failed-precondition', 'Payment not completed.');
       }
 
       const subRef = db.collection('subscriptions').doc(uid);
@@ -39,7 +46,7 @@ export const verifyPayment = functions
       // Idempotency check — safe to call multiple times
       const existingSub = await subRef.get();
       if (existingSub.exists && existingSub.data()?.cashfreePaymentId === orderData.cf_payment_id) {
-        functions.logger.info('Duplicate verifyPayment call, skipping', { uid, orderId: data.orderId });
+        logger.info('Duplicate verifyPayment call, skipping', { uid, orderId: data.orderId });
         return { success: true, plan: 'premium', expiresAt: existingSub.data()?.endDate?.toDate()?.toISOString() };
       }
 
@@ -66,10 +73,11 @@ export const verifyPayment = functions
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
 
-      batch.update(usageRef, {
-        scanLimit: 20,
+      // Premium = unlimited scans and chats
+      batch.set(usageRef, {
+        scanLimit: -1,
         aiChatLimit: -1,
-      });
+      }, { merge: true });
 
       await batch.commit();
 
@@ -86,7 +94,7 @@ export const verifyPayment = functions
           token: fcmToken,
           notification: {
             title: '✨ Welcome to Premium!',
-            body: 'You now have unlimited AI chats and 20 scans per month.',
+            body: 'You now have unlimited plant scans and AI chats.',
           },
         }).catch(() => { /* FCM errors should not fail the function */ });
       }

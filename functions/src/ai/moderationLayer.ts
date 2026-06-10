@@ -1,18 +1,14 @@
-import * as functions from 'firebase-functions';
+import * as logger from 'firebase-functions/logger';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
-import OpenAI from 'openai';
+import { getOpenAI } from './openaiClient';
 
 const db = getFirestore();
-
-const openai = new OpenAI({
-  apiKey: functions.config().openai?.key,
-});
 
 export const moderateMessage = async (
   uid: string,
   message: string
 ): Promise<{ safe: boolean; reason?: string }> => {
-  const result = await openai.moderations.create({ input: message });
+  const result = await getOpenAI().moderations.create({ input: message });
   const [output] = result.results;
 
   if (output.flagged) {
@@ -21,8 +17,8 @@ export const moderateMessage = async (
       moderationFlags: FieldValue.increment(1),
     });
 
-    const reason = getModerationReason(output.categories as Record<string, boolean>);
-    functions.logger.warn('Moderation flag', { uid, reason });
+    const reason = getModerationReason(output.categories as unknown as Record<string, boolean>);
+    logger.warn('Moderation flag', { uid, reason });
 
     return { safe: false, reason };
   }

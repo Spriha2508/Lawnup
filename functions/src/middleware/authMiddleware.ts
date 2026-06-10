@@ -1,14 +1,14 @@
-import * as functions from 'firebase-functions';
+import { CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 
-export const requireAuth = (context: functions.https.CallableContext): string => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Authentication required.');
+export const requireAuth = (request: CallableRequest): string => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
   }
-  return context.auth.uid;
+  return request.auth.uid;
 };
 
-export const requireAppCheck = (context: functions.https.CallableContext): void => {
-  if (!context.app) {
-    throw new functions.https.HttpsError('unauthenticated', 'App Check verification required.');
+export const requireAppCheck = (request: CallableRequest): void => {
+  if (!request.app) {
+    throw new HttpsError('unauthenticated', 'App Check verification required.');
   }
 };

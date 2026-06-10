@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { DS } from '../../../constants/ds';
 import { computeHealthScore, getIKImageUrl } from '../../utils/plantUtils';
+import { getWaterInfo } from '../../../services/reminders/reminderService';
 import type { UserPlantDoc } from '../../../types/firestore.types';
 
 interface PlantCardProps {
@@ -18,22 +19,38 @@ interface PlantCardProps {
   onPress: () => void;
 }
 
-function healthBadgeStyle(score: number) {
-  if (score >= 75) return { bg: DS.color.healthGreenBg, text: DS.color.healthGreenText };
-  if (score >= 45) return { bg: DS.color.healthAmberBg, text: DS.color.healthAmberText };
-  return { bg: DS.color.healthRedBg, text: DS.color.healthRedText };
+function healthLabel(score: number): { label: string; bg: string; text: string } {
+  if (score >= 75) return { label: 'Healthy',    bg: DS.color.healthGreenBg, text: DS.color.healthGreenText };
+  if (score >= 45) return { label: 'Needs care', bg: DS.color.healthAmberBg, text: DS.color.healthAmberText };
+  return              { label: 'Needs care',  bg: DS.color.healthRedBg,   text: DS.color.healthRedText  };
+}
+
+function scanAgo(isoDate?: string): string | null {
+  if (!isoDate) return null;
+  const then = new Date(isoDate).getTime();
+  if (Number.isNaN(then)) return null;
+  const days = Math.floor((Date.now() - then) / 86_400_000);
+  if (days === 0) return 'Scanned today';
+  if (days === 1) return 'Scanned yesterday';
+  if (days < 30)  return `Scanned ${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 8)  return `Scanned ${weeks}w ago`;
+  return null;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const PlantCard: React.FC<PlantCardProps> = ({ plant, width, index, onPress }) => {
   const scale = useSharedValue(1);
-  const imageHeight = Math.round(width * 0.78);
+  const imageHeight = Math.round(width * 0.88);
   const score = computeHealthScore(plant);
-  const badge = healthBadgeStyle(score);
+  const badge = healthLabel(score);
+  const ago = scanAgo(plant.scanDate);
+  const waterInfo = getWaterInfo(plant);
+  const showWaterAlert = waterInfo.status === 'overdue' || waterInfo.status === 'today';
 
   const imageUrl = plant.imageUrl
-    ? getIKImageUrl(plant.imageUrl, 'tr=w-400,h-320,q-80,fo-auto')
+    ? getIKImageUrl(plant.imageUrl, 'tr=w-400,h-360,q-80,fo-auto')
     : null;
 
   const animStyle = useAnimatedStyle(() => ({
@@ -63,27 +80,36 @@ export const PlantCard: React.FC<PlantCardProps> = ({ plant, width, index, onPre
           ) : (
             <PlantPlaceholder name={plant.speciesName} />
           )}
-          {/* Health score badge */}
+          {/* Health label badge */}
           <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-            <Text style={[styles.badgeText, { color: badge.text }]}>{score}%</Text>
+            <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
           </View>
         </View>
 
         {/* Text */}
         <View style={styles.info}>
           <Text style={styles.plantName} numberOfLines={1}>{plant.nickname}</Text>
-          {plant.location ? (
-            <Text style={styles.plantLocation} numberOfLines={1}>{plant.location}</Text>
-          ) : (
-            <Text style={styles.plantLocation} numberOfLines={1}>{plant.speciesName}</Text>
-          )}
+          <Text style={styles.plantSpecies} numberOfLines={1}>{plant.speciesName}</Text>
+          {showWaterAlert ? (
+            <View style={styles.waterAlertRow}>
+              <View style={[
+                styles.waterAlertDot,
+                { backgroundColor: waterInfo.status === 'overdue' ? '#C0392B' : '#B07000' },
+              ]} />
+              <Text style={[
+                styles.waterAlertText,
+                { color: waterInfo.status === 'overdue' ? '#C0392B' : '#B07000' },
+              ]}>{waterInfo.urgentLabel}</Text>
+            </View>
+          ) : ago ? (
+            <Text style={styles.plantAgo} numberOfLines={1}>{ago}</Text>
+          ) : null}
         </View>
       </AnimatedPressable>
     </Animated.View>
   );
 };
 
-// Gradient-ish placeholder when no image is available
 const PLACEHOLDER_COLORS: [string, string][] = [
   ['#D4EDD0', '#A8D4A0'],
   ['#EDD4C8', '#D4A8A0'],
@@ -116,7 +142,6 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: DS.color.inputBg,
     overflow: 'hidden',
-    // Top corners match card radius; bottom is straight (handled by card overflow)
     borderTopLeftRadius: DS.radius.card,
     borderTopRightRadius: DS.radius.card,
   },
@@ -125,7 +150,7 @@ const styles = StyleSheet.create({
     top: 9,
     right: 9,
     borderRadius: DS.radius.badge,
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 3,
   },
   badgeText: {
@@ -144,9 +169,32 @@ const styles = StyleSheet.create({
     color: DS.color.ink,
     marginBottom: 2,
   },
-  plantLocation: {
+  plantSpecies: {
     fontSize: DS.type.cardSub.size,
     fontFamily: DS.type.cardSub.family,
     color: DS.color.inkMuted,
+    marginBottom: 1,
+  },
+  plantAgo: {
+    fontSize: 10,
+    fontFamily: 'Nunito-Regular',
+    color: DS.color.inkMuted,
+    opacity: 0.7,
+    marginTop: 2,
+  },
+  waterAlertRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 3,
+  },
+  waterAlertDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  waterAlertText: {
+    fontSize: 10,
+    fontFamily: 'Nunito-Bold',
   },
 });

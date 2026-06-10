@@ -19,7 +19,7 @@ type Nav = StackNavigationProp<ScanStackParamList, 'ScanLanding'>;
 
 export const ScanLandingScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const { canScan, scansUsed, scanLimit } = useSubscriptionStore();
+  const { canScan, scansUsed, scanLimit, isUsageHydrated } = useSubscriptionStore();
   const { reset, setCapturedImageUri } = useScanStore();
 
   const sheetSlide = useRef(new Animated.Value(40)).current;
@@ -36,13 +36,13 @@ export const ScanLandingScreen: React.FC = () => {
   }, []);
 
   const handleCamera = () => {
-    if (!canScan()) return;
+    if (isUsageHydrated && !canScan()) return;
     logger.scan.started();
     navigation.navigate('Camera');
   };
 
   const handleGallery = async () => {
-    if (!canScan()) return;
+    if (isUsageHydrated && !canScan()) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -61,7 +61,7 @@ export const ScanLandingScreen: React.FC = () => {
 
   const scanLimitDisplay = scanLimit === -1 ? '∞' : String(scanLimit);
   const scanPercent = scanLimit === -1 ? 0 : scansUsed / scanLimit;
-  const limitReached = !canScan();
+  const limitReached = isUsageHydrated && !canScan();
 
   return (
     <View style={styles.root}>
@@ -141,7 +141,7 @@ export const ScanLandingScreen: React.FC = () => {
         {limitReached && (
           <TouchableOpacity
             style={styles.upgradeBtn}
-            onPress={() => navigation.getParent<any>()?.navigate('Profile')}
+            onPress={() => navigation.getParent<any>()?.navigate('Profile', { screen: 'Paywall' })}
             activeOpacity={0.85}
           >
             <Text style={styles.upgradeBtnText}>Upgrade for unlimited scans</Text>

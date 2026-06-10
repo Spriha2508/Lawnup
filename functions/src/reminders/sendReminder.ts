@@ -1,14 +1,12 @@
-import * as functions from 'firebase-functions';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 
 const db = admin.firestore();
 const messaging = admin.messaging();
 
-// Called via Cloud Scheduler every hour (or Pub/Sub trigger)
-export const sendReminder = functions
-  .region('asia-south1')
-  .pubsub.schedule('every 60 minutes')
-  .onRun(async () => {
+// Runs hourly via Cloud Scheduler
+export const sendReminder = onSchedule('every 60 minutes', async () => {
     const now = admin.firestore.Timestamp.now();
     const oneHourFromNow = admin.firestore.Timestamp.fromMillis(now.toMillis() + 60 * 60 * 1000);
 
@@ -24,11 +22,11 @@ export const sendReminder = functions
       .get();
 
     if (remindersSnap.empty) {
-      functions.logger.info('No reminders due');
+      logger.info('No reminders due');
       return;
     }
 
-    functions.logger.info(`Processing ${remindersSnap.size} reminders`);
+    logger.info(`Processing ${remindersSnap.size} reminders`);
 
     const sendPromises: Promise<void>[] = [];
 
@@ -50,7 +48,7 @@ const processReminder = async (doc: admin.firestore.QueryDocumentSnapshot) => {
   const fcmToken = userSnap.data()?.fcmToken;
 
   if (!fcmToken) {
-    functions.logger.info('No FCM token for user, skipping', { uid });
+    logger.info('No FCM token for user, skipping', { uid });
     return;
   }
 
@@ -91,9 +89,9 @@ const processReminder = async (doc: admin.firestore.QueryDocumentSnapshot) => {
       nextReminderAt: admin.firestore.Timestamp.fromDate(nextDate),
     });
 
-    functions.logger.info('Reminder sent', { uid, reminderType, nickname });
+    logger.info('Reminder sent', { uid, reminderType, nickname });
   } catch (err) {
-    functions.logger.error('Failed to send reminder', { uid, err });
+    logger.error('Failed to send reminder', { uid, err });
   }
 };
 

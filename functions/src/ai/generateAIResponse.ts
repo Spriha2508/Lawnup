@@ -1,28 +1,30 @@
-import * as functions from 'firebase-functions';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
+import type OpenAI from 'openai';
 import * as admin from 'firebase-admin';
-import OpenAI from 'openai';
 import axios from 'axios';
 import { requireAuth } from '../middleware/authMiddleware';
 import { checkAndDecrementQuota } from '../middleware/rateLimiter';
 import { moderateMessage, getSafeDeclineMessage } from './moderationLayer';
 import { buildSystemPrompt, sanitizeInput } from './promptBuilder';
 import { getPlantMemory, updatePlantMemoryAsync } from './memoryManager';
+import { getOpenAI, OPENAI_KEY } from './openaiClient';
 import { getIndianSeason } from '../weather/fetchWeather';
 
 const db = admin.firestore();
-const openai = new OpenAI({ apiKey: functions.config().openai?.key });
 
-export const generateAIResponse = functions
-  .region('asia-south1')
-  .runWith({ timeoutSeconds: 60, memory: '256MB' })
-  .https.onCall(
-    async (data: { message: string; plantId?: string; sessionId?: string }, context) => {
-      const uid = requireAuth(context);
+const OPENWEATHER_KEY = defineSecret('OPENWEATHER_KEY');
+
+export const generateAIResponse = onCall(
+  { secrets: [OPENAI_KEY, OPENWEATHER_KEY], timeoutSeconds: 60, memory: '256MiB' },
+  async (request) => {
+      const data = request.data as { message: string; plantId?: string; sessionId?: string };
+      const uid = requireAuth(request);
 
       // Sanitize input
       const userMessage = sanitizeInput(data.message);
       if (!userMessage) {
-        throw new functions.https.HttpsError('invalid-argument', 'Message is empty.');
+        throw new HttpsError('invalid-argument', 'Message is empty.');
       }
 
       // Check quota
@@ -42,7 +44,7 @@ export const generateAIResponse = functions
       // Fetch user data
       const userSnap = await db.collection('users').doc(uid).get();
       const user = userSnap.data();
-      if (!user) throw new functions.https.HttpsError('not-found', 'User not found.');
+      if (!user) throw new HttpsError('not-found', 'User not found.');
 
       // Fetch active plant
       let plant = null;
@@ -105,7 +107,7 @@ export const generateAIResponse = functions
         { role: 'user', content: userMessage },
       ];
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: 'gpt-4.1-mini',
         messages,
         max_tokens: 200,
@@ -167,7 +169,7 @@ const getWeather = async (city: string) => {
   }
 
   try {
-    const owmKey = functions.config().openweather?.key;
+    const owmKey = OPENWEATHER_KEY.value();
     const res = await axios.get(
       `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)},IN&appid=${owmKey}&units=metric`
     );

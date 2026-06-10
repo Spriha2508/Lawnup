@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,24 +11,19 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuthStore } from '../../auth/store/authStore';
 import { usePlantsStore } from '../../my-plants/store/plantsStore';
+import { useOnboardingStore } from '../../onboarding/store/onboardingStore';
+import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
 import { isDueForWater, computeHealthScore, getIKImageUrl } from '../../../shared/utils/plantUtils';
+import { getCurrentWeather } from '../../../services/weather/weatherService';
+import { getTodayNarrative } from '../../../services/reminders/reminderService';
+import type { WeatherData } from '../../../services/weather/weatherService';
 import type { UserPlantDoc } from '../../../types/firestore.types';
 
 const { width: W } = Dimensions.get('window');
-const H_PAD        = 20;
+const H_PAD = 20;
 const PLANT_CARD_W = Math.floor(W * 0.42);
-
-const JOURNAL_ARTICLES = [
-  { id: '1', tag: 'WATERING',    title: 'The Art of\nDeep Watering',    },
-  { id: '2', tag: 'LIGHT',       title: 'Low Light\nSurvivors',         },
-  { id: '3', tag: 'SOIL',        title: 'Perfect Mix\nfor Tropicals',   },
-  { id: '4', tag: 'PESTS',       title: 'Spotting Early\nInfestation',  },
-];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getGreeting = (): string => {
   const h = new Date().getHours();
@@ -46,20 +41,35 @@ const getDateLabel = (): string => {
 
 function healthBadgeStyle(score: number) {
   if (score >= 75) return { bg: 'rgba(111,148,62,0.14)', text: '#4A6E25' };
-  if (score >= 45) return { bg: 'rgba(176,112,0,0.12)',  text: '#7A5200' };
+  if (score >= 45) return { bg: 'rgba(176,112,0,0.12)', text: '#7A5200' };
   return { bg: 'rgba(192,57,43,0.10)', text: '#8B2010' };
 }
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useAuthStore();
   const { plants } = usePlantsStore();
+  const { city } = useOnboardingStore();
+  const isPremiumActive = useSubscriptionStore(s => s.isPremiumActive);
 
-  const firstName  = user?.name?.split(' ')[0] ?? 'Gardener';
-  const duePlants  = useMemo(() => plants.filter(isDueForWater), [plants]);
-  const showPlants = plants.slice(0, 6);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const isPremium = isPremiumActive();
+
+  useEffect(() => {
+    if (city) {
+      getCurrentWeather(city).then(setWeather).catch(() => {});
+    }
+  }, [city]);
+
+  const firstName = user?.name?.split(' ')[0] ?? 'Gardener';
+  const duePlants = useMemo(() => plants.filter(isDueForWater), [plants]);
+  const showPlants = useMemo(() => plants.slice(0, 6), [plants]);
+  const todayNarrative = useMemo(
+    () => getTodayNarrative(plants, weather, city || undefined),
+    [plants, weather, city],
+  );
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -67,17 +77,12 @@ export const HomeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        {/* ── Header row ────────────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(0).duration(400)} style={styles.headerRow}>
+        {/* Header */}
+        <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Text style={styles.dateLabel}>{getDateLabel()}</Text>
             <Text style={styles.greeting}>{getGreeting()}</Text>
             <Text style={styles.firstName}>{firstName}</Text>
-            <Text style={styles.subtitle}>
-              {duePlants.length > 0
-                ? `${duePlants.length} plant${duePlants.length > 1 ? 's' : ''} need${duePlants.length === 1 ? 's' : ''} attention today.`
-                : 'Ready to help your plants thrive.'}
-            </Text>
           </View>
           <Pressable
             style={styles.avatarBtn}
@@ -87,48 +92,74 @@ export const HomeScreen: React.FC = () => {
               {user?.name ? user.name[0].toUpperCase() : 'G'}
             </Text>
           </Pressable>
-        </Animated.View>
+        </View>
 
-        {/* ── Search bar ────────────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(60).duration(400)} style={styles.searchWrap}>
-          <Text style={styles.searchPlaceholder}>Search your greenhouse...</Text>
-        </Animated.View>
+        {/* Upgrade banner — free users only, dismissible */}
+        {!isPremium && !bannerDismissed && (
+          <View style={styles.premiumBanner}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              onPress={() => navigation.navigate('Profile', { screen: 'Paywall' })}
+              activeOpacity={0.82}
+            />
+            <View style={styles.premiumBannerLeft}>
+              <Text style={styles.premiumEyebrow}>LAWNUP PRO</Text>
+              <Text style={styles.premiumText}>Unlimited scans · AI Doctor · No limits</Text>
+            </View>
+            <View style={styles.premiumBannerRight}>
+              <Text style={styles.premiumArrow}>→</Text>
+              <TouchableOpacity
+                style={styles.premiumClose}
+                onPress={() => setBannerDismissed(true)}
+                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+              >
+                <Text style={styles.premiumCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
-        {/* ── AI Diagnostics hero card ──────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(120).duration(400)}>
-          <TouchableOpacity
-            style={styles.aiCard}
-            onPress={() => navigation.navigate('Scan')}
-            activeOpacity={0.88}
-          >
-            <View style={styles.aiBlob} />
+        {/* Today in your garden */}
+        <View style={styles.todayCard}>
+          <View style={styles.todayLeft}>
+            <Text style={styles.todayEyebrow}>TODAY IN YOUR GARDEN</Text>
+            <Text style={styles.todayText}>{todayNarrative}</Text>
+          </View>
+          {weather && (
+            <View style={styles.todayWeatherCol}>
+              <Text style={styles.todayTemp}>{weather.tempC}°</Text>
+              <Text style={styles.todayHumidity}>{weather.humidity}%</Text>
+              <Text style={styles.todayHumidityLabel}>humidity</Text>
+            </View>
+          )}
+        </View>
 
-            <Text style={styles.aiLabel}>AI DIAGNOSTICIAN</Text>
-            <Text style={styles.aiTitle}>Instant Health{'\n'}Check</Text>
-            <Text style={styles.aiBody}>
-              Point your camera to identify species{'\n'}
-              and diagnose leaf issues in seconds.
-            </Text>
+        {/* Dark scan CTA — solid green button, not ghost */}
+        <TouchableOpacity
+          style={styles.scanCard}
+          onPress={() => navigation.navigate('Scan')}
+          activeOpacity={0.88}
+        >
+          <View style={styles.scanBlob} />
+          <Text style={styles.scanLabel}>AI PLANT SCAN</Text>
+          <Text style={styles.scanTitle}>Identify any plant{'\n'}in seconds</Text>
+          <Text style={styles.scanBody}>
+            Species ID, health check, and personalised care guide — instantly.
+          </Text>
+          <View style={styles.scanBtn}>
+            <Text style={styles.scanBtnText}>Open Camera  →</Text>
+          </View>
+        </TouchableOpacity>
 
-            <Pressable
-              style={styles.aiBtn}
-              onPress={() => navigation.navigate('Scan')}
-            >
-              <Text style={styles.aiBtnText}>Scan a leaf  →</Text>
-            </Pressable>
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* ── Your Greenhouse ───────────────────────────────────────────── */}
+        {/* My Garden horizontal strip */}
         {plants.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(180).duration(400)} style={styles.greenhouseWrap}>
+          <View style={styles.sectionWrap}>
             <View style={[styles.sectionRow, { paddingHorizontal: H_PAD, marginBottom: 14 }]}>
-              <Text style={styles.sectionLabel}>YOUR GREENHOUSE</Text>
+              <Text style={styles.sectionLabel}>MY GARDEN</Text>
               <Pressable onPress={() => navigation.navigate('Plants')}>
-                <Text style={styles.sectionLink}>View all →</Text>
+                <Text style={styles.sectionLink}>See all →</Text>
               </Pressable>
             </View>
-
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -150,51 +181,26 @@ export const HomeScreen: React.FC = () => {
                 />
               ))}
             </ScrollView>
-          </Animated.View>
-        )}
-
-        {/* ── Empty greenhouse ─────────────────────────────────────────── */}
-        {plants.length === 0 && (
-          <Animated.View entering={FadeInDown.delay(180).duration(400)} style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>
-              Your first leaf awaits. Scan any plant to begin.
-            </Text>
-          </Animated.View>
-        )}
-
-        {/* ── Plant Journal ─────────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(220).duration(400)} style={styles.journalWrap}>
-          <View style={[styles.sectionRow, { paddingHorizontal: H_PAD, marginBottom: 14 }]}>
-            <Text style={styles.sectionLabel}>PLANT JOURNAL</Text>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.journalScroll}
-            decelerationRate="fast"
-          >
-            {JOURNAL_ARTICLES.map((article) => (
-              <Pressable key={article.id} style={styles.journalCard}>
-                <Text style={styles.journalTag}>{article.tag}</Text>
-                <Text style={styles.journalTitle}>{article.title}</Text>
-                <View style={styles.journalReadMore}>
-                  <Text style={styles.journalReadMoreText}>Read →</Text>
-                </View>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </Animated.View>
+        )}
 
-        {/* ── Today's Care ─────────────────────────────────────────────── */}
+        {plants.length === 0 && (
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyText}>
+              Your future indoor jungle starts here — scan any plant to begin.
+            </Text>
+          </View>
+        )}
+
+        {/* Today's Care */}
         {duePlants.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(240).duration(400)}>
+          <View style={styles.careSectionWrap}>
             <View style={styles.sectionRow}>
               <Text style={styles.sectionLabel}>TODAY'S CARE</Text>
               <Pressable onPress={() => navigation.navigate('Plants')}>
                 <Text style={styles.sectionLink}>All →</Text>
               </Pressable>
             </View>
-
             <View style={styles.careCard}>
               {duePlants.slice(0, 4).map((plant, i) => (
                 <CareRow
@@ -210,23 +216,24 @@ export const HomeScreen: React.FC = () => {
                 />
               ))}
             </View>
-          </Animated.View>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-// ─── Home plant card ──────────────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 const HomePlantCard: React.FC<{ plant: UserPlantDoc; onPress: () => void }> = ({
   plant, onPress,
 }) => {
-  const score  = computeHealthScore(plant);
-  const badge  = healthBadgeStyle(score);
+  const score = computeHealthScore(plant);
+  const badge = healthBadgeStyle(score);
   const imgUrl = plant.imageUrl
     ? getIKImageUrl(plant.imageUrl, 'tr=w-400,h-320,q-80,fo-auto')
     : null;
+  const healthLabel = score >= 75 ? 'Healthy' : 'Needs care';
 
   return (
     <Pressable style={styles.plantCard} onPress={onPress}>
@@ -246,25 +253,16 @@ const HomePlantCard: React.FC<{ plant: UserPlantDoc; onPress: () => void }> = ({
           </View>
         )}
         <View style={[styles.healthBadge, { backgroundColor: badge.bg }]}>
-          <Text style={[styles.healthBadgeText, { color: badge.text }]}>{score}%</Text>
+          <Text style={[styles.healthBadgeText, { color: badge.text }]}>{healthLabel}</Text>
         </View>
       </View>
-
       <View style={styles.plantInfo}>
         <Text style={styles.plantName} numberOfLines={1}>{plant.nickname}</Text>
-        <View style={styles.plantStatusRow}>
-          <View style={[
-            styles.statusDot,
-            { backgroundColor: score >= 75 ? '#6F943E' : score >= 45 ? '#B07000' : '#C0392B' },
-          ]} />
-          <Text style={styles.plantStatus}>{plant.healthStatus ?? 'Unknown'}</Text>
-        </View>
+        <Text style={styles.plantStatus} numberOfLines={1}>{plant.speciesName}</Text>
       </View>
     </Pressable>
   );
 };
-
-// ─── Care row ─────────────────────────────────────────────────────────────────
 
 const CareRow: React.FC<{
   plant: UserPlantDoc;
@@ -313,27 +311,23 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'Nunito-SemiBold',
     color: '#9E9A94',
-    letterSpacing: 1.5,
+    letterSpacing: 1.8,
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   greeting: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Nunito-Regular',
-    color: '#6E6A64',
+    color: '#9E9A94',
     marginBottom: 2,
   },
   firstName: {
-    fontSize: 36,
+    fontSize: 44,
     fontFamily: 'Cormorant-SemiBoldItalic',
     color: '#111111',
-    lineHeight: 40,
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 13,
-    fontFamily: 'Nunito-Regular',
-    color: '#9E9A94',
+    lineHeight: 48,
+    letterSpacing: -0.5,
+    marginBottom: 4,
   },
   avatarBtn: {
     width: 40,
@@ -350,107 +344,183 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Search
-  searchWrap: {
+  // Premium banner
+  premiumBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1A2416',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  premiumBannerLeft: { flex: 1 },
+  premiumEyebrow: {
+    fontSize: 9,
+    fontFamily: 'Nunito-SemiBold',
+    color: '#6F943E',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 3,
+  },
+  premiumText: {
+    fontSize: 13,
+    fontFamily: 'Nunito-SemiBold',
+    color: 'rgba(255,255,255,0.85)',
+  },
+  premiumBannerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  premiumArrow: {
+    fontSize: 16,
+    color: '#A7C47C',
+  },
+  premiumClose: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  premiumCloseText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.35)',
+  },
+
+  // Today card
+  todayCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#EEE7DA',
-    borderRadius: 999,
+    borderRadius: 20,
     paddingHorizontal: 20,
-    paddingVertical: 13,
+    paddingVertical: 16,
     marginBottom: 20,
-    borderWidth: 1.5,
-    borderColor: '#DDD4C7',
+    borderWidth: 1,
+    borderColor: '#CEC6B2',
+    gap: 14,
   },
-  searchPlaceholder: {
+  todayLeft: { flex: 1, gap: 6 },
+  todayEyebrow: {
+    fontSize: 9,
+    fontFamily: 'Nunito-SemiBold',
+    color: '#9E9A94',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  todayText: {
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 14,
+    color: '#2A2A22',
+    lineHeight: 21,
+  },
+  todayWeatherCol: { alignItems: 'flex-end' },
+  todayTemp: {
+    fontFamily: 'Cormorant-SemiBold',
+    fontSize: 32,
+    color: '#111111',
+    lineHeight: 34,
+  },
+  todayHumidity: {
+    fontFamily: 'Nunito-ExtraBold',
+    fontSize: 12,
+    color: '#6F943E',
+  },
+  todayHumidityLabel: {
     fontFamily: 'Nunito-Regular',
+    fontSize: 10,
     color: '#9E9A94',
   },
 
-  // AI card
-  aiCard: {
+  // Scan CTA (dark, solid green button)
+  scanCard: {
     backgroundColor: '#1A2416',
-    borderRadius: 24,
-    padding: 22,
-    marginBottom: 28,
+    borderRadius: 28,
+    paddingHorizontal: 26,
+    paddingTop: 28,
+    paddingBottom: 28,
+    marginBottom: 36,
     overflow: 'hidden',
   },
-  aiBlob: {
+  scanBlob: {
     position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(111,148,62,0.08)',
-    top: -80,
-    right: -60,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: 'rgba(111,148,62,0.06)',
+    top: -100,
+    right: -80,
   },
-  aiLabel: {
+  scanLabel: {
     fontSize: 9,
     fontFamily: 'Nunito-SemiBold',
     color: '#6F943E',
     letterSpacing: 2.5,
     textTransform: 'uppercase',
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  aiTitle: {
-    fontSize: 28,
+  scanTitle: {
+    fontSize: 40,
     fontFamily: 'Cormorant-SemiBoldItalic',
     color: '#FFFFFF',
-    lineHeight: 32,
-    marginBottom: 10,
+    lineHeight: 44,
+    letterSpacing: -0.5,
+    marginBottom: 12,
   },
-  aiBody: {
-    fontSize: 13,
+  scanBody: {
+    fontSize: 14,
     fontFamily: 'Nunito-Regular',
-    color: 'rgba(255,255,255,0.5)',
-    lineHeight: 20,
-    marginBottom: 20,
+    color: 'rgba(255,255,255,0.40)',
+    lineHeight: 21,
+    marginBottom: 28,
   },
-  aiBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(111,148,62,0.20)',
+  scanBtn: {
+    backgroundColor: '#6F943E',
     borderRadius: 999,
-    paddingVertical: 11,
-    paddingHorizontal: 18,
+    paddingVertical: 15,
+    paddingHorizontal: 26,
     alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: 'rgba(111,148,62,0.30)',
   },
-  aiBtnText: {
-    fontSize: 13,
-    fontFamily: 'Nunito-SemiBold',
-    color: '#A7C47C',
-    letterSpacing: 0.2,
+  scanBtnText: {
+    fontSize: 15,
+    fontFamily: 'Nunito-Bold',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
 
-  // Sections
+  // Section headers
+  sectionWrap: {
+    marginLeft: -H_PAD,
+    marginRight: -H_PAD,
+    marginBottom: 36,
+  },
+  careSectionWrap: {
+    marginBottom: 36,
+  },
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   sectionLabel: {
     fontSize: 10,
-    fontFamily: 'Nunito-SemiBold',
+    fontFamily: 'Nunito-Bold',
     color: '#9E9A94',
-    letterSpacing: 2,
+    letterSpacing: 2.2,
     textTransform: 'uppercase',
   },
   sectionLink: {
     fontSize: 13,
     fontFamily: 'Nunito-SemiBold',
     color: '#6F943E',
+    letterSpacing: 0.2,
   },
 
-  // Greenhouse horizontal scroll
-  greenhouseWrap: {
-    marginLeft: -H_PAD,
-    marginRight: -H_PAD,
-    marginBottom: 28,
-  },
+  // Plant strip
   plantScroll: {
     paddingHorizontal: H_PAD,
     gap: 12,
@@ -500,87 +570,30 @@ const styles = StyleSheet.create({
     color: '#111111',
     marginBottom: 4,
   },
-  plantStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
   plantStatus: {
     fontSize: 12,
     fontFamily: 'Nunito-Regular',
     color: '#6E6A64',
   },
 
-  // Plant Journal
-  journalWrap: {
-    marginLeft: -H_PAD,
-    marginRight: -H_PAD,
-    marginBottom: 28,
-  },
-  journalScroll: {
-    paddingHorizontal: H_PAD,
-    gap: 12,
-  },
-  journalCard: {
-    width: W * 0.54,
-    backgroundColor: '#1A2416',
-    borderRadius: 20,
-    padding: 18,
-    justifyContent: 'space-between',
-    minHeight: 140,
-  },
-  journalTag: {
-    fontSize: 9,
-    fontFamily: 'Nunito-SemiBold',
-    color: '#6F943E',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-  },
-  journalTitle: {
-    fontSize: 20,
-    fontFamily: 'Cormorant-SemiBoldItalic',
-    color: '#FFFFFF',
-    lineHeight: 24,
-    flex: 1,
-  },
-  journalReadMore: {
-    marginTop: 14,
-    alignSelf: 'flex-start',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(111,148,62,0.5)',
-  },
-  journalReadMoreText: {
-    fontSize: 12,
-    fontFamily: 'Nunito-SemiBold',
-    color: '#A7C47C',
-    paddingBottom: 2,
-  },
-
   // Care section
   careCard: {
     backgroundColor: '#EEE7DA',
     borderRadius: 20,
-    marginBottom: 28,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#DDD4C7',
+    borderColor: '#CEC6B2',
   },
   careRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    gap: 14,
   },
   careRowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#DDD4C7',
+    borderBottomColor: '#CEC6B2',
   },
   careIcon: {
     width: 36,
@@ -622,6 +635,7 @@ const styles = StyleSheet.create({
   emptyWrap: {
     paddingVertical: 24,
     alignItems: 'center',
+    marginBottom: 20,
   },
   emptyText: {
     fontSize: 14,

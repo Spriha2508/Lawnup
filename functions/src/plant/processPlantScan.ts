@@ -1,112 +1,200 @@
-import * as functions from 'firebase-functions';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
+import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 import axios from 'axios';
 import { requireAuth } from '../middleware/authMiddleware';
-import { checkAndDecrementQuota } from '../middleware/rateLimiter';
+import { assertQuotaAvailable, incrementUsage } from '../middleware/rateLimiter';
 
 const db = admin.firestore();
 const storage = admin.storage();
 
-export const processPlantScan = functions
-  .region('asia-south1')
-  .https.onCall(async (data: { imageBase64: string }, context) => {
-    const uid = requireAuth(context);
+// Set once with: firebase functions:secrets:set PLANT_ID_KEY
+const PLANT_ID_KEY = defineSecret('PLANT_ID_KEY');
 
-    if (!data.imageBase64) {
-      throw new functions.https.HttpsError('invalid-argument', 'imageBase64 is required.');
+const PLANT_ID_URL = 'https://plant.id/api/v3/identification';
+
+// Mirrors the thresholds previously tuned on the client
+// (src/services/api/plantIdentification.ts) — keep in sync.
+const IS_PLANT_THRESHOLD = 0.40;
+const MAX_IMAGES = 5;
+
+// ── Wire types returned to the client ────────────────────────────────────────
+// The client keeps presentation logic (name normalization, care guide,
+// confidence labels); the server returns structured Plant.id data.
+
+interface WireSuggestion {
+  name: string;                 // latin/scientific name from Plant.id
+  probability: number;
+  commonNames: string[];
+  watering?: { min?: number; max?: number };
+}
+
+interface WireDisease {
+  name: string;
+  probability: number;
+  description?: string;
+  treatment?: {
+    prevention?: string[];
+    chemical?: string[];
+    biological?: string[];
+  };
+}
+
+export interface ProcessPlantScanResult {
+  scanId: string;
+  imageUrl: string;             // durable Storage URL of the primary image
+  isPlantProbability: number;
+  isHealthyBinary: boolean;
+  suggestions: WireSuggestion[];
+  diseases: WireDisease[];
+}
+
+export const processPlantScan = onCall(
+  { secrets: [PLANT_ID_KEY], timeoutSeconds: 90, memory: '512MiB' },
+  async (request): Promise<ProcessPlantScanResult> => {
+    const uid = requireAuth(request);
+    const data = request.data as { imageBase64?: string; extraImagesBase64?: string[] };
+
+    const primary = sanitizeBase64(data.imageBase64 ?? '');
+    if (!primary || primary.length < 1000) {
+      throw new HttpsError('invalid-argument', 'imageBase64 is missing or too short.');
     }
 
-    // Check and decrement scan quota atomically
-    await checkAndDecrementQuota(uid, 'scan');
+    const extras = (data.extraImagesBase64 ?? [])
+      .map(sanitizeBase64)
+      .filter((b) => b.length >= 1000)
+      .slice(0, MAX_IMAGES - 1);
 
-    // Upload image to Firebase Storage
+    // Read-only gate — quota is consumed only after a successful identification,
+    // so blurry/not-a-plant photos never burn a free scan.
+    await assertQuotaAvailable(uid, 'scan');
+
+    // ── Call Plant.id v3 ─────────────────────────────────────────────────────
+    // similar_images is only a valid modifier when true — omit it (false → HTTP 400).
+    let plantIdData: PlantIdResponse;
+    try {
+      const res = await axios.post(
+        PLANT_ID_URL,
+        { images: [primary, ...extras], health: 'all' },
+        {
+          headers: { 'Api-Key': PLANT_ID_KEY.value(), 'Content-Type': 'application/json' },
+          timeout: 30_000,
+        },
+      );
+      plantIdData = res.data as PlantIdResponse;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status ?? 0;
+        logger.error('Plant.id request failed', { uid, status, body: JSON.stringify(err.response?.data)?.slice(0, 300) });
+        if (status >= 400 && status < 500) {
+          throw new HttpsError('internal', `Plant.id rejected the request (HTTP ${status}).`);
+        }
+        throw new HttpsError('unavailable', 'Plant identification service is busy — try again.');
+      }
+      throw new HttpsError('internal', 'Plant identification failed unexpectedly.');
+    }
+
+    // ── is_plant gate ────────────────────────────────────────────────────────
+    const isPlantProbability = plantIdData.result?.is_plant?.probability ?? 1;
+    if (isPlantProbability < IS_PLANT_THRESHOLD) {
+      throw new HttpsError('failed-precondition', 'not_plant_detected');
+    }
+
+    const rawSuggestions = plantIdData.result?.classification?.suggestions ?? [];
+    const suggestions: WireSuggestion[] = rawSuggestions.slice(0, 4).map((s) => ({
+      name: s.name,
+      probability: s.probability,
+      commonNames: s.details?.common_names ?? [],
+      watering: s.details?.watering,
+    }));
+
+    const isHealthyBinary = plantIdData.result?.is_healthy?.binary ?? true;
+    const diseases: WireDisease[] = (plantIdData.result?.disease?.suggestions ?? [])
+      .slice(0, 5)
+      .map((d) => ({
+        name: d.name,
+        probability: d.probability,
+        description: d.details?.description,
+        treatment: d.details?.treatment,
+      }));
+
+    // ── Persist image + scan history (best-effort: never fail the scan) ─────
     const scanId = db.collection('plant_scans').doc().id;
-    const fileName = `scans/${uid}/${scanId}/${Date.now()}.webp`;
-    const bucket = storage.bucket();
-    const file = bucket.file(fileName);
+    let imageUrl = '';
+    try {
+      const fileName = `scans/${uid}/${scanId}/photo.jpg`;
+      const file = storage.bucket().file(fileName);
+      await file.save(Buffer.from(primary, 'base64'), {
+        metadata: { contentType: 'image/jpeg' },
+      });
+      const [signedUrl] = await file.getSignedUrl({ action: 'read', expires: '2099-01-01' });
+      imageUrl = signedUrl;
+    } catch (err) {
+      logger.warn('Scan image upload failed — continuing without imageUrl', { uid, scanId, err });
+    }
 
-    const buffer = Buffer.from(data.imageBase64, 'base64');
-    await file.save(buffer, { metadata: { contentType: 'image/webp' } });
-    const [imageUrl] = await file.getSignedUrl({
-      action: 'read',
-      expires: '2099-01-01',
-    });
+    try {
+      await db.collection('plant_scans').doc(scanId).set({
+        scanId,
+        userId: uid,
+        imageUrl,
+        status: 'completed',
+        isPlantProbability,
+        isHealthy: isHealthyBinary,
+        topSuggestion: suggestions[0]?.name ?? null,
+        topConfidence: suggestions[0]?.probability ?? 0,
+        suggestions,
+        diseases,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      logger.error('plant_scans write failed', { uid, scanId, err });
+    }
 
-    // Save processing placeholder
-    await db.collection('plant_scans').doc(scanId).set({
-      scanId,
-      userId: uid,
-      imageUrl,
-      status: 'processing',
-      plantIdResult: null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    // Consume quota only after successful identification
+    await incrementUsage(uid, 'scan');
 
-    // Call Plant.id API
-    const plantIdKey = functions.config().plantid?.key;
-    const plantIdResponse = await axios.post(
-      'https://api.plant.id/v3/identification',
-      {
-        images: [`data:image/webp;base64,${data.imageBase64}`],
-        similar_images: false,
-        health: 'all',
-      },
-      { headers: { 'Api-Key': plantIdKey, 'Content-Type': 'application/json' } }
-    );
+    return { scanId, imageUrl, isPlantProbability, isHealthyBinary, suggestions, diseases };
+  },
+);
 
-    const result = parsePlantIdResponse(plantIdResponse.data);
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-    // Update scan with results
-    await db.collection('plant_scans').doc(scanId).update({
-      status: 'completed',
-      plantIdResult: result,
-    });
+function sanitizeBase64(raw: string): string {
+  return raw
+    .replace(/^data:image\/\w+;base64,/, '')
+    .replace(/[\r\n]/g, '')
+    .trim();
+}
 
-    return {
-      scanId,
-      plantName: result.commonName,
-      confidence: result.confidence,
-      isHealthy: result.isHealthy,
-      diseases: result.diseases,
-      suggestedActions: buildSuggestedActions(result),
+interface PlantIdResponse {
+  result?: {
+    is_plant?: { probability: number; binary: boolean };
+    is_healthy?: { probability: number; binary: boolean };
+    classification?: {
+      suggestions: Array<{
+        name: string;
+        probability: number;
+        details?: {
+          common_names?: string[];
+          watering?: { min?: number; max?: number };
+        };
+      }>;
     };
-  });
-
-const parsePlantIdResponse = (data: Record<string, unknown>) => {
-  const suggestion = (data.result as Record<string, unknown>)?.classification as Record<string, unknown>;
-  const bestMatch = (suggestion?.suggestions as unknown[])?.[0] as Record<string, unknown>;
-  const health = (data.result as Record<string, unknown>)?.disease as Record<string, unknown>;
-  const diseases = (health?.suggestions as unknown[] ?? []).map((d) => {
-    const disease = d as Record<string, unknown>;
-    return {
-      name: disease.name as string,
-      probability: (disease.probability as number) ?? 0,
-      description: ((disease.details as Record<string, unknown>)?.description as string) ?? '',
-      treatment: {
-        chemical: ((disease.details as Record<string, unknown>)?.treatment as Record<string, unknown>)?.chemical as string ?? '',
-        biological: ((disease.details as Record<string, unknown>)?.treatment as Record<string, unknown>)?.biological as string ?? '',
-        prevention: ((disease.details as Record<string, unknown>)?.treatment as Record<string, unknown>)?.prevention as string ?? '',
-      },
+    disease?: {
+      suggestions: Array<{
+        name: string;
+        probability: number;
+        details?: {
+          description?: string;
+          treatment?: {
+            prevention?: string[];
+            chemical?: string[];
+            biological?: string[];
+          };
+        };
+      }>;
     };
-  });
-
-  return {
-    commonName: (bestMatch?.name as string) ?? 'Unknown plant',
-    scientificName: ((bestMatch?.details as Record<string, unknown>)?.scientific_name as string) ?? '',
-    confidence: (bestMatch?.probability as number) ?? 0,
-    isHealthy: (health?.is_healthy as Record<string, unknown>)?.probability as number > 0.5,
-    diseases: diseases.filter((d) => d.probability > 0.2),
   };
-};
-
-const buildSuggestedActions = (result: ReturnType<typeof parsePlantIdResponse>): string[] => {
-  const actions: string[] = [];
-  if (!result.isHealthy && result.diseases.length > 0) {
-    actions.push(`Check for ${result.diseases[0].name}`);
-    actions.push('Consult a local nursery if condition worsens');
-  } else {
-    actions.push('Plant looks healthy — keep up the good care!');
-  }
-  actions.push('Save to My Plants to set up watering reminders');
-  return actions;
-};
+}

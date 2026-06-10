@@ -8,6 +8,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { ProfileStackParamList } from '../../../navigation/types';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
@@ -86,15 +89,19 @@ const getMemberSince = (createdAt: any): string => {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
+type ProfileNav = StackNavigationProp<ProfileStackParamList, 'Profile'>;
+
 export const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation<ProfileNav>();
   const { user, signOut } = useAuthStore();
-  const { plan, scansUsed, scanLimit, chatsUsed, chatLimit } = useSubscriptionStore();
+  const { plan, scansUsed, scanLimit, chatsUsed, chatLimit, scansRemainingThisWeek, isPremiumActive } = useSubscriptionStore();
   const { plants } = usePlantsStore();
 
-  const initials  = user?.name ? getInitials(user.name) : 'G';
-  const thriving  = plants.filter(p => p.healthStatus === 'Healthy').length;
-  const year      = getMemberSince(user?.createdAt);
-  const isPremium = plan === 'premium';
+  const initials   = user?.name ? getInitials(user.name) : 'G';
+  const thriving   = plants.filter(p => p.healthStatus === 'Healthy').length;
+  const year       = getMemberSince(user?.createdAt);
+  const isPremium  = isPremiumActive();
+  const remaining  = scansRemainingThisWeek();
 
   const achievements = [
     {
@@ -186,8 +193,13 @@ export const ProfileScreen: React.FC = () => {
             <View style={styles.premiumLeft}>
               <Text style={styles.premiumLabel}>LAWNUP PREMIUM</Text>
               <Text style={styles.premiumTitle}>Unlimited scans,{'\n'}zero limits.</Text>
+              {remaining >= 0 && remaining <= 1 && (
+                <Text style={styles.premiumScansLeft}>
+                  {remaining === 0 ? 'No free scans left this week' : `${remaining} free scan${remaining === 1 ? '' : 's'} left this week`}
+                </Text>
+              )}
             </View>
-            <Pressable style={styles.premiumBtn}>
+            <Pressable style={styles.premiumBtn} onPress={() => navigation.navigate('Paywall')}>
               <Text style={styles.premiumBtnText}>Upgrade</Text>
             </Pressable>
           </Animated.View>
@@ -466,6 +478,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Cormorant-SemiBold',
     color: '#FFFFFF',
     lineHeight: 24,
+  },
+  premiumScansLeft: {
+    fontSize: 11,
+    fontFamily: 'Nunito-Regular',
+    color: 'rgba(255,255,255,0.45)',
+    marginTop: 6,
   },
   premiumBtn: {
     backgroundColor: '#6F943E',

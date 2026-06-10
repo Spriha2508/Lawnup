@@ -22,7 +22,7 @@ export type OnboardingStackParamList = {
 export type ScanStackParamList = {
   ScanLanding: undefined;
   Camera: undefined;
-  Processing: { imageUri: string };
+  Processing: { imageUri: string; extraUris?: string[] };
   ScanResult: { scanId: string };
   Nickname: { scanId: string; speciesName: string };
 };

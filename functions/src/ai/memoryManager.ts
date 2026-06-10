@@ -1,10 +1,9 @@
-import * as functions from 'firebase-functions';
+import * as logger from 'firebase-functions/logger';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
-import OpenAI from 'openai';
+import { getOpenAI } from './openaiClient';
 import type { PlantMemoryDoc } from '../types';
 
 const db = getFirestore();
-const openai = new OpenAI({ apiKey: functions.config().openai?.key });
 
 export const getPlantMemory = async (
   uid: string,
@@ -28,7 +27,7 @@ export const updatePlantMemoryAsync = (
   aiResponse: string
 ): void => {
   updateMemory(uid, plantId, nickname, userMessage, aiResponse).catch((err) =>
-    functions.logger.error('Memory update failed', { uid, plantId, err })
+    logger.error('Memory update failed', { uid, plantId, err })
   );
 };
 
@@ -62,7 +61,7 @@ AI: "${aiResponse}"
 Write a NEW compressed summary (max 200 chars) of this plant's history, care patterns, and any recurring issues.
 Also list up to 3 recurring issues as a JSON array on the last line, format: ISSUES:["issue1","issue2"]`;
 
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAI().chat.completions.create({
     model: 'gpt-4.1-mini',
     messages: [{ role: 'user', content: summaryPrompt }],
     max_tokens: 200,

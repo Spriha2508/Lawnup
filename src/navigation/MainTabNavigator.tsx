@@ -12,7 +12,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { HomeScreen } from '../features/home/screens/HomeScreen';
 import { ScanNavigator } from './ScanNavigator';
 import { PlantsNavigator } from './PlantsNavigator';
-import { ProfileScreen } from '../features/profile/screens/ProfileScreen';
+import { ProfileNavigator } from './ProfileNavigator';
 import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -126,6 +126,7 @@ const TabButton: React.FC<{
     </Pressable>
   );
 });
+TabButton.displayName = 'TabButton';
 
 const CustomTabBar: React.FC<BottomTabBarProps> = memo(({ state, navigation }) => (
   <SafeAreaView edges={['bottom']} style={styles.bar}>
@@ -153,6 +154,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = memo(({ state, navigation }) =
     </View>
   </SafeAreaView>
 ));
+CustomTabBar.displayName = 'CustomTabBar';
 
 // ─── Navigator ─────────────────────────────────────────────────────────────────
 
@@ -167,7 +169,7 @@ export const MainTabNavigator: React.FC = () => (
     <Tab.Screen name="Home"    component={HomeScreen} />
     <Tab.Screen name="Plants"  component={PlantsNavigator} />
     <Tab.Screen name="Scan"    component={ScanNavigator} />
-    <Tab.Screen name="Profile" component={ProfileScreen} />
+    <Tab.Screen name="Profile" component={ProfileNavigator} />
   </Tab.Navigator>
 );
 

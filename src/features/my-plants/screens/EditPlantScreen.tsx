@@ -13,6 +13,8 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePlantsStore } from '../store/plantsStore';
+import { updatePlantInCloud } from '../services/plantService';
+import { useAuthStore } from '../../auth/store/authStore';
 import { PLANT_LOCATIONS } from '../../../constants/plants';
 import { track } from '../../../services/analytics/posthog';
 import type { PlantsStackParamList } from '../../../navigation/types';
@@ -36,6 +38,7 @@ export const EditPlantScreen: React.FC = () => {
   const { plantId } = route.params;
 
   const { plants, updatePlant } = usePlantsStore();
+  const { user } = useAuthStore();
   const plant = plants.find((p) => p.plantId === plantId) ?? null;
 
   const [nickname, setNickname] = useState(plant?.nickname ?? '');
@@ -50,12 +53,14 @@ export const EditPlantScreen: React.FC = () => {
     if (!isValid || !plant) return;
     setIsSaving(true);
     try {
-      updatePlant(plantId, {
+      const updates = {
         nickname: nickname.trim(),
         notes: notes.trim() || undefined,
         wateringFrequencyDays: wateringDays,
         location: location ?? undefined,
-      });
+      };
+      if (user) await updatePlantInCloud(user.uid, plantId, updates);
+      updatePlant(plantId, updates);
       track('plant_updated', { plantId, watering_days: wateringDays, has_notes: !!notes.trim() });
       navigation.goBack();
     } catch {
@@ -63,7 +68,7 @@ export const EditPlantScreen: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [isValid, plant, plantId, nickname, notes, wateringDays, location, updatePlant, navigation]);
+  }, [isValid, plant, plantId, nickname, notes, wateringDays, location, updatePlant, user, navigation]);
 
   if (!plant) {
     return (

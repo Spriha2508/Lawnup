@@ -23,6 +23,15 @@ import { NotificationProvider } from './src/app/providers/NotificationProvider';
 import { ErrorBoundary } from './src/shared/components/feedback/ErrorBoundary';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AnimatedSplash } from './src/shared/components/motion/AnimatedSplash';
+import { logger } from './src/shared/utils/logger';
+// DevOverlay is imported lazily so it is only bundled in __DEV__ builds
+const DevOverlay = __DEV__
+  ? require('./src/shared/components/feedback/DevOverlay').DevOverlay
+  : null;
+
+// Install global JS crash + unhandled-promise handlers before anything renders.
+// Errors will appear in Metro as [BUNDLE_CRASH] / [RUNTIME_ERROR] / [UNHANDLED_PROMISE].
+logger.installGlobalHandlers();
 
 LogBox.ignoreLogs([
   '@firebase/firestore',
@@ -45,12 +54,14 @@ const NAV_THEME = {
   },
 } as const;
 
-// Isolated so that splashDone state changes in App never cascade into the nav tree
+// Isolated so that splashDone state changes in App never cascade into the nav tree.
+// DevOverlay lives INSIDE NavigationContainer so its navigation hooks have context.
 const NavTree: React.FC = memo(() => (
   <NavigationContainer theme={NAV_THEME}>
     <NotificationProvider>
       <StatusBar style="dark" />
       <RootNavigator />
+      {DevOverlay ? <DevOverlay /> : null}
     </NotificationProvider>
   </NavigationContainer>
 ));
@@ -98,7 +109,7 @@ function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1, height: WINDOW_HEIGHT }}>
       <SafeAreaProvider>
-        <ErrorBoundary>
+        <ErrorBoundary screenName="App root">
           <QueryProvider>
             <NavTree />
           </QueryProvider>

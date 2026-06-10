@@ -12,7 +12,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Timestamp } from 'firebase/firestore';
 import { usePlantsStore } from '../store/plantsStore';
+import { savePlantToCloud } from '../services/plantService';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useScanStore } from '../../scan/store/scanStore';
 import { PLANT_LOCATIONS } from '../../../constants/plants';
@@ -33,11 +35,8 @@ const WATERING_OPTIONS = [
   { label: 'Fortnightly', value: 14 },
 ];
 
-const mockTs = (date: Date) => ({
-  seconds: Math.floor(date.getTime() / 1000),
-  nanoseconds: 0,
-  toDate: () => date,
-});
+// Real Firestore Timestamp — structurally satisfies the local Timestamp type
+const fsTs = (date: Date) => Timestamp.fromDate(date);
 
 export const AddPlantScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
@@ -80,15 +79,18 @@ export const AddPlantScreen: React.FC = () => {
         imageUrl: scanResult?.imageUri ?? '',
         healthStatus: scanResult?.isHealthy === false ? 'Needs Attention' : 'Healthy',
         wateringFrequencyDays: wateringDays,
-        lastWateredAt: mockTs(now),
-        nextWaterAt: mockTs(nextWater),
+        lastWateredAt: fsTs(now),
+        nextWaterAt: fsTs(nextWater),
         notes: notes.trim() || undefined,
         location: location ?? undefined,
         addedFromScanId: fromScanId,
-        createdAt: mockTs(now),
-        updatedAt: mockTs(now),
+        createdAt: fsTs(now),
+        updatedAt: fsTs(now),
       };
 
+      // Persist first; addPlant keeps navigation instant while the
+      // live snapshot reconciles the store.
+      await savePlantToCloud(user.uid, plant);
       addPlant(plant);
 
       logger.scan.nicknamed(species.trim(), nickname.trim());

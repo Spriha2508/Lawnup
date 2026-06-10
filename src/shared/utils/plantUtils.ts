@@ -3,10 +3,18 @@ import type { HealthStatus } from '../../constants/plants';
 import { REMINDER_MESSAGES } from '../../constants/plants';
 import type { ReminderType } from '../../constants/plants';
 
+function safeToDate(raw: any): Date {
+  if (raw && typeof raw.toDate === 'function') return raw.toDate();
+  if (raw instanceof Date) return raw;
+  if (raw) { const d = new Date(raw); if (!isNaN(d.getTime())) return d; }
+  return new Date();
+}
+
 export const getNextWaterDate = (plant: UserPlantDoc): Date => {
-  const last = plant.lastWateredAt.toDate();
+  const last = safeToDate(plant.lastWateredAt);
   const next = new Date(last);
-  next.setDate(next.getDate() + plant.wateringFrequencyDays);
+  const freq = plant.wateringFrequencyDays > 0 ? plant.wateringFrequencyDays : 3;
+  next.setDate(next.getDate() + freq);
   return next;
 };
 
