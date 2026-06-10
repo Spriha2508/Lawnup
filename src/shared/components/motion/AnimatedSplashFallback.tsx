@@ -1,98 +1,104 @@
 /**
- * AnimatedSplashFallback — Skia-free splash used when the native Skia module
- * isn't present (Expo Go / pre-Skia binary). Reanimated + SVG only, so it boots
- * everywhere. Same `onDone` contract and ~2.6s timing as the Skia version.
+ * AnimatedSplashFallback — Skia-free premium splash (Expo Go / pre-Skia binary).
+ * Reanimated + svg only. Same dark, luxurious direction & timing as the Skia
+ * version, minus the canvas particles. Same onDone contract.
  */
 
-import React, { useEffect, useRef, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  withDelay,
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, Easing,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { theme } from '@constants/designSystem';
 
-const { color: C } = theme;
-const TOTAL_DURATION = 3500; // hold a little longer on the logo
+const { width: W, height: H } = Dimensions.get('window');
+const BG_TOP = '#0E1A12';
+const GOLD = '#CBB682';
+const SAGE = '#B7CE8F';
+const TOTAL_DURATION = 4000;
 
-interface Props {
-  onDone: () => void;
-}
+const LEAF = 'M12 2 C18 6 22 12 12 22 C2 12 6 6 12 2 Z M12 4 L12 20';
+
+interface Props { onDone: () => void }
+
+const DriftLeaf: React.FC<{ x: number; delay: number; dur: number; size: number; op: number }> = ({ x, delay, dur, size, op }) => {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.value = withDelay(delay, withRepeat(withTiming(1, { duration: dur, easing: Easing.linear }), -1, false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const style = useAnimatedStyle(() => ({
+    opacity: Math.sin(t.value * Math.PI) * op,
+    transform: [{ translateX: x + (t.value - 0.5) * 40 }, { translateY: -30 + t.value * (H * 0.85) }, { rotate: `${t.value * 90}deg` }],
+  }));
+  return (
+    <Animated.View style={[styles.drift, style]}>
+      <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={LEAF} fill={SAGE} /></Svg>
+    </Animated.View>
+  );
+};
 
 export const AnimatedSplashFallback: React.FC<Props> = ({ onDone }) => {
   const calledRef = useRef(false);
-
-  const iconScale  = useSharedValue(0.6);
-  const iconOpacity = useSharedValue(0);
+  const markScale = useSharedValue(0.7);
+  const markOpacity = useSharedValue(0);
   const wordOpacity = useSharedValue(0);
-  const wordY       = useSharedValue(16);
-  const tagOpacity  = useSharedValue(0);
-  const container   = useSharedValue(1);
+  const wordY = useSharedValue(12);
+  const tagOpacity = useSharedValue(0);
+  const container = useSharedValue(1);
 
-  const finish = useCallback(() => {
-    if (calledRef.current) return;
-    calledRef.current = true;
-    onDone();
-  }, [onDone]);
+  const finish = useCallback(() => { if (calledRef.current) return; calledRef.current = true; onDone(); }, [onDone]);
+
+  const drifts = useMemo(() => [
+    { x: W * 0.2, delay: 600, dur: 7000, size: 26, op: 0.14 },
+    { x: W * 0.55, delay: 1600, dur: 8200, size: 20, op: 0.12 },
+    { x: W * 0.78, delay: 1000, dur: 7600, size: 30, op: 0.10 },
+  ], []);
 
   useEffect(() => {
-    const { spring, ease } = theme.motion;
-    iconScale.value   = withSpring(1, spring.bouncy);
-    iconOpacity.value = withTiming(1, { duration: 500 });
-    wordOpacity.value = withDelay(400, withTiming(1, { duration: 500 }));
-    wordY.value       = withDelay(400, withSpring(0, spring.gentle));
-    tagOpacity.value  = withDelay(700, withTiming(1, { duration: 450 }));
-    container.value   = withDelay(TOTAL_DURATION - 450, withTiming(0, { duration: 450, easing: ease.smooth }));
-
+    const easeOut = Easing.out(Easing.cubic);
+    markScale.value = withDelay(200, withTiming(1, { duration: 1000, easing: easeOut }));
+    markOpacity.value = withDelay(200, withTiming(1, { duration: 800 }));
+    wordOpacity.value = withDelay(900, withTiming(1, { duration: 700, easing: easeOut }));
+    wordY.value = withDelay(900, withTiming(0, { duration: 700, easing: easeOut }));
+    tagOpacity.value = withDelay(1300, withTiming(1, { duration: 600 }));
+    container.value = withDelay(TOTAL_DURATION - 450, withTiming(0, { duration: 450, easing: easeOut }));
     const t = setTimeout(finish, TOTAL_DURATION);
     return () => { clearTimeout(t); finish(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const containerStyle = useAnimatedStyle(() => ({ opacity: container.value }));
-  const iconStyle = useAnimatedStyle(() => ({ opacity: iconOpacity.value, transform: [{ scale: iconScale.value }] }));
+  const markStyle = useAnimatedStyle(() => ({ opacity: markOpacity.value, transform: [{ scale: markScale.value }] }));
   const wordStyle = useAnimatedStyle(() => ({ opacity: wordOpacity.value, transform: [{ translateY: wordY.value }] }));
-  const tagStyle  = useAnimatedStyle(() => ({ opacity: tagOpacity.value }));
+  const tagStyle = useAnimatedStyle(() => ({ opacity: tagOpacity.value }));
 
   return (
     <Animated.View style={[styles.root, containerStyle]}>
-      <Animated.View style={[styles.iconBox, iconStyle]}>
-        <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
-          <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill="rgba(255,255,255,0.94)" />
-          <Path d="M12 3V21" stroke="rgba(111,148,62,0.4)" strokeWidth={1.4} strokeLinecap="round" />
-          <Path d="M12 13C9.5 15 6.5 15 5 16.5M12 16C14.5 18 17.5 17.2 19 18" stroke="rgba(111,148,62,0.3)" strokeWidth={1.1} strokeLinecap="round" />
-        </Svg>
-      </Animated.View>
+      {drifts.map((d, i) => <DriftLeaf key={i} {...d} />)}
 
-      <Animated.Text style={[styles.brand, wordStyle]}>Lawnup</Animated.Text>
-      <Animated.Text style={[styles.tag, tagStyle]}>YOUR AI PLANT COMPANION</Animated.Text>
+      <View style={styles.center}>
+        <Animated.View style={[styles.mark, markStyle]}>
+          <Svg width={64} height={64} viewBox="0 0 24 24" fill="none">
+            <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" stroke={GOLD} strokeWidth={1.3} strokeLinejoin="round" />
+            <Path d="M12 3V21" stroke={GOLD} strokeWidth={1} strokeLinecap="round" opacity={0.7} />
+            <Path d="M12 12C9.7 13.9 6.8 13.9 5.2 15.5M12 15C14.3 16.8 17.2 16.1 18.8 17.6" stroke={SAGE} strokeWidth={0.9} strokeLinecap="round" opacity={0.7} />
+          </Svg>
+        </Animated.View>
+
+        <Animated.Text style={[styles.brand, wordStyle]}>Lawnup</Animated.Text>
+        <View style={styles.rule} />
+        <Animated.Text style={[styles.tag, tagStyle]}>YOUR AI PLANT COMPANION</Animated.Text>
+      </View>
     </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: C.canvas,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.md,
-    zIndex: theme.z.splash,
-  },
-  iconBox: {
-    width: 76, height: 76, borderRadius: 22,
-    backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center',
-    marginBottom: theme.spacing.xs, ...theme.shadows.cta,
-  },
-  brand: {
-    fontFamily: theme.fonts.serifMediumItalic,
-    fontSize: 44, color: C.textPrimary, letterSpacing: -0.5,
-  },
-  tag: {
-    fontFamily: theme.fonts.sansMedium,
-    fontSize: 11, color: C.textMuted, letterSpacing: 3,
-  },
+  root: { ...StyleSheet.absoluteFillObject, backgroundColor: BG_TOP, alignItems: 'center', justifyContent: 'center', zIndex: theme.z.splash, overflow: 'hidden' },
+  drift: { position: 'absolute', top: 0 },
+  center: { alignItems: 'center' },
+  mark: { marginBottom: theme.spacing.xl },
+  brand: { fontFamily: theme.fonts.serifMediumItalic, fontSize: 46, color: '#F2EEE3', letterSpacing: 0.5 },
+  rule: { width: 34, height: 1, backgroundColor: GOLD, opacity: 0.6, marginVertical: 14 },
+  tag: { fontFamily: theme.fonts.sansMedium, fontSize: 10.5, color: 'rgba(203,182,126,0.78)', letterSpacing: 3.4 },
 });
