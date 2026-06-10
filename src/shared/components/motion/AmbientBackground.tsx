@@ -37,14 +37,15 @@ const ORBS: Orb[] = [
   { color: P.green[300],      size: W * 0.78, x:  W * 0.6,  y:  H * 0.72, dx: -16, dy: 18, grow: 0.09, opacity: 0.26, duration: 19000, delay: 1800 },
 ];
 
-const Orb: React.FC<{ orb: Orb; id: number }> = ({ orb, id }) => {
-  const t = useSharedValue(0);
+const Orb: React.FC<{ orb: Orb; id: number; animated: boolean }> = ({ orb, id, animated }) => {
+  const t = useSharedValue(animated ? 0 : 0.5);
   useEffect(() => {
+    if (!animated) return;
     t.value = withDelay(
       orb.delay,
       withRepeat(withTiming(1, { duration: orb.duration, easing: Easing.inOut(Easing.sin) }), -1, true),
     );
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [animated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const style = useAnimatedStyle(() => {
     const p = t.value;
@@ -74,10 +75,12 @@ const Orb: React.FC<{ orb: Orb; id: number }> = ({ orb, id }) => {
   );
 };
 
-export const AmbientBackground: React.FC<{ tint?: string; vignette?: boolean }> = ({ tint, vignette = true }) => (
+export const AmbientBackground: React.FC<{ tint?: string; vignette?: boolean; animated?: boolean }> = ({
+  tint, vignette = true, animated = true,
+}) => (
   <View style={[StyleSheet.absoluteFill, { backgroundColor: tint ?? theme.color.canvas }]} pointerEvents="none">
     {ORBS.map((orb, i) => (
-      <Orb key={i} orb={orb} id={i} />
+      <Orb key={i} orb={orb} id={i} animated={animated} />
     ))}
     {vignette && (
       <Svg style={StyleSheet.absoluteFill} width={W} height={H} pointerEvents="none">

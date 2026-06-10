@@ -1,26 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useAuthNavigation } from '@navigation/AuthNavigationContext';
 import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
+import { PlantEmblem } from '@shared/components/motion/PlantEmblem';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
 
-const { width: W } = Dimensions.get('window');
-const { color: C, spacing: S, typography: T, radii: R, motion: M } = theme;
-
-// ─── Leaf app icon ────────────────────────────────────────────────────────────
-const AppIcon: React.FC = () => (
-  <View style={styles.iconBox}>
-    <Svg width={32} height={32} viewBox="0 0 32 32" fill="none">
-      <Path d="M16 4C16 4 6 8 6 17C6 22.5228 10.4772 27 16 27C21.5228 27 26 22.5228 26 17C26 8 16 4 16 4Z" fill="white" opacity={0.92} />
-      <Path d="M16 4L16 27" stroke="rgba(111,148,62,0.4)" strokeWidth={1.5} strokeLinecap="round" />
-      <Path d="M16 14C13 16 9 16 7 18M16 18C19 20 22 19 24 20" stroke="rgba(111,148,62,0.3)" strokeWidth={1} strokeLinecap="round" fill="none" />
-    </Svg>
-  </View>
-);
+const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 
 const AppleLogo: React.FC = () => (
   <Svg width={18} height={18} viewBox="0 0 814 1000" fill={C.textPrimary}>
@@ -43,50 +32,42 @@ export const LandingScreen: React.FC = () => {
   return (
     <View style={styles.root}>
       <AmbientBackground />
-
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        {/* Hero — staggered entrance */}
+        {/* Cinematic hero */}
         <View style={styles.hero}>
-          <Animated.View entering={FadeInDown.duration(M.duration.expressive).springify().damping(16)}>
-            <AppIcon />
+          <Animated.View entering={FadeIn.duration(M.duration.cinematic)} style={styles.emblem}>
+            <PlantEmblem size={108} />
           </Animated.View>
 
-          <Animated.Text entering={FadeInDown.delay(120).duration(M.duration.expressive)} style={styles.eyebrow}>
-            WELCOME TO LAWNUP
+          <Animated.Text entering={FadeInDown.delay(240).duration(M.duration.expressive)} style={styles.eyebrow}>
+            YOUR AI PLANT COMPANION
           </Animated.Text>
 
-          <Animated.Text entering={FadeInDown.delay(220).duration(M.duration.expressive)} style={styles.headline}>
-            Your plants{'\n'}deserve better
+          <Animated.Text entering={FadeInDown.delay(340).duration(M.duration.expressive)} style={styles.headline}>
+            Grow something{'\n'}<Text style={styles.headlineAccent}>beautiful.</Text>
           </Animated.Text>
 
-          <Animated.View entering={FadeIn.delay(360)} style={styles.dotSeparator} />
-
-          <Animated.Text entering={FadeInDown.delay(420).duration(M.duration.expressive)} style={styles.body}>
-            A cinematic, AI-powered companion{'\n'}
-            that helps your greenery thrive —{'\n'}
-            one leaf at a time.
+          <Animated.Text entering={FadeInDown.delay(460).duration(M.duration.expressive)} style={styles.body}>
+            Identify, diagnose and care for every plant in your home — with a companion that learns your garden.
           </Animated.Text>
         </View>
 
-        {/* Auth buttons — rise in last */}
-        <Animated.View entering={FadeInUp.delay(560).duration(M.duration.expressive)} style={styles.buttons}>
-          <PressableScale style={styles.btnEmail} onPress={() => navigate('Signup')}>
+        {/* Auth actions */}
+        <Animated.View entering={FadeInUp.delay(600).duration(M.duration.expressive)} style={styles.buttons}>
+          <PressableScale style={styles.btnEmail} onPress={() => navigate('Signup')} to={0.97}>
             <Text style={styles.btnEmailText}>Continue with Email</Text>
           </PressableScale>
 
-          <PressableScale style={styles.btnSocial} onPress={() => navigate('Signup')}>
-            <AppleLogo />
-            <Text style={styles.btnSocialText}>Continue with Apple</Text>
-          </PressableScale>
-
-          <PressableScale style={styles.btnSocial} onPress={() => navigate('Signup')}>
-            <GoogleLogo />
-            <Text style={styles.btnSocialText}>Continue with Google</Text>
-          </PressableScale>
-
-          <Text style={styles.terms}>
-            By continuing you agree to our <Text style={styles.termsLink}>Terms & Privacy</Text>.
-          </Text>
+          <View style={styles.socialRow}>
+            <PressableScale style={styles.btnSocial} onPress={() => navigate('Signup')} to={0.95}>
+              <AppleLogo />
+              <Text style={styles.btnSocialText}>Apple</Text>
+            </PressableScale>
+            <PressableScale style={styles.btnSocial} onPress={() => navigate('Signup')} to={0.95}>
+              <GoogleLogo />
+              <Text style={styles.btnSocialText}>Google</Text>
+            </PressableScale>
+          </View>
 
           <View style={styles.signinRow}>
             <Text style={styles.signinLabel}>Already have an account?  </Text>
@@ -94,6 +75,10 @@ export const LandingScreen: React.FC = () => {
               <Text style={styles.signinLink}>Sign in</Text>
             </PressableScale>
           </View>
+
+          <Text style={styles.terms}>
+            By continuing you agree to our <Text style={styles.termsLink}>Terms & Privacy</Text>.
+          </Text>
         </Animated.View>
       </SafeAreaView>
     </View>
@@ -101,47 +86,29 @@ export const LandingScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.canvas, overflow: 'hidden' },
+  root: { flex: 1, backgroundColor: C.canvas },
+  safe: { flex: 1, paddingHorizontal: 30, justifyContent: 'space-between', paddingBottom: S.md },
 
-  blobGreen: {
-    position: 'absolute',
-    width: W * 0.85, height: W * 0.85, borderRadius: W * 0.425,
-    backgroundColor: 'rgba(160,195,120,0.20)', top: -W * 0.35, left: -W * 0.2,
-  },
-  blobGreenLow: {
-    position: 'absolute',
-    width: W * 0.65, height: W * 0.65, borderRadius: W * 0.325,
-    backgroundColor: 'rgba(140,180,100,0.10)', bottom: -W * 0.22, right: -W * 0.12,
-  },
+  hero: { flex: 1, justifyContent: 'center' },
+  emblem: { marginBottom: S['3xl'], marginLeft: -S.xs },
+  eyebrow: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2.8, marginBottom: S.lg },
+  headline: { fontFamily: F.serifMedium, fontSize: 52, lineHeight: 56, letterSpacing: -0.7, color: C.textPrimary, marginBottom: S.xl },
+  headlineAccent: { fontFamily: F.serifMediumItalic, color: C.primary },
+  body: { ...T.bodyLg, color: C.textSecondary, lineHeight: 27, maxWidth: '94%' },
 
-  safe: { flex: 1, paddingHorizontal: 28, justifyContent: 'space-between', paddingBottom: S.md },
-
-  hero: { flex: 1, justifyContent: 'center', paddingTop: S.xl },
-  iconBox: {
-    width: 56, height: 56, borderRadius: R.lg,
-    backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center',
-    marginBottom: 28, ...theme.shadows.cta,
-  },
-  eyebrow: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: S.lg, fontSize: 11 },
-  headline: { ...T.display, fontFamily: theme.fonts.serifMedium, fontSize: 44, lineHeight: 50, color: C.textPrimary, marginBottom: S.xl },
-  dotSeparator: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.primary, marginBottom: S.xl },
-  body: { ...T.bodyLg, color: C.textSecondary, lineHeight: 26 },
-
-  buttons: { gap: S.sm + 2, paddingBottom: S.xs },
-  btnEmail: {
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: C.inkBtn, borderRadius: R.pill, paddingVertical: S.lg,
-  },
-  btnEmailText: { ...T.button, color: C.onInkBtn, fontFamily: theme.fonts.sansMedium },
+  buttons: { gap: S.md },
+  btnEmail: { alignItems: 'center', justifyContent: 'center', backgroundColor: C.inkBtn, borderRadius: R.pill, paddingVertical: 18, ...theme.shadows.cta },
+  btnEmailText: { ...T.button, color: C.onInkBtn, fontFamily: F.sansMedium },
+  socialRow: { flexDirection: 'row', gap: S.md },
   btnSocial: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: S.sm + 2,
-    backgroundColor: C.surface, borderRadius: R.pill, paddingVertical: 15,
-    borderWidth: 1.5, borderColor: C.border,
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: S.sm,
+    backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: R.pill, paddingVertical: 15,
+    borderWidth: 1, borderColor: C.border,
   },
   btnSocialText: { ...T.bodyStrong, color: C.textPrimary },
-  terms: { ...T.caption, color: C.textMuted, textAlign: 'center', marginTop: S.xs },
-  termsLink: { color: C.textSecondary, fontFamily: theme.fonts.sansMedium },
   signinRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: S.xs },
   signinLabel: { ...T.bodyMd, color: C.textMuted },
-  signinLink: { ...T.bodyMd, fontFamily: theme.fonts.sansBold, color: C.primary },
+  signinLink: { ...T.bodyMd, fontFamily: F.sansBold, color: C.primary },
+  terms: { ...T.caption, color: C.textMuted, textAlign: 'center', marginTop: S.xs },
+  termsLink: { color: C.textSecondary, fontFamily: F.sansMedium },
 });
