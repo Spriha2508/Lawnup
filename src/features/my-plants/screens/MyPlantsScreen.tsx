@@ -1,60 +1,48 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Pressable,
-  StyleSheet,
-  Dimensions,
-} from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  FadeIn,
-} from 'react-native-reanimated';
-import { DS } from '../../../constants/ds';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 import { PlantCard } from '../../../shared/components/ui/PlantCard';
+import { PressableScale } from '@shared/components/motion/PressableScale';
+import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
 import { usePlantsStore } from '../store/plantsStore';
 import { useOnboardingStore } from '../../onboarding/store/onboardingStore';
 import { getCurrentWeather } from '../../../services/weather/weatherService';
-import { getTodayNarrative, getGardenSummary } from '../../../services/reminders/reminderService';
+import { getTodayNarrative } from '../../../services/reminders/reminderService';
+import { theme } from '@constants/designSystem';
 import type { WeatherData } from '../../../services/weather/weatherService';
 import type { UserPlantDoc } from '../../../types/firestore.types';
 
 const { width: SCREEN_W } = Dimensions.get('window');
+const { color: C, spacing: S, typography: T, radii: R, fonts: F } = theme;
 const CONTENT_W = Math.min(SCREEN_W, 430);
-const H_PAD = DS.space.screenH;
-const CARD_GAP = DS.space.cardGap;
+const H_PAD = S.xl;
+const CARD_GAP = 12;
 const CARD_W = Math.floor((CONTENT_W - H_PAD * 2 - CARD_GAP) / 2);
 
 type FilterKey = 'All' | 'Thriving' | 'Needs Care' | 'Indoor' | 'Outdoor';
 const FILTERS: FilterKey[] = ['All', 'Thriving', 'Needs Care', 'Indoor', 'Outdoor'];
-
-const INDOOR_KEYWORDS  = ['living room', 'bedroom', 'kitchen', 'bathroom', 'office', 'study', 'hall', 'balcony', 'indoor'];
+const INDOOR_KEYWORDS = ['living room', 'bedroom', 'kitchen', 'bathroom', 'office', 'study', 'hall', 'balcony', 'indoor'];
 const OUTDOOR_KEYWORDS = ['garden', 'terrace', 'lawn', 'yard', 'outdoor', 'patio', 'driveway'];
 
 function matchesFilter(plant: UserPlantDoc, filter: FilterKey): boolean {
-  if (filter === 'All')       return true;
-  if (filter === 'Thriving')  return plant.healthStatus === 'Healthy';
+  if (filter === 'All') return true;
+  if (filter === 'Thriving') return plant.healthStatus === 'Healthy';
   if (filter === 'Needs Care') return plant.healthStatus !== 'Healthy';
   const loc = (plant.location ?? '').toLowerCase();
-  if (filter === 'Indoor')  return INDOOR_KEYWORDS.some(k => loc.includes(k)) || !OUTDOOR_KEYWORDS.some(k => loc.includes(k));
+  if (filter === 'Indoor') return INDOOR_KEYWORDS.some(k => loc.includes(k)) || !OUTDOOR_KEYWORDS.some(k => loc.includes(k));
   if (filter === 'Outdoor') return OUTDOOR_KEYWORDS.some(k => loc.includes(k));
   return true;
 }
 
-function weatherEmoji(w: WeatherData): string {
-  if (w.isRaining) return '🌧';
-  if (w.isHot && w.humidity > 70) return '💧';
-  if (w.isHot) return '☀️';
-  if (w.isHumid) return '💧';
-  if (w.tempC < 15) return '🌤';
-  return '✦';
-}
+const LeafMark: React.FC<{ size?: number; color?: string }> = ({ size = 30, color = C.primary }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill={color} opacity={0.9} />
+    <Path d="M12 3V21" stroke={C.canvas} strokeWidth={1.3} strokeLinecap="round" />
+  </Svg>
+);
 
 export const MyPlantsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -63,290 +51,155 @@ export const MyPlantsScreen: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('All');
   const [weather, setWeather] = useState<WeatherData | null>(null);
 
-  useEffect(() => {
-    if (city) {
-      getCurrentWeather(city).then(setWeather).catch(() => {});
-    }
-  }, [city]);
+  useEffect(() => { if (city) getCurrentWeather(city).then(setWeather).catch(() => {}); }, [city]);
 
-  const filtered = useMemo(
-    () => plants.filter(p => matchesFilter(p, activeFilter)),
-    [plants, activeFilter],
-  );
-
+  const filtered = useMemo(() => plants.filter(p => matchesFilter(p, activeFilter)), [plants, activeFilter]);
   const thriving = plants.filter(p => p.healthStatus === 'Healthy').length;
   const needCare = plants.filter(p => p.healthStatus !== 'Healthy').length;
+  const todayNarrative = getTodayNarrative(plants, weather, city || undefined);
 
-  const todayNarrative  = getTodayNarrative(plants, weather, city || undefined);
-  const gardenSummary   = getGardenSummary(plants, weather);
+  const handlePlantPress = useCallback((plantId: string) => navigation.navigate('PlantDetail', { plantId }), [navigation]);
 
-  const handlePlantPress = useCallback((plantId: string) => {
-    navigation.navigate('PlantDetail', { plantId });
-  }, [navigation]);
-
-  // Empty state
   if (plants.length === 0) {
     return (
-      <SafeAreaView style={styles.root}>
-        <View style={styles.emptyContainer}>
-          <View style={styles.emptyIconWrap}>
-            <Text style={styles.emptyMark}>✦</Text>
-          </View>
-          <Text style={styles.emptyTitle}>Your future garden starts here</Text>
-          <Text style={styles.emptySub}>
-            Identify any plant around you and it'll live here. Your green space is one scan away.
-          </Text>
-          <TouchableOpacity
-            style={styles.emptyBtn}
-            onPress={() => navigation.navigate('Scan')}
-            activeOpacity={0.8}
-          >
+      <View style={styles.root}>
+        <AmbientBackground animated={false} />
+        <SafeAreaView style={styles.emptyContainer}>
+          <View style={styles.emptyIconWrap}><LeafMark size={36} /></View>
+          <Text style={styles.emptyTitle}>Your living collection{'\n'}starts here</Text>
+          <Text style={styles.emptySub}>Identify any plant around you and it'll take root here. Your green space is one scan away.</Text>
+          <PressableScale style={styles.emptyBtn} onPress={() => navigation.navigate('Scan')} to={0.97}>
             <Text style={styles.emptyBtnText}>Identify your first plant  →</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+          </PressableScale>
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
-      <FlatList
-        data={filtered}
-        keyExtractor={p => p.plantId}
-        numColumns={2}
-        showsVerticalScrollIndicator={false}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.listContent}
-        ListHeaderComponent={
-          <GardenHeader
-            totalPlants={plants.length}
-            thriving={thriving}
-            needCare={needCare}
-            todayNarrative={todayNarrative}
-            gardenSummary={gardenSummary}
-            weather={weather}
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-            onAdd={() => navigation.navigate('AddPlant', {})}
-            weatherEmoji={weather ? weatherEmoji(weather) : '✦'}
-          />
-        }
-        renderItem={({ item, index }) => (
-          <PlantCard
-            plant={item}
-            width={CARD_W}
-            index={index}
-            onPress={() => handlePlantPress(item.plantId)}
-          />
-        )}
-        ListEmptyComponent={
-          <Animated.View entering={FadeIn.duration(300)} style={styles.emptyFilter}>
-            <Text style={styles.emptyFilterText}>No plants here yet</Text>
-          </Animated.View>
-        }
-      />
-    </SafeAreaView>
+    <View style={styles.root}>
+      <AmbientBackground animated={false} vignette={false} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <FlatList
+          data={filtered}
+          keyExtractor={p => p.plantId}
+          numColumns={2}
+          showsVerticalScrollIndicator={false}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            <GardenHeader
+              total={plants.length} thriving={thriving} needCare={needCare}
+              todayNarrative={todayNarrative} weather={weather}
+              activeFilter={activeFilter} onFilterChange={setActiveFilter}
+              onAdd={() => navigation.navigate('AddPlant', {})}
+            />
+          }
+          renderItem={({ item, index }) => (
+            <PlantCard plant={item} width={CARD_W} index={index} onPress={() => handlePlantPress(item.plantId)} />
+          )}
+          ListEmptyComponent={
+            <Animated.View entering={FadeIn.duration(300)} style={styles.emptyFilter}>
+              <Text style={styles.emptyFilterText}>No plants here yet</Text>
+            </Animated.View>
+          }
+        />
+      </SafeAreaView>
+    </View>
   );
 };
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
-
+// ─── Header ──────────────────────────────────────────────────────────────────
 interface HeaderProps {
-  totalPlants: number;
-  thriving: number;
-  needCare: number;
-  todayNarrative: string;
-  gardenSummary: string;
-  weather: WeatherData | null;
-  activeFilter: FilterKey;
-  onFilterChange: (f: FilterKey) => void;
-  onAdd: () => void;
-  weatherEmoji: string;
+  total: number; thriving: number; needCare: number;
+  todayNarrative: string; weather: WeatherData | null;
+  activeFilter: FilterKey; onFilterChange: (f: FilterKey) => void; onAdd: () => void;
 }
 
-const GardenHeader: React.FC<HeaderProps> = ({
-  totalPlants, thriving, needCare,
-  todayNarrative, weather,
-  activeFilter, onFilterChange, onAdd, weatherEmoji,
-}) => (
-  <View style={styles.header}>
-    {/* Title row */}
+const GardenHeader: React.FC<HeaderProps> = ({ total, thriving, needCare, todayNarrative, weather, activeFilter, onFilterChange, onAdd }) => (
+  <Animated.View entering={FadeInDown.duration(theme.motion.duration.expressive)} style={styles.header}>
     <View style={styles.titleRow}>
       <View>
-        <Text style={styles.eyebrow}>MY GARDEN</Text>
-        <Text style={styles.title}>My Plants</Text>
+        <Text style={styles.eyebrow}>YOUR LIVING COLLECTION</Text>
+        <Text style={styles.title}>My garden</Text>
       </View>
-      <AddButton onPress={onAdd} />
+      <PressableScale style={[styles.addBtn, theme.shadows.cta]} onPress={onAdd} to={0.9}>
+        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none"><Path d="M12 5V19M5 12H19" stroke={C.onInkBtn} strokeWidth={2.2} strokeLinecap="round" /></Svg>
+      </PressableScale>
     </View>
 
-    {/* Today's garden narrative — weather-aware */}
+    {/* Today banner */}
     <View style={styles.todayBanner}>
-      <Text style={styles.todayEmoji}>{weatherEmoji}</Text>
-      <Text style={styles.todayText}>{todayNarrative}</Text>
-      {weather && (
-        <Text style={styles.todayWeather}>{weather.tempC}°C · {weather.humidity}%</Text>
-      )}
+      <View style={styles.todayDot} />
+      <Text style={styles.todayText} numberOfLines={2}>{todayNarrative}</Text>
+      {weather && <Text style={styles.todayWeather}>{weather.tempC}° · {weather.humidity}%</Text>}
     </View>
 
-    {/* Filter tabs */}
+    {/* Filters */}
     <FlatList
-      horizontal
-      data={FILTERS}
-      keyExtractor={f => f}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.filtersContent}
-      style={styles.filters}
+      horizontal data={FILTERS} keyExtractor={f => f} showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.filtersContent} style={styles.filters}
       renderItem={({ item: f }) => (
-        <FilterPill
-          label={f}
-          active={activeFilter === f}
-          onPress={() => onFilterChange(f)}
-        />
+        <Pressable onPress={() => onFilterChange(f)} style={[styles.pill, activeFilter === f && styles.pillActive]}>
+          <Text style={[styles.pillText, activeFilter === f && styles.pillTextActive]}>{f}</Text>
+        </Pressable>
       )}
     />
 
     {/* Stats */}
     <View style={styles.statsRow}>
-      <StatItem label="PLANTS"    value={totalPlants} />
+      <StatItem label="PLANTS" value={total} />
       <View style={styles.statDivider} />
-      <StatItem label="THRIVING"  value={thriving} />
+      <StatItem label="THRIVING" value={thriving} tone={C.healthyFg} />
       <View style={styles.statDivider} />
-      <StatItem label="NEED CARE" value={needCare} />
+      <StatItem label="NEED CARE" value={needCare} tone={C.waterFg} />
     </View>
-  </View>
+  </Animated.View>
 );
 
-const AddButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
-  const scale = useSharedValue(1);
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  return (
-    <Animated.View style={style}>
-      <Pressable
-        onPressIn={() => { scale.value = withSpring(0.92, { damping: 20 }); }}
-        onPressOut={() => { scale.value = withSpring(1, { damping: 18 }); }}
-        onPress={onPress}
-        style={[styles.addBtn, DS.shadow.addBtn]}
-      >
-        <Text style={styles.addBtnText}>+</Text>
-      </Pressable>
-    </Animated.View>
-  );
-};
-
-const FilterPill: React.FC<{ label: string; active: boolean; onPress: () => void }> = ({
-  label, active, onPress,
-}) => (
-  <Pressable onPress={onPress} style={[styles.pill, active && styles.pillActive]}>
-    <Text style={[styles.pillText, active && styles.pillTextActive]}>{label}</Text>
-  </Pressable>
-);
-
-const StatItem: React.FC<{ label: string; value: number }> = ({ label, value }) => (
+const StatItem: React.FC<{ label: string; value: number; tone?: string }> = ({ label, value, tone }) => (
   <View style={styles.statItem}>
+    <Text style={[styles.statValue, tone && { color: tone }]}>{value}</Text>
     <Text style={styles.statLabel}>{label}</Text>
-    <Text style={styles.statValue}>{value}</Text>
   </View>
 );
-
-// ── Styles ─────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F1E8' },
+  root: { flex: 1, backgroundColor: C.canvas },
 
-  // Header
-  header: { paddingHorizontal: H_PAD, paddingTop: 8, paddingBottom: 0 },
-  titleRow: {
-    flexDirection: 'row', alignItems: 'flex-end',
-    justifyContent: 'space-between', marginBottom: 16,
-  },
-  eyebrow: {
-    fontSize: DS.type.eyebrow.size, fontFamily: DS.type.eyebrow.family,
-    color: DS.color.inkMuted, letterSpacing: DS.type.eyebrow.tracking,
-    textTransform: 'uppercase', marginBottom: 3,
-  },
-  title: {
-    fontSize: 34, fontFamily: 'Cormorant-SemiBold', color: '#111111', letterSpacing: -0.3,
-  },
-  addBtn: {
-    width: 40, height: 40, borderRadius: DS.radius.addBtn,
-    backgroundColor: DS.color.forestDark, alignItems: 'center', justifyContent: 'center',
-  },
-  addBtnText: {
-    fontSize: 22, color: '#FFFFFF', lineHeight: 26, fontFamily: 'Nunito-Regular', marginTop: -1,
-  },
+  header: { paddingHorizontal: H_PAD, paddingTop: S.sm },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: S.lg },
+  eyebrow: { ...T.eyebrow, color: C.textMuted, marginBottom: S.xs },
+  title: { fontFamily: F.serifMedium, fontSize: 36, letterSpacing: -0.4, color: C.textPrimary },
+  addBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: C.inkBtn, alignItems: 'center', justifyContent: 'center' },
 
-  // Today banner
-  todayBanner: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#EEE7DA', borderRadius: 14,
-    paddingHorizontal: 14, paddingVertical: 12,
-    marginBottom: 16, gap: 10,
-    borderWidth: 1, borderColor: '#DDD4C7',
-  },
-  todayEmoji: { fontSize: 16 },
-  todayText: {
-    flex: 1, fontFamily: 'Nunito-SemiBold', fontSize: 13, color: '#3D3D35', lineHeight: 19,
-  },
-  todayWeather: {
-    fontFamily: 'Nunito-Regular', fontSize: 11, color: '#9E9A94', flexShrink: 0,
-  },
+  todayBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: R.lg, paddingHorizontal: S.lg, paddingVertical: S.md, marginBottom: S.lg, gap: S.md, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
+  todayDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.primary },
+  todayText: { flex: 1, ...T.caption, fontFamily: F.sansMedium, fontSize: 13, color: C.textPrimary, lineHeight: 18 },
+  todayWeather: { ...T.caption, fontSize: 11, color: C.textMuted, flexShrink: 0 },
 
-  // Filters
-  filters: { marginBottom: 16, marginHorizontal: -H_PAD },
+  filters: { marginBottom: S.lg, marginHorizontal: -H_PAD },
   filtersContent: { paddingHorizontal: H_PAD, gap: 8 },
-  pill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: DS.radius.pill },
-  pillActive: { backgroundColor: '#111111' },
-  pillText: { fontSize: 13, fontFamily: 'Nunito-SemiBold', color: '#A0A094', letterSpacing: 0.1 },
-  pillTextActive: { color: '#FFFFFF' },
+  pill: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: R.pill, backgroundColor: C.card, borderWidth: 1, borderColor: C.border },
+  pillActive: { backgroundColor: C.inkBtn, borderColor: C.inkBtn },
+  pillText: { ...T.label, fontSize: 13, color: C.textMuted },
+  pillTextActive: { color: C.onInkBtn },
 
-  // Stats
-  statsRow: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#EEE7DA', borderRadius: 16,
-    paddingVertical: 14, marginBottom: 18,
-  },
+  statsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: R.xl, paddingVertical: S.lg, marginBottom: S.xl, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
   statItem: { flex: 1, alignItems: 'center' },
-  statLabel: {
-    fontSize: DS.type.statLabel.size, fontFamily: DS.type.statLabel.family,
-    color: DS.color.inkMuted, letterSpacing: DS.type.statLabel.tracking,
-    textTransform: 'uppercase', marginBottom: 4,
-  },
-  statValue: {
-    fontSize: DS.type.statNum.size, fontFamily: DS.type.statNum.family,
-    color: DS.color.ink, letterSpacing: DS.type.statNum.tracking,
-  },
-  statDivider: { width: 1, height: 28, backgroundColor: DS.color.divider },
+  statLabel: { ...T.statLabel, color: C.textMuted, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 },
+  statValue: { fontFamily: F.sansHeavy, fontSize: 24, letterSpacing: -0.4, color: C.textPrimary },
+  statDivider: { width: 1, height: 30, backgroundColor: C.divider },
 
-  // Grid
-  listContent: { paddingBottom: 110 },
+  listContent: { paddingBottom: 120 },
   row: { paddingHorizontal: H_PAD, justifyContent: 'space-between' },
 
-  // Empty states
-  emptyContainer: {
-    flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32,
-  },
-  emptyIconWrap: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: 'rgba(111,148,62,0.08)',
-    borderWidth: 1, borderColor: 'rgba(111,148,62,0.18)',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 24,
-  },
-  emptyMark: { fontSize: 28, color: '#6F943E' },
-  emptyTitle: {
-    fontSize: DS.type.h2.size, fontFamily: DS.type.h2.family,
-    color: DS.color.ink, textAlign: 'center', marginBottom: 10,
-  },
-  emptySub: {
-    fontSize: DS.type.body.size, fontFamily: DS.type.body.family,
-    color: DS.color.inkMid, textAlign: 'center', lineHeight: 22, marginBottom: 28,
-  },
-  emptyBtn: {
-    backgroundColor: DS.color.forestDark, borderRadius: DS.radius.pill,
-    paddingVertical: 14, paddingHorizontal: 32,
-  },
-  emptyBtnText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: '#FFFFFF', letterSpacing: 0.2 },
+  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  emptyIconWrap: { width: 88, height: 88, borderRadius: 30, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center', marginBottom: S['2xl'] },
+  emptyTitle: { fontFamily: F.serifMedium, fontSize: 30, lineHeight: 35, color: C.textPrimary, textAlign: 'center', marginBottom: S.md },
+  emptySub: { ...T.bodyMd, color: C.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: S['2xl'] },
+  emptyBtn: { backgroundColor: C.inkBtn, borderRadius: R.pill, paddingVertical: S.lg, paddingHorizontal: S['3xl'], ...theme.shadows.cta },
+  emptyBtnText: { ...T.button, fontFamily: F.sansMedium, color: C.onInkBtn },
   emptyFilter: { alignItems: 'center', paddingVertical: 48 },
-  emptyFilterText: {
-    fontSize: DS.type.body.size, fontFamily: DS.type.body.family, color: DS.color.inkMid,
-  },
+  emptyFilterText: { ...T.bodyMd, color: C.textMuted },
 });

@@ -1,16 +1,14 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  FadeInDown,
-} from 'react-native-reanimated';
-import { DS } from '../../../constants/ds';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeInDown } from 'react-native-reanimated';
 import { computeHealthScore, getIKImageUrl } from '../../utils/plantUtils';
 import { getWaterInfo } from '../../../services/reminders/reminderService';
+import { HealthRing } from '../motion/HealthRing';
+import { theme } from '@constants/designSystem';
 import type { UserPlantDoc } from '../../../types/firestore.types';
+
+const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 
 interface PlantCardProps {
   plant: UserPlantDoc;
@@ -19,11 +17,8 @@ interface PlantCardProps {
   onPress: () => void;
 }
 
-function healthLabel(score: number): { label: string; bg: string; text: string } {
-  if (score >= 75) return { label: 'Healthy',    bg: DS.color.healthGreenBg, text: DS.color.healthGreenText };
-  if (score >= 45) return { label: 'Needs care', bg: DS.color.healthAmberBg, text: DS.color.healthAmberText };
-  return              { label: 'Needs care',  bg: DS.color.healthRedBg,   text: DS.color.healthRedText  };
-}
+const tone = (score: number) =>
+  score >= 75 ? C.healthyFg : score >= 45 ? C.waterFg : C.criticalFg;
 
 function scanAgo(isoDate?: string): string | null {
   if (!isoDate) return null;
@@ -32,74 +27,59 @@ function scanAgo(isoDate?: string): string | null {
   const days = Math.floor((Date.now() - then) / 86_400_000);
   if (days === 0) return 'Scanned today';
   if (days === 1) return 'Scanned yesterday';
-  if (days < 30)  return `Scanned ${days}d ago`;
+  if (days < 30) return `Scanned ${days}d ago`;
   const weeks = Math.floor(days / 7);
-  if (weeks < 8)  return `Scanned ${weeks}w ago`;
+  if (weeks < 8) return `Scanned ${weeks}w ago`;
   return null;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+const PLACEHOLDER: string[] = ['#D4EDD0', '#EDD4C8', '#D4DEED', '#EDE8D4', '#D4EDE8'];
+
 export const PlantCard: React.FC<PlantCardProps> = ({ plant, width, index, onPress }) => {
   const scale = useSharedValue(1);
-  const imageHeight = Math.round(width * 0.88);
+  const imageHeight = Math.round(width * 0.92);
   const score = computeHealthScore(plant);
-  const badge = healthLabel(score);
+  const t = tone(score);
   const ago = scanAgo(plant.scanDate);
   const waterInfo = getWaterInfo(plant);
   const showWaterAlert = waterInfo.status === 'overdue' || waterInfo.status === 'today';
+  const imageUrl = plant.imageUrl ? getIKImageUrl(plant.imageUrl, 'tr=w-400,h-360,q-80,fo-auto') : null;
+  const alertColor = waterInfo.status === 'overdue' ? C.criticalFg : C.waterFg;
 
-  const imageUrl = plant.imageUrl
-    ? getIKImageUrl(plant.imageUrl, 'tr=w-400,h-360,q-80,fo-auto')
-    : null;
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <Animated.View
-      entering={FadeInDown.delay(index * 70).duration(380).springify()}
-      style={[styles.wrapper, { width }, animStyle]}
-    >
+    <Animated.View entering={FadeInDown.delay(index * M.stagger.base).duration(M.duration.expressive).springify().damping(18)} style={[styles.wrapper, { width }, animStyle]}>
       <AnimatedPressable
-        onPressIn={() => { scale.value = withSpring(0.96, { damping: 20, stiffness: 300 }); }}
-        onPressOut={() => { scale.value = withSpring(1,    { damping: 18, stiffness: 250 }); }}
+        onPressIn={() => { scale.value = withSpring(0.96, M.spring.snappy); }}
+        onPressOut={() => { scale.value = withSpring(1, M.spring.gentle); }}
         onPress={onPress}
-        style={[styles.card, DS.shadow.card]}
+        style={styles.card}
       >
-        {/* Photo */}
         <View style={[styles.imageWrap, { height: imageHeight }]}>
           {imageUrl ? (
-            <Image
-              source={{ uri: imageUrl }}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-              transition={300}
-            />
+            <Image source={{ uri: imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
           ) : (
-            <PlantPlaceholder name={plant.speciesName} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: PLACEHOLDER[plant.speciesName.charCodeAt(0) % PLACEHOLDER.length], alignItems: 'center', justifyContent: 'center' }]}>
+              <Text style={styles.placeholderInitial}>{plant.speciesName.charAt(0).toUpperCase()}</Text>
+            </View>
           )}
-          {/* Health label badge */}
-          <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-            <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
+          <View style={styles.ringWrap}>
+            <HealthRing progress={score / 100} size={40} stroke={4} color={t} delay={index * M.stagger.base + 200}>
+              <Text style={[styles.ringScore, { color: t }]}>{score}</Text>
+            </HealthRing>
           </View>
         </View>
 
-        {/* Text */}
         <View style={styles.info}>
           <Text style={styles.plantName} numberOfLines={1}>{plant.nickname}</Text>
           <Text style={styles.plantSpecies} numberOfLines={1}>{plant.speciesName}</Text>
           {showWaterAlert ? (
-            <View style={styles.waterAlertRow}>
-              <View style={[
-                styles.waterAlertDot,
-                { backgroundColor: waterInfo.status === 'overdue' ? '#C0392B' : '#B07000' },
-              ]} />
-              <Text style={[
-                styles.waterAlertText,
-                { color: waterInfo.status === 'overdue' ? '#C0392B' : '#B07000' },
-              ]}>{waterInfo.urgentLabel}</Text>
+            <View style={styles.alertRow}>
+              <View style={[styles.alertDot, { backgroundColor: alertColor }]} />
+              <Text style={[styles.alertText, { color: alertColor }]}>{waterInfo.urgentLabel}</Text>
             </View>
           ) : ago ? (
             <Text style={styles.plantAgo} numberOfLines={1}>{ago}</Text>
@@ -110,91 +90,18 @@ export const PlantCard: React.FC<PlantCardProps> = ({ plant, width, index, onPre
   );
 };
 
-const PLACEHOLDER_COLORS: [string, string][] = [
-  ['#D4EDD0', '#A8D4A0'],
-  ['#EDD4C8', '#D4A8A0'],
-  ['#D4DEED', '#A0B8D4'],
-  ['#EDE8D4', '#D4C8A0'],
-  ['#D4EDE8', '#A0D4C8'],
-];
-
-const PlantPlaceholder: React.FC<{ name: string }> = ({ name }) => {
-  const idx = name.charCodeAt(0) % PLACEHOLDER_COLORS.length;
-  const [bgTop] = PLACEHOLDER_COLORS[idx];
-  const initial = name.charAt(0).toUpperCase();
-  return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: bgTop, alignItems: 'center', justifyContent: 'center' }]}>
-      <Text style={{ fontSize: 32, fontFamily: 'Cormorant-SemiBoldItalic', color: 'rgba(0,0,0,0.25)' }}>{initial}</Text>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
-  wrapper: {
-    marginBottom: DS.space.cardGap,
-  },
-  card: {
-    backgroundColor: DS.color.card,
-    borderRadius: DS.radius.card,
-    overflow: 'hidden',
-  },
-  imageWrap: {
-    width: '100%',
-    backgroundColor: DS.color.inputBg,
-    overflow: 'hidden',
-    borderTopLeftRadius: DS.radius.card,
-    borderTopRightRadius: DS.radius.card,
-  },
-  badge: {
-    position: 'absolute',
-    top: 9,
-    right: 9,
-    borderRadius: DS.radius.badge,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  badgeText: {
-    fontSize: DS.type.badge.size,
-    fontFamily: DS.type.badge.family,
-    letterSpacing: DS.type.badge.tracking,
-  },
-  info: {
-    paddingHorizontal: 11,
-    paddingTop: 9,
-    paddingBottom: 11,
-  },
-  plantName: {
-    fontSize: DS.type.cardName.size,
-    fontFamily: DS.type.cardName.family,
-    color: DS.color.ink,
-    marginBottom: 2,
-  },
-  plantSpecies: {
-    fontSize: DS.type.cardSub.size,
-    fontFamily: DS.type.cardSub.family,
-    color: DS.color.inkMuted,
-    marginBottom: 1,
-  },
-  plantAgo: {
-    fontSize: 10,
-    fontFamily: 'Nunito-Regular',
-    color: DS.color.inkMuted,
-    opacity: 0.7,
-    marginTop: 2,
-  },
-  waterAlertRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 3,
-  },
-  waterAlertDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-  },
-  waterAlertText: {
-    fontSize: 10,
-    fontFamily: 'Nunito-Bold',
-  },
+  wrapper: { marginBottom: S.md },
+  card: { backgroundColor: C.card, borderRadius: R.xl, overflow: 'hidden', ...theme.shadows.card },
+  imageWrap: { width: '100%', backgroundColor: C.input, overflow: 'hidden' },
+  placeholderInitial: { fontSize: 34, fontFamily: F.serifMediumItalic, color: 'rgba(0,0,0,0.24)' },
+  ringWrap: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 22, padding: 2 },
+  ringScore: { fontFamily: F.sansHeavy, fontSize: 12 },
+  info: { paddingHorizontal: S.md, paddingTop: 10, paddingBottom: S.md },
+  plantName: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary, marginBottom: 2 },
+  plantSpecies: { ...T.caption, color: C.textSecondary },
+  plantAgo: { ...T.caption, fontSize: 10, color: C.textMuted, marginTop: 3 },
+  alertRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
+  alertDot: { width: 5, height: 5, borderRadius: 3 },
+  alertText: { fontFamily: F.sansBold, fontSize: 10 },
 });
