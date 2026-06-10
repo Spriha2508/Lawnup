@@ -15,6 +15,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RouteProp } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import Svg, { Path } from 'react-native-svg';
 import { useScanFlow } from '../hooks/useScanFlow';
 import { ProcessingAnimation } from '../components/ProcessingAnimation';
 import { logger } from '../../../shared/utils/logger';
@@ -238,9 +239,14 @@ export const ProcessingScreen: React.FC = () => {
       {/* ── Not-a-plant retry state ─────────────────────────────────────────── */}
       {phase === 'not_plant' && (
         <Animated.View style={[styles.retryContent, { opacity: retryOpacity }]}>
-          <Text style={styles.retryMark}>✦</Text>
+          <View style={styles.retryMarkWrap}>
+            <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
+              <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill="rgba(167,196,124,0.6)" />
+              <Path d="M12 3V21" stroke="rgba(255,255,255,0.4)" strokeWidth={1.2} strokeLinecap="round" />
+            </Svg>
+          </View>
           <Text style={styles.retryTitle}>
-            No plant clearly detected
+            Hmm, I couldn't spot a plant
           </Text>
           <Text style={styles.retryHint}>
             For best results, try:
@@ -296,7 +302,12 @@ export const ProcessingScreen: React.FC = () => {
       {/* ── API / identification failure ────────────────────────────────────── */}
       {phase === 'scan_failed' && (
         <Animated.View style={[styles.retryContent, { opacity: failedOpacity }]}>
-          <Text style={styles.retryMark}>◇</Text>
+          <View style={styles.retryMarkWrap}>
+            <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
+              <Path d="M12 8V13M12 16.5V16.6" stroke="rgba(255,255,255,0.55)" strokeWidth={2.2} strokeLinecap="round" />
+              <Path d="M12 3L21 19H3L12 3Z" stroke="rgba(255,255,255,0.45)" strokeWidth={1.6} strokeLinejoin="round" />
+            </Svg>
+          </View>
           <Text style={styles.retryTitle}>
             Scan didn't complete
           </Text>
@@ -424,9 +435,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 36,
   },
-  retryMark: {
-    fontSize: 32,
-    color: 'rgba(180,165,140,0.55)',
+  retryMarkWrap: {
+    width: 60, height: 60, borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center', justifyContent: 'center',
     marginBottom: 24,
   },
   retryTitle: {

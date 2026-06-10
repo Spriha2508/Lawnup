@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 const HERO_HEIGHT = Math.round(SH * 0.56);
@@ -36,7 +37,10 @@ export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
         <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
-          <Text style={styles.placeholderMark}>✦</Text>
+          <Svg width={56} height={56} viewBox="0 0 24 24" fill="none">
+            <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill="rgba(255,255,255,0.22)" />
+            <Path d="M12 3V21" stroke="rgba(255,255,255,0.3)" strokeWidth={1.2} strokeLinecap="round" />
+          </Svg>
         </View>
       )}
 

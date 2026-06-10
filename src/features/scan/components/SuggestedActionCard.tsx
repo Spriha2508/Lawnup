@@ -1,5 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { theme } from '@constants/designSystem';
+
+const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 
 interface SuggestedActionCardProps {
   action: string;
@@ -7,38 +11,25 @@ interface SuggestedActionCardProps {
 }
 
 export const SuggestedActionCard: React.FC<SuggestedActionCardProps> = ({ action, index }) => (
-  <View style={styles.card}>
-    <Text style={styles.indexText}>{String(index + 1).padStart(2, '0')}</Text>
+  <Animated.View entering={FadeInDown.delay(index * M.stagger.base).duration(M.duration.expressive)} style={styles.card}>
+    <View style={styles.badge}>
+      <Text style={styles.badgeText}>{index + 1}</Text>
+    </View>
     <Text style={styles.text}>{action}</Text>
-  </View>
+  </Animated.View>
 );
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#EEE7DA',
-    borderRadius: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    gap: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#DDD4C7',
+    flexDirection: 'row', alignItems: 'flex-start',
+    backgroundColor: C.card, borderRadius: R.lg,
+    paddingHorizontal: S.lg, paddingVertical: S.lg, gap: S.lg, marginBottom: S.sm,
+    borderWidth: 1, borderColor: C.border, ...theme.shadows.sm,
   },
-  indexText: {
-    fontFamily: 'Cormorant-SemiBold',
-    fontSize: 18,
-    color: '#6F943E',
-    lineHeight: 22,
-    marginTop: 1,
-    minWidth: 22,
+  badge: {
+    width: 26, height: 26, borderRadius: 13, backgroundColor: C.primaryWash,
+    alignItems: 'center', justifyContent: 'center', marginTop: 1,
   },
-  text: {
-    flex: 1,
-    fontFamily: 'Nunito-Regular',
-    fontSize: 15,
-    color: '#2A2A22',
-    lineHeight: 22,
-  },
+  badgeText: { fontFamily: F.sansHeavy, fontSize: 13, color: C.primary },
+  text: { flex: 1, ...T.body, color: C.textPrimary, lineHeight: 22 },
 });

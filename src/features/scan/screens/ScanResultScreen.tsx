@@ -20,7 +20,9 @@ import { useAuthStore } from '../../auth/store/authStore';
 import { useOnboardingStore } from '../../onboarding/store/onboardingStore';
 import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
 import { UpgradePrompt } from '../../subscription/components/UpgradePrompt';
+import Svg, { Path } from 'react-native-svg';
 import { PlantResultHero } from '../components/PlantResultHero';
+import { AICompanionSummary } from '../components/AICompanionSummary';
 import { DiseaseCard } from '../components/DiseaseCard';
 import { SuggestedActionCard } from '../components/SuggestedActionCard';
 import { SavePlantModal } from '../components/SavePlantModal';
@@ -192,7 +194,12 @@ export const ScanResultScreen: React.FC = () => {
   if (!scanResult) {
     return (
       <View style={styles.errorScreen}>
-        <Text style={styles.errorMark}>✦</Text>
+        <View style={styles.errorMarkWrap}>
+          <Svg width={30} height={30} viewBox="0 0 24 24" fill="none">
+            <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill="#6F943E" opacity={0.9} />
+            <Path d="M12 3V21" stroke="#F5F1E8" strokeWidth={1.3} strokeLinecap="round" />
+          </Svg>
+        </View>
         <Text style={styles.errorTitle}>Result not found</Text>
         <Text style={styles.errorSub}>Let's try again with a closer photo.</Text>
         <TouchableOpacity
@@ -239,7 +246,7 @@ export const ScanResultScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         style={{ opacity: scrollFade }}
         contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
-        stickyHeaderIndices={[1]}
+        stickyHeaderIndices={[2]}
       >
         {/* [0] Hero */}
         <PlantResultHero
@@ -251,14 +258,23 @@ export const ScanResultScreen: React.FC = () => {
           isHealthy={scanResult.isHealthy}
         />
 
-        {/* [1] Tab bar — sticky on scroll */}
+        {/* [1] AI companion summary — the emotional read */}
+        <AICompanionSummary
+          name={scanResult.commonName}
+          isHealthy={scanResult.isHealthy}
+          confidence={scanResult.confidence}
+          diseases={scanResult.diseases}
+        />
+
+        {/* [2] Tab bar — sticky on scroll */}
         <View style={styles.tabBar}>
           {/* Global banners inside sticky bar */}
           {savedNickname && (
             <View style={styles.savedBanner}>
-              <Text style={styles.savedBannerText}>
-                ✦  {savedNickname} added to your garden
-              </Text>
+              <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
+                <Path d="M5 12.5L10 17.5L19 7" stroke="#6F943E" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+              <Text style={styles.savedBannerText}>{savedNickname} added to your garden</Text>
             </View>
           )}
           {!isPremium && remaining !== -1 && remaining <= 1 && (
@@ -298,7 +314,7 @@ export const ScanResultScreen: React.FC = () => {
             <View style={styles.tabContent}>
               <View style={styles.section}>
                 <Text style={styles.sectionEyebrow}>CARE GUIDE</Text>
-                <Text style={styles.sectionTitle}>What your plant needs</Text>
+                <Text style={styles.sectionTitle}>Your next steps</Text>
                 {scanResult.suggestedActions.map((action, i) => (
                   <SuggestedActionCard key={i} action={action} index={i} />
                 ))}
@@ -389,7 +405,10 @@ export const ScanResultScreen: React.FC = () => {
               {!scanResult.isHealthy && scanResult.diseases.length > 0 && conf < 0.60 && (
                 <View style={styles.healthyBanner}>
                   <View style={styles.healthyIconWrap}>
-                    <Text style={styles.healthyIcon}>◇</Text>
+                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                      <Path d="M12 8V13M12 16.5V16.6" stroke="#6F943E" strokeWidth={2} strokeLinecap="round" />
+                      <Path d="M12 3L21 19H3L12 3Z" stroke="#6F943E" strokeWidth={1.6} strokeLinejoin="round" />
+                    </Svg>
                   </View>
                   <View style={styles.healthyTextWrap}>
                     <Text style={styles.healthyTitle}>Health assessment skipped</Text>
@@ -404,7 +423,9 @@ export const ScanResultScreen: React.FC = () => {
               {!hasDiseases && scanResult.isHealthy && (
                 <View style={styles.healthyBanner}>
                   <View style={styles.healthyIconWrap}>
-                    <Text style={styles.healthyIcon}>✦</Text>
+                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                      <Path d="M5 12.5L10 17.5L19 7" stroke="#6F943E" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
                   </View>
                   <View style={styles.healthyTextWrap}>
                     <Text style={styles.healthyTitle}>Looking healthy</Text>
@@ -590,6 +611,10 @@ const styles = StyleSheet.create({
 
   // Global banners (inside sticky tabBar)
   savedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: 'rgba(111,148,62,0.10)',
     marginHorizontal: 20,
     marginTop: 12,
@@ -889,9 +914,10 @@ const styles = StyleSheet.create({
     gap: 16,
     padding: 32,
   },
-  errorMark: {
-    fontSize: 40,
-    color: 'rgba(111,148,62,0.5)',
+  errorMarkWrap: {
+    width: 72, height: 72, borderRadius: 26,
+    backgroundColor: 'rgba(111,148,62,0.10)',
+    alignItems: 'center', justifyContent: 'center',
   },
   errorTitle: {
     fontFamily: 'Nunito-Bold',
