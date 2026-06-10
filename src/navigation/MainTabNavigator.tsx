@@ -94,7 +94,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'Plants',  label: 'Plants' },
   { key: 'Scan',    label: ''       },
   { key: 'Chat',    label: 'Doctor' },
-  { key: 'Profile', label: 'You'    },
+  { key: 'Profile', label: 'Profile' },
 ];
 
 const TabButton: React.FC<{

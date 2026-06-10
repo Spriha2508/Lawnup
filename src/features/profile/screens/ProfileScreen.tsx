@@ -16,20 +16,15 @@ import type { ProfileStackParamList } from '../../../navigation/types';
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
+const I = { stroke: C.textMuted, w: 1.6 };
 const StarIcon: React.FC<{ color: string }> = ({ color }) => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5L12 2Z" stroke={color} strokeWidth={1.6} strokeLinejoin="round" fill={color === C.primary ? 'rgba(111,148,62,0.12)' : 'none'} />
-  </Svg>
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5L12 2Z" stroke={color} strokeWidth={1.6} strokeLinejoin="round" fill={color === C.primary ? 'rgba(111,148,62,0.12)' : 'none'} /></Svg>
 );
-const HistoryIcon: React.FC = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Circle cx="12" cy="12" r="9" stroke={C.textMuted} strokeWidth={1.6} /><Path d="M12 7v5l3 3" stroke={C.textMuted} strokeWidth={1.6} strokeLinecap="round" /></Svg>
-);
-const BellIcon: React.FC = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke={C.textMuted} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" /></Svg>
-);
-const ShopIcon: React.FC = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke={C.textMuted} strokeWidth={1.6} strokeLinejoin="round" /><Path d="M3 6h18M16 10a4 4 0 0 1-8 0" stroke={C.textMuted} strokeWidth={1.6} strokeLinecap="round" /></Svg>
-);
+const EditIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M4 20h4L19 9l-4-4L4 16v4z" stroke={I.stroke} strokeWidth={I.w} strokeLinejoin="round" /><Path d="M14 6l4 4" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" /></Svg>);
+const BellIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" strokeLinejoin="round" /></Svg>);
+const ThemeIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" stroke={I.stroke} strokeWidth={I.w} strokeLinejoin="round" /></Svg>);
+const HistoryIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Circle cx="12" cy="12" r="9" stroke={I.stroke} strokeWidth={I.w} /><Path d="M12 7v5l3 3" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" /></Svg>);
+const HelpIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Circle cx="12" cy="12" r="9" stroke={I.stroke} strokeWidth={I.w} /><Path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7M12 17v.1" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" /></Svg>);
 
 const getInitials = (name: string): string => {
   const parts = name.trim().split(' ').filter(Boolean);
@@ -41,6 +36,7 @@ const getMemberSince = (createdAt: any): string => {
   const d = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
   return String(d.getFullYear());
 };
+const gardenLevel = (n: number): string => (n >= 12 ? 'Botanist' : n >= 6 ? 'Gardener' : n >= 2 ? 'Sprout' : 'Seedling');
 
 type ProfileNav = StackNavigationProp<ProfileStackParamList, 'Profile'>;
 
@@ -55,6 +51,7 @@ export const ProfileScreen: React.FC = () => {
   const year = getMemberSince(user?.createdAt);
   const isPremium = isPremiumActive();
   const remaining = scansRemainingThisWeek();
+  const level = gardenLevel(plants.length);
 
   const achievements = [
     { id: 'first_plant', title: 'First plant added', sub: plants.length > 0 ? 'Earned' : 'Add a plant to earn', earned: plants.length > 0 },
@@ -73,11 +70,9 @@ export const ProfileScreen: React.FC = () => {
           <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.identity}>
             <View style={styles.avatarRing}><Text style={styles.avatarText}>{initials}</Text></View>
             <Text style={styles.userName}>{user?.name ?? 'Gardener'}</Text>
-            <Text style={styles.userSince}>Plant parent since {year}</Text>
+            <Text style={styles.userSince}>{level} · Plant parent since {year}</Text>
             <View style={styles.badgeRow}>
-              {thriving >= 3 && (
-                <View style={[styles.badge, styles.badgeGreen]}><Text style={[styles.badgeText, { color: C.primary }]}>GREEN THUMB</Text></View>
-              )}
+              <View style={[styles.badge, styles.badgeGreen]}><Text style={[styles.badgeText, { color: C.primary }]}>{level.toUpperCase()}</Text></View>
               <View style={[styles.badge, isPremium ? styles.badgeGreen : styles.badgeAmber]}>
                 <Text style={[styles.badgeText, { color: isPremium ? C.primary : C.secondary }]}>{isPremium ? 'PREMIUM' : 'EARLY ADOPTER'}</Text>
               </View>
@@ -85,7 +80,7 @@ export const ProfileScreen: React.FC = () => {
           </Animated.View>
 
           {/* Stats */}
-          <Animated.View entering={FadeInDown.delay(80).duration(M.duration.expressive)} style={styles.statsRow}>
+          <Animated.View entering={FadeInDown.delay(70).duration(M.duration.expressive)} style={styles.statsRow}>
             <StatBlock value={plants.length} label="PLANTS" />
             <View style={styles.statDiv} />
             <StatBlock value={thriving} label="THRIVING" tone={C.healthyFg} />
@@ -95,7 +90,7 @@ export const ProfileScreen: React.FC = () => {
 
           {/* Premium */}
           {!isPremium && (
-            <Animated.View entering={FadeInDown.delay(160).duration(M.duration.expressive)} style={styles.premiumBanner}>
+            <Animated.View entering={FadeInDown.delay(140).duration(M.duration.expressive)} style={styles.premiumBanner}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.premiumLabel}>LAWNUP PREMIUM</Text>
                 <Text style={styles.premiumTitle}>Unlimited scans,{'\n'}zero limits.</Text>
@@ -110,14 +105,12 @@ export const ProfileScreen: React.FC = () => {
           )}
 
           {/* Achievements */}
-          <Animated.View entering={FadeInDown.delay(220).duration(M.duration.expressive)}>
+          <Animated.View entering={FadeInDown.delay(200).duration(M.duration.expressive)}>
             <Text style={styles.sectionLabel}>ACHIEVEMENTS</Text>
             <View style={styles.listCard}>
               {achievements.map((a, i) => (
                 <View key={a.id} style={[styles.listRow, i < achievements.length - 1 && styles.listRowBorder]}>
-                  <View style={[styles.iconWrap, a.earned && styles.iconWrapEarned]}>
-                    <StarIcon color={a.earned ? C.primary : C.textFaint} />
-                  </View>
+                  <View style={[styles.iconWrap, a.earned && styles.iconWrapEarned]}><StarIcon color={a.earned ? C.primary : C.textFaint} /></View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.listTitle, !a.earned && { color: C.textMuted }]}>{a.title}</Text>
                     <Text style={styles.listSub}>{a.sub}</Text>
@@ -128,23 +121,33 @@ export const ProfileScreen: React.FC = () => {
             </View>
           </Animated.View>
 
-          {/* More — clearly marked Coming soon (no dead taps) */}
-          <Animated.View entering={FadeInDown.delay(280).duration(M.duration.expressive)}>
-            <Text style={styles.sectionLabel}>MORE</Text>
+          {/* Account — settings (clearly Coming soon, no dead taps) */}
+          <Animated.View entering={FadeInDown.delay(250).duration(M.duration.expressive)}>
+            <Text style={styles.sectionLabel}>ACCOUNT</Text>
             <View style={styles.listCard}>
-              <ComingSoonRow icon={<HistoryIcon />} label="AI scan history" isLast={false} />
-              <ComingSoonRow icon={<BellIcon />} label="Reminders & notifications" isLast={false} />
-              <ComingSoonRow icon={<ShopIcon />} label="Plant marketplace" isLast />
+              <SoonRow icon={<EditIcon />} label="Edit profile" isLast={false} />
+              <SoonRow icon={<BellIcon />} label="Reminders & notifications" isLast={false} />
+              <SoonRow icon={<ThemeIcon />} label="Appearance (dark mode)" isLast={false} />
+              <SoonRow icon={<HistoryIcon />} label="Scan history" isLast />
+            </View>
+          </Animated.View>
+
+          {/* Support */}
+          <Animated.View entering={FadeInDown.delay(300).duration(M.duration.expressive)}>
+            <Text style={styles.sectionLabel}>SUPPORT</Text>
+            <View style={styles.listCard}>
+              <SoonRow icon={<HelpIcon />} label="Help & support" isLast />
             </View>
           </Animated.View>
 
           {/* Sign out */}
-          <Animated.View entering={FadeInDown.delay(330).duration(M.duration.expressive)}>
+          <Animated.View entering={FadeInDown.delay(350).duration(M.duration.expressive)}>
             <PressableScale style={styles.signOutBtn} onPress={signOut} to={0.97}>
               <Text style={styles.signOutText}>Sign out</Text>
             </PressableScale>
           </Animated.View>
 
+          <Text style={styles.version}>LawnUp · v1.0.0</Text>
           <View style={{ height: 40 }} />
         </ScrollView>
       </SafeAreaView>
@@ -159,7 +162,7 @@ const StatBlock: React.FC<{ value: number; label: string; tone?: string }> = ({ 
   </View>
 );
 
-const ComingSoonRow: React.FC<{ icon: React.ReactNode; label: string; isLast: boolean }> = ({ icon, label, isLast }) => (
+const SoonRow: React.FC<{ icon: React.ReactNode; label: string; isLast: boolean }> = ({ icon, label, isLast }) => (
   <View style={[styles.listRow, !isLast && styles.listRowBorder]}>
     <View style={styles.iconWrap}>{icon}</View>
     <Text style={[styles.listTitle, { flex: 1, color: C.textSecondary }]}>{label}</Text>
@@ -208,6 +211,7 @@ const styles = StyleSheet.create({
   premiumBtn: { backgroundColor: C.primary, borderRadius: R.pill, paddingHorizontal: S.lg, paddingVertical: 11, marginLeft: S.lg },
   premiumBtnText: { ...T.label, fontFamily: F.sansBold, color: '#FFFFFF' },
 
-  signOutBtn: { paddingVertical: S.lg, alignItems: 'center', borderRadius: R.pill, borderWidth: 1.5, borderColor: 'rgba(229,72,77,0.4)' },
+  signOutBtn: { paddingVertical: S.lg, alignItems: 'center', borderRadius: R.pill, borderWidth: 1.5, borderColor: 'rgba(229,72,77,0.4)', marginBottom: S.lg },
   signOutText: { ...T.bodyStrong, fontFamily: F.sansMedium, color: C.criticalFg },
+  version: { ...T.caption, color: C.textFaint, textAlign: 'center' },
 });
