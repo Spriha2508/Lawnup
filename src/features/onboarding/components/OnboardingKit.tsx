@@ -99,9 +99,10 @@ export const SelectCard: React.FC<SelectCardProps> = ({ label, descriptor, activ
   }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cardStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(sel.value, [0, 1], [C.surface, C.primary]),
+    backgroundColor: interpolateColor(sel.value, [0, 1], [C.card, C.primary]),
     borderColor: interpolateColor(sel.value, [0, 1], [C.border, C.primary]),
-    transform: [{ scale: 1 - press.value * 0.03 }],
+    transform: [{ scale: 1 - press.value * 0.03 }, { translateY: -sel.value * 3 }],
+    shadowOpacity: 0.06 + sel.value * 0.12,
   }));
   const labelStyle = useAnimatedStyle(() => ({ color: interpolateColor(sel.value, [0, 1], [C.textPrimary, C.onPrimary]) }));
   const descStyle  = useAnimatedStyle(() => ({ color: interpolateColor(sel.value, [0, 1], [C.textMuted, 'rgba(255,255,255,0.82)']) }));
@@ -141,10 +142,13 @@ const selectStyles = StyleSheet.create({
   card: {
     minHeight: 96,
     borderRadius: R.xl,
-    borderWidth: 1.5,
+    borderWidth: 1,
     padding: S.lg,
     justifyContent: 'space-between',
-    ...theme.shadows.sm,
+    shadowColor: '#1C3520',
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 16,
+    elevation: 3,
   },
   cardTall: { minHeight: 132 },
   ring: {
