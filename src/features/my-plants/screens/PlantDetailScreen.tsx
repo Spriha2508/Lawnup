@@ -11,7 +11,9 @@ import {
   Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
+import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { HealthRing } from '@shared/components/motion/HealthRing';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -160,7 +162,12 @@ export const PlantDetailScreen: React.FC = () => {
           </TouchableOpacity>
         </SafeAreaView>
         <View style={styles.errorBody}>
-          <Text style={styles.errorMark}>✦</Text>
+          <View style={styles.errorMarkWrap}>
+            <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
+              <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill="#6F943E" opacity={0.85} />
+              <Path d="M12 3V21" stroke="#F5F1E8" strokeWidth={1.3} strokeLinecap="round" />
+            </Svg>
+          </View>
           <Text style={styles.errorTitle}>Plant not found</Text>
           <Text style={styles.errorSub}>It may have been removed from your garden.</Text>
         </View>
@@ -169,6 +176,7 @@ export const PlantDetailScreen: React.FC = () => {
   }
 
   const health       = HEALTH_CONFIG[plant.healthStatus] ?? HEALTH_CONFIG['Healthy'];
+  const healthScore  = computeHealthScore(plant);
   const nextWater    = getNextWaterDate(plant);
   const waterInfo    = getWaterInfo(plant);
   const rawLastWatered = plant.lastWateredAt as any;
@@ -234,6 +242,13 @@ export const PlantDetailScreen: React.FC = () => {
               {plant.scientificName ?? plant.speciesName}
             </Text>
           </View>
+
+          {/* Self-drawing health ring */}
+          <View style={styles.heroRing}>
+            <HealthRing progress={healthScore / 100} size={58} stroke={5} color={health.color} trackColor="rgba(255,255,255,0.28)" delay={350}>
+              <Text style={styles.heroRingText}>{healthScore}</Text>
+            </HealthRing>
+          </View>
         </View>
 
         {/* ── Body ── */}
@@ -249,7 +264,7 @@ export const PlantDetailScreen: React.FC = () => {
           {/* Quick care stats */}
           <View style={styles.statsRow}>
             <StatCard
-              icon="◆"
+              icon="drop"
               iconColor={waterStatusColor}
               value={waterInfo.label}
               label="Next water"
@@ -257,13 +272,13 @@ export const PlantDetailScreen: React.FC = () => {
               urgentColor={waterStatusColor}
             />
             <StatCard
-              icon="◇"
+              icon="clock"
               iconColor="#6F943E"
               value={daysSinceWater === 0 ? 'Today' : `${daysSinceWater}d ago`}
               label="Last watered"
             />
             <StatCard
-              icon="✦"
+              icon="repeat"
               iconColor="#9E9A94"
               value={plant.wateringFrequencyDays === 1 ? 'Daily' : `${plant.wateringFrequencyDays}d`}
               label="Frequency"
@@ -308,16 +323,16 @@ export const PlantDetailScreen: React.FC = () => {
               <Text style={styles.sectionEyebrow}>CARE GUIDE</Text>
               <Text style={styles.sectionTitle}>What {plant.nickname} needs</Text>
               <View style={styles.careList}>
-                <CareRow icon="◆" label="Watering"  text={careProfile.water} />
-                <CareRow icon="◇" label="Light"     text={careProfile.light} />
+                <CareRow icon="drop" label="Watering"  text={careProfile.water} />
+                <CareRow icon="sun" label="Light"     text={careProfile.light} />
                 {careProfile.humidity && (
-                  <CareRow icon="✦" label="Humidity" text={careProfile.humidity} />
+                  <CareRow icon="humidity" label="Humidity" text={careProfile.humidity} />
                 )}
                 {careProfile.fertilizer && (
-                  <CareRow icon="✧" label="Feeding"  text={careProfile.fertilizer} />
+                  <CareRow icon="feed" label="Feeding"  text={careProfile.fertilizer} />
                 )}
                 {careProfile.tips.slice(0, 2).map((tip, i) => (
-                  <CareRow key={i} icon="›" label="Tip" text={tip} />
+                  <CareRow key={i} icon="tip" label="Tip" text={tip} />
                 ))}
               </View>
             </View>
@@ -468,12 +483,26 @@ export const PlantDetailScreen: React.FC = () => {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+const DetailIcon: React.FC<{ name: string; color: string; size?: number }> = ({ name, color, size = 16 }) => {
+  const p = { stroke: color, strokeWidth: 1.7, fill: 'none' as const, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  const paths: Record<string, React.ReactNode> = {
+    drop: <Path d="M12 3C12 3 5 11 5 15.5C5 19.09 8.13 22 12 22C15.87 22 19 19.09 19 15.5C19 11 12 3 12 3Z" fill={color} stroke="none" />,
+    clock: <><Path d="M12 21a9 9 0 100-18 9 9 0 000 18z" {...p} /><Path d="M12 7v5l3 2" {...p} /></>,
+    repeat: <><Path d="M17 2l4 4-4 4" {...p} /><Path d="M3 11V9a4 4 0 014-4h14M7 22l-4-4 4-4" {...p} /><Path d="M21 13v2a4 4 0 01-4 4H3" {...p} /></>,
+    sun: <><Path d="M12 17a5 5 0 100-10 5 5 0 000 10z" {...p} /><Path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" {...p} /></>,
+    humidity: <><Path d="M12 3C12 3 6 9 6 14a6 6 0 0012 0c0-5-6-11-6-11z" {...p} /></>,
+    feed: <Path d="M11 3C11 3 5 6 5 12C5 15.87 7.91 19 11 19C11 19 11 11 11 3ZM13 21C13 21 19 18 19 12C19 8.13 16.09 5 13 5" {...p} />,
+    tip: <Path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5L12 2Z" {...p} />,
+  };
+  return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">{paths[name] ?? paths.tip}</Svg>;
+};
+
 const StatCard: React.FC<{
   icon: string; iconColor: string; value: string; label: string;
   urgent?: boolean; urgentColor?: string;
 }> = ({ icon, iconColor, value, label, urgent, urgentColor }) => (
   <View style={styles.statCard}>
-    <Text style={[styles.statIcon, { color: iconColor }]}>{icon}</Text>
+    <View style={styles.statIconWrap}><DetailIcon name={icon} color={iconColor} /></View>
     <Text style={[styles.statValue, urgent && { color: urgentColor }]} numberOfLines={1}>
       {value}
     </Text>
@@ -483,7 +512,7 @@ const StatCard: React.FC<{
 
 const CareRow: React.FC<{ icon: string; label: string; text: string }> = ({ icon, label, text }) => (
   <View style={styles.careRow}>
-    <Text style={styles.careRowIcon}>{icon}</Text>
+    <View style={styles.careRowIconWrap}><DetailIcon name={icon} color="#6F943E" size={15} /></View>
     <View style={styles.careRowContent}>
       <Text style={styles.careRowLabel}>{label}</Text>
       <Text style={styles.careRowText}>{text}</Text>
@@ -533,7 +562,7 @@ const styles = StyleSheet.create({
   errorScreen: { flex: 1, backgroundColor: '#F5F1E8' },
   backBtnOverlay: { margin: 20, alignSelf: 'flex-start' },
   errorBody: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32 },
-  errorMark: { fontSize: 36, color: 'rgba(111,148,62,0.4)' },
+  errorMarkWrap: { width: 64, height: 64, borderRadius: 24, backgroundColor: 'rgba(111,148,62,0.10)', alignItems: 'center', justifyContent: 'center' },
   errorTitle: { fontFamily: 'Nunito-Bold', fontSize: 18, color: '#111111' },
   errorSub: { fontFamily: 'Nunito-Regular', fontSize: 14, color: '#6B6B5E', textAlign: 'center' },
 
@@ -574,6 +603,8 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 0, left: 0, right: 0,
     padding: 22, paddingBottom: 26, gap: 4,
   },
+  heroRing: { position: 'absolute', right: 22, bottom: 28 },
+  heroRingText: { fontFamily: 'Nunito-ExtraBold', fontSize: 16, color: '#FFFFFF' },
   healthPill: {
     flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start',
     borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, gap: 6, marginBottom: 4,
@@ -619,7 +650,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  statIcon: { fontSize: 14, marginBottom: 2 },
+  statIconWrap: { marginBottom: 4, alignItems: 'center', justifyContent: 'center' },
   statValue: {
     fontFamily: 'Nunito-ExtraBold',
     fontSize: 14,
@@ -692,7 +723,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#DDD4C7',
     alignItems: 'flex-start',
   },
-  careRowIcon: { fontSize: 14, color: '#6F943E', marginTop: 1, width: 16, textAlign: 'center' },
+  careRowIconWrap: { marginTop: 1, width: 18, alignItems: 'center' },
   careRowContent: { flex: 1, gap: 2 },
   careRowLabel: {
     fontFamily: 'Nunito-SemiBold', fontSize: 10, color: '#9E9A94',
