@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useAuthNavigation } from '@navigation/AuthNavigationContext';
-import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
+import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
 
@@ -42,9 +42,7 @@ export const LandingScreen: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      <View style={styles.blobGreen} />
-      <View style={styles.blobGreenLow} />
-      <FloatingLeaves />
+      <AmbientBackground />
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         {/* Hero — staggered entrance */}

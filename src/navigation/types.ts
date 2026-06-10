@@ -56,11 +56,12 @@ export type ProfileStackParamList = {
   SubscriptionSuccess: { plan: string; expiresAt: string };
 };
 
-// Main Tab Navigator (4 tabs — AiDoctor accessible from Profile)
+// Main Tab Navigator (5 tabs — Home · Plants · Scan · Chat · Profile)
 export type MainTabParamList = {
   Home: undefined;
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Plants: NavigatorScreenParams<PlantsStackParamList>;
+  Chat: NavigatorScreenParams<ChatStackParamList>;
   Profile: NavigatorScreenParams<ProfileStackParamList>;
 };
 

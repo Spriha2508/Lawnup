@@ -6,7 +6,7 @@ import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import { useAuthNavigation } from '@navigation/AuthNavigationContext';
 import { Input } from '@shared/components/ui/Input';
 import { PressableScale } from '@shared/components/motion/PressableScale';
-import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
+import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
 import { useAuth } from '../hooks/useAuth';
 import { theme } from '@constants/designSystem';
 
@@ -39,7 +39,7 @@ export const ForgotPasswordScreen: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      <FloatingLeaves />
+      <AmbientBackground />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         {/* dim space above — the card slides up like a sheet */}
         <View style={styles.spacer} />

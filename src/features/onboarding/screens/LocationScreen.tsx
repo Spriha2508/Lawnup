@@ -1,26 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, Pressable, Dimensions,
+  View, Text, FlatList, StyleSheet, TextInput, Pressable, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import Animated, {
   FadeInDown, FadeInUp,
-  useSharedValue, useAnimatedStyle, withSpring,
+  useSharedValue, useAnimatedStyle, withSpring, withTiming, interpolateColor,
 } from 'react-native-reanimated';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useOnboardingStore } from '../store/onboardingStore';
 import { useAuthStore } from '../../auth/store/authStore';
 import { db } from '../../../services/firebase/firebaseConfig';
 import { INDIAN_CITIES } from '../../../constants/plants';
 import type { ClimateZone } from '../../../constants/plants';
-import type { OnboardingStackParamList } from '../../../navigation/types';
+import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
+import { theme } from '@constants/designSystem';
+import type { OnboardingStackParamList } from '@navigation/types';
 
 type Nav = StackNavigationProp<OnboardingStackParamList, 'Location'>;
-
 const { width: W } = Dimensions.get('window');
+const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
+const CHIP_W = (W - 56 - 10) / 2;
 
 const ZONE_MAP: Record<string, ClimateZone> = {
   Delhi: 'north', Mumbai: 'coastal', Bengaluru: 'south', Hyderabad: 'south',
@@ -32,19 +35,42 @@ const ZONE_MAP: Record<string, ClimateZone> = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Horizontal bar — 4 segments all dimmed (location precedes the 4-step flow)
-const StepBar: React.FC = () => (
-  <View style={stepStyles.row}>
-    {Array.from({ length: 4 }, (_, i) => (
-      <View key={i} style={stepStyles.seg} />
-    ))}
-  </View>
+const PinIcon: React.FC<{ color: string }> = ({ color }) => (
+  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 21C12 21 19 15.5 19 10C19 6.13401 15.866 3 12 3C8.13401 3 5 6.13401 5 10C5 15.5 12 21 12 21Z" stroke={color} strokeWidth={1.7} strokeLinejoin="round" />
+    <Circle cx="12" cy="10" r="2.4" stroke={color} strokeWidth={1.7} />
+  </Svg>
 );
 
-const stepStyles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 6, marginBottom: 28 },
-  seg: { flex: 1, height: 3, borderRadius: 2, backgroundColor: '#DDD4C7' },
-});
+const CityChip: React.FC<{ city: string; active: boolean; onPress: () => void; index: number }> = ({
+  city, active, onPress, index,
+}) => {
+  const sel = useSharedValue(active ? 1 : 0);
+  const press = useSharedValue(0);
+  React.useEffect(() => {
+    sel.value = withTiming(active ? 1 : 0, { duration: M.duration.standard, easing: M.ease.smooth });
+  }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const chipStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(sel.value, [0, 1], [C.surface, C.inkBtn]),
+    borderColor: interpolateColor(sel.value, [0, 1], [C.border, C.inkBtn]),
+    transform: [{ scale: 1 - press.value * 0.04 }],
+  }));
+  const textStyle = useAnimatedStyle(() => ({ color: interpolateColor(sel.value, [0, 1], [C.textPrimary, C.onInkBtn]) }));
+
+  return (
+    <Animated.View entering={FadeInDown.delay(Math.min(index * 24, 260)).duration(360)} style={{ width: CHIP_W }}>
+      <AnimatedPressable
+        onPress={onPress}
+        onPressIn={() => { press.value = withSpring(1, M.spring.snappy); }}
+        onPressOut={() => { press.value = withSpring(0, M.spring.gentle); }}
+        style={[styles.chip, chipStyle]}
+      >
+        <Animated.Text style={[styles.chipText, textStyle]} numberOfLines={1}>{city}</Animated.Text>
+      </AnimatedPressable>
+    </Animated.View>
+  );
+};
 
 export const LocationScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
@@ -52,63 +78,52 @@ export const LocationScreen: React.FC = () => {
   const { user } = useAuthStore();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState('');
-  const btnScale = useSharedValue(1);
+  const [focused, setFocused] = useState(false);
 
-  const filtered = INDIAN_CITIES.filter((c) =>
-    c.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = INDIAN_CITIES.filter(c => c.toLowerCase().includes(search.toLowerCase()));
 
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     if (!selected || !user) return;
     const zone = ZONE_MAP[selected] ?? 'north';
     setCity(selected, zone);
     await updateDoc(doc(db, `users/${user.uid}`), { city: selected, climateZone: zone });
     navigation.navigate('PlaceType');
-  };
-
-  const btnStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: btnScale.value }],
-  }));
+  }, [selected, user, setCity, navigation]);
 
   return (
     <View style={styles.root}>
+      <AmbientBackground />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        {/* Header */}
-        <Animated.View entering={FadeInDown.delay(0).duration(400)} style={styles.headerWrap}>
-          <StepBar />
-          <Text style={styles.stepLabel}>YOUR LOCATION</Text>
-          <Text style={styles.title}>Where are{'\n'}you based?</Text>
-          <Text style={styles.sub}>
-            We'll give weather-smart care tips for your exact city.
-          </Text>
+        <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.header}>
+          <Text style={styles.eyebrow}>YOUR LOCATION</Text>
+          <Text style={styles.title}>{'Where are\nyou based?'}</Text>
+          <Text style={styles.sub}>Weather-smart care, tuned to your exact city.</Text>
         </Animated.View>
 
-        {/* Search */}
         <Animated.View
-          entering={FadeInDown.delay(120).duration(450).springify()}
-          style={styles.searchWrap}
+          entering={FadeInDown.delay(100).duration(M.duration.expressive)}
+          style={[styles.searchWrap, focused && styles.searchWrapFocused]}
         >
+          <PinIcon color={focused ? C.primary : C.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search your city..."
-            placeholderTextColor="#A0A094"
+            placeholder="Search your city…"
+            placeholderTextColor={C.textMuted}
             value={search}
             onChangeText={setSearch}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             autoCorrect={false}
             autoCapitalize="words"
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')}>
+            <Pressable onPress={() => setSearch('')} hitSlop={8}>
               <Text style={styles.clearBtn}>✕</Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
         </Animated.View>
 
-        {/* City grid */}
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(450)}
-          style={styles.listWrap}
-        >
+        <View style={styles.listWrap}>
           <FlatList
             data={filtered}
             keyExtractor={(item) => item}
@@ -116,47 +131,19 @@ export const LocationScreen: React.FC = () => {
             columnWrapperStyle={styles.columnWrap}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item, index }) => (
-              <Animated.View
-                entering={FadeInDown.delay(Math.min(index * 25, 280)).duration(320)}
-                style={styles.cityItem}
-              >
-                <TouchableOpacity
-                  onPress={() => setSelected(item)}
-                  style={[
-                    styles.cityBtn,
-                    selected === item && styles.cityBtnActive,
-                  ]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    styles.cityText,
-                    selected === item && styles.cityTextActive,
-                  ]}>
-                    {item}
-                  </Text>
-                  {selected === item && (
-                    <Text style={styles.cityCheck}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              </Animated.View>
+              <CityChip city={item} index={index} active={selected === item} onPress={() => setSelected(item)} />
             )}
           />
-        </Animated.View>
+        </View>
 
-        {/* CTA */}
-        <Animated.View entering={FadeInUp.delay(300).duration(450).springify()} style={styles.ctaWrap}>
-          <AnimatedPressable
-            style={[styles.cta, !selected && styles.ctaDisabled, btnStyle]}
-            disabled={!selected}
-            onPressIn={() => { if (selected) btnScale.value = withSpring(0.96, { damping: 12 }); }}
-            onPressOut={() => { btnScale.value = withSpring(1, { damping: 10 }); }}
-            onPress={handleNext}
-          >
-            <Text style={[styles.ctaText, !selected && styles.ctaTextDisabled]}>
-              {selected ? `Continue with ${selected}  →` : 'Select your city'}
+        <Animated.View entering={FadeInUp.delay(220).duration(M.duration.expressive)} style={styles.ctaWrap}>
+          <Pressable style={[styles.cta, !selected && styles.ctaDisabled]} disabled={!selected} onPress={handleNext}>
+            <Text style={[styles.ctaText, !selected && styles.ctaTextOff]}>
+              {selected ? `Continue with ${selected}` : 'Select your city'}
             </Text>
-          </AnimatedPressable>
+          </Pressable>
         </Animated.View>
       </SafeAreaView>
     </View>
@@ -164,99 +151,37 @@ export const LocationScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F1E8' },
-  safe: { flex: 1, paddingHorizontal: 28, paddingTop: 16, paddingBottom: 8 },
+  root: { flex: 1, backgroundColor: C.canvas },
+  safe: { flex: 1, paddingHorizontal: 28, paddingTop: S.lg, paddingBottom: S.sm },
 
-  headerWrap: {
-    marginBottom: 4,
-  },
-  stepLabel: {
-    fontSize: 11,
-    fontFamily: 'Nunito-SemiBold',
-    color: '#8A8575',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 38,
-    fontFamily: 'Cormorant-SemiBold',
-    color: '#111111',
-    lineHeight: 44,
-    marginBottom: 8,
-  },
-  sub: {
-    fontSize: 14,
-    fontFamily: 'Nunito-Regular',
-    color: '#6B6B5E',
-    marginBottom: 20,
-    lineHeight: 20,
-  },
+  header: { marginBottom: S.xl },
+  eyebrow: { ...T.eyebrow, color: C.textMuted, marginBottom: S.md },
+  title: { fontFamily: F.serifMedium, fontSize: 40, lineHeight: 44, letterSpacing: -0.4, color: C.textPrimary },
+  sub: { ...T.bodyMd, color: C.textSecondary, lineHeight: 20, marginTop: S.md },
 
   searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EEE7DA',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    marginBottom: 14,
-    borderWidth: 1.5,
-    borderColor: '#DDD4C7',
+    flexDirection: 'row', alignItems: 'center', gap: S.md,
+    backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: R.lg,
+    paddingHorizontal: S.lg, marginBottom: S.lg,
+    borderWidth: 1.5, borderColor: C.border,
   },
-  searchInput: {
-    flex: 1,
-    height: 44,
-    fontSize: 15,
-    fontFamily: 'Nunito-Regular',
-    color: '#1A1A14',
-  },
-  clearBtn: { fontSize: 14, color: '#A0A094', paddingHorizontal: 4 },
+  searchWrapFocused: { borderColor: C.primary, backgroundColor: 'rgba(255,255,255,0.92)' },
+  searchInput: { flex: 1, height: 50, ...T.body, color: C.textPrimary },
+  clearBtn: { fontSize: 14, color: C.textMuted, paddingHorizontal: S.xs },
 
   listWrap: { flex: 1 },
-  listContent: { paddingBottom: 8 },
+  listContent: { paddingBottom: S.sm },
   columnWrap: { gap: 10, marginBottom: 10 },
-  cityItem: { flex: 1 },
-  cityBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#EEE7DA',
-    borderRadius: 16,
-    paddingVertical: 13,
-    paddingHorizontal: 14,
+  chip: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    borderRadius: R.lg, paddingVertical: 14, paddingHorizontal: S.md,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
   },
-  cityBtnActive: {
-    backgroundColor: '#111111',
-    borderColor: '#111111',
-  },
-  cityText: {
-    fontSize: 14,
-    fontFamily: 'Nunito-SemiBold',
-    color: '#111111',
-  },
-  cityTextActive: { color: '#FFFFFF' },
-  cityCheck: { fontSize: 12, color: '#FFFFFF' },
+  chipText: { ...T.bodyMd, fontFamily: F.sansMedium },
 
-  ctaWrap: {
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  cta: {
-    width: '100%',
-    backgroundColor: '#111111',
-    borderRadius: 999,
-    paddingVertical: 17,
-    alignItems: 'center',
-  },
-  ctaDisabled: { backgroundColor: '#C8C8BC' },
-  ctaText: {
-    fontSize: 16,
-    fontFamily: 'Nunito-SemiBold',
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
-  ctaTextDisabled: { color: 'rgba(255,255,255,0.7)' },
+  ctaWrap: { paddingTop: S.sm, paddingBottom: S.xs },
+  cta: { width: '100%', backgroundColor: C.inkBtn, borderRadius: R.pill, paddingVertical: 17, alignItems: 'center' },
+  ctaDisabled: { backgroundColor: C.textFaint },
+  ctaText: { ...T.button, fontFamily: F.sansMedium, color: C.onInkBtn },
+  ctaTextOff: { color: 'rgba(255,255,255,0.7)' },
 });

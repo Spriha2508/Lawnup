@@ -17,7 +17,7 @@ import Svg, { Path } from 'react-native-svg';
 import { theme } from '@constants/designSystem';
 
 const { color: C } = theme;
-const TOTAL_DURATION = 2400;
+const TOTAL_DURATION = 3500; // hold a little longer on the logo
 
 interface Props {
   onDone: () => void;

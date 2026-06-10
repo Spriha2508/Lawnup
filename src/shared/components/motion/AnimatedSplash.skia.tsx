@@ -61,7 +61,7 @@ const P = theme.palette;
 const EARTH = P.terracotta[600];
 
 const SKIP_AFTER = 1500;
-const TOTAL_DURATION = 2600;
+const TOTAL_DURATION = 3900; // growth completes ~2.4s, then holds on the finished plant + wordmark
 
 interface Props {
   onDone: () => void;
