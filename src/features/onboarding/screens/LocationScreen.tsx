@@ -17,6 +17,7 @@ import { db } from '../../../services/firebase/firebaseConfig';
 import { INDIAN_CITIES } from '../../../constants/plants';
 import type { ClimateZone } from '../../../constants/plants';
 import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
+import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
 import { theme } from '@constants/designSystem';
 import type { OnboardingStackParamList } from '@navigation/types';
 
@@ -93,6 +94,7 @@ export const LocationScreen: React.FC = () => {
   return (
     <View style={styles.root}>
       <AmbientBackground />
+      <FloatingLeaves />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.header}>
           <Text style={styles.eyebrow}>YOUR LOCATION</Text>

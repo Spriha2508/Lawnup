@@ -6,6 +6,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useAuthStore } from '../../auth/store/authStore';
 import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
+import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
 import { PlantEmblem } from '@shared/components/motion/PlantEmblem';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
@@ -22,6 +23,7 @@ export const WelcomeScreen: React.FC = () => {
   return (
     <View style={styles.root}>
       <AmbientBackground />
+      <FloatingLeaves />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         {/* Cinematic hero */}
         <View style={styles.hero}>

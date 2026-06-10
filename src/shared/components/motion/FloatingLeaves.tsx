@@ -33,12 +33,12 @@ const C = theme.palette;
 
 // Hand-placed for a balanced, uncluttered composition.
 const LEAVES: LeafSpec[] = [
-  { x: W * 0.08, y: H * 0.14, size: 46, rotate: -18, drift: 14, sway: 8,  duration: 7000, delay: 0,    color: C.green[400], opacity: 0.16 },
-  { x: W * 0.78, y: H * 0.10, size: 64, rotate: 24,  drift: 18, sway: 10, duration: 9000, delay: 600,  color: C.green[500], opacity: 0.12 },
-  { x: W * 0.84, y: H * 0.42, size: 38, rotate: -40, drift: 12, sway: 14, duration: 6500, delay: 1200, color: C.mint[500],  opacity: 0.18 },
-  { x: W * 0.04, y: H * 0.52, size: 54, rotate: 12,  drift: 16, sway: 9,  duration: 8200, delay: 300,  color: C.green[400], opacity: 0.13 },
-  { x: W * 0.70, y: H * 0.74, size: 44, rotate: -8,  drift: 13, sway: 11, duration: 7600, delay: 900,  color: C.green[300], opacity: 0.16 },
-  { x: W * 0.16, y: H * 0.80, size: 34, rotate: 30,  drift: 10, sway: 7,  duration: 6800, delay: 1500, color: C.terracotta[400], opacity: 0.12 },
+  { x: W * 0.08, y: H * 0.14, size: 46, rotate: -18, drift: 22, sway: 14, duration: 7000, delay: 0,    color: C.green[400], opacity: 0.26 },
+  { x: W * 0.78, y: H * 0.10, size: 64, rotate: 24,  drift: 26, sway: 16, duration: 9000, delay: 600,  color: C.green[500], opacity: 0.20 },
+  { x: W * 0.84, y: H * 0.42, size: 38, rotate: -40, drift: 20, sway: 20, duration: 6500, delay: 1200, color: C.mint[500],  opacity: 0.28 },
+  { x: W * 0.04, y: H * 0.52, size: 54, rotate: 12,  drift: 24, sway: 14, duration: 8200, delay: 300,  color: C.green[400], opacity: 0.22 },
+  { x: W * 0.70, y: H * 0.74, size: 44, rotate: -8,  drift: 20, sway: 16, duration: 7600, delay: 900,  color: C.green[300], opacity: 0.24 },
+  { x: W * 0.16, y: H * 0.80, size: 34, rotate: 30,  drift: 16, sway: 12, duration: 6800, delay: 1500, color: C.terracotta[400], opacity: 0.20 },
 ];
 
 // Unit leaf (almond) — scaled per spec.

@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
+import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
 import { PlantEmblem } from '@shared/components/motion/PlantEmblem';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
@@ -67,6 +68,7 @@ interface Props {
 export const AuthScaffold: React.FC<Props> = ({ onBack, eyebrow, headline, subtitle, children }) => (
   <View style={styles.root}>
     <AmbientBackground />
+    <FloatingLeaves />
     <KAV>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView

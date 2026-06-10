@@ -24,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
+import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
 import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
@@ -191,6 +192,7 @@ export const OnboardingScaffold: React.FC<ScaffoldProps> = ({
   return (
     <View style={scaffold.root}>
       <AmbientBackground />
+      <FloatingLeaves />
       <SafeAreaView style={scaffold.safe} edges={['top', 'bottom']}>
         <Body {...(bodyProps as any)}>
           <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={scaffold.header}>
