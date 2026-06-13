@@ -158,7 +158,7 @@ export const ProfileScreen: React.FC = () => {
             <Text style={styles.sectionLabel}>ACCOUNT</Text>
             <View style={styles.listCard}>
               <SoonRow icon={<EditIcon />} label="Edit profile" isLast={false} />
-              <SoonRow icon={<BellIcon />} label="Reminders & notifications" isLast={false} />
+              <NavRow icon={<BellIcon />} label="Reminders" isLast={false} onPress={() => navigation.navigate('Reminders')} />
               <SoonRow icon={<ThemeIcon />} label="Appearance (dark mode)" isLast={false} />
               <SoonRow icon={<HistoryIcon />} label="Scan history" isLast />
             </View>
@@ -200,6 +200,16 @@ const SoonRow: React.FC<{ icon: React.ReactNode; label: string; isLast: boolean 
     <Text style={[styles.listTitle, { flex: 1, color: C.textSecondary }]}>{label}</Text>
     <View style={styles.soonPill}><Text style={styles.soonText}>SOON</Text></View>
   </View>
+);
+
+const NavRow: React.FC<{ icon: React.ReactNode; label: string; isLast: boolean; onPress: () => void }> = ({ icon, label, isLast, onPress }) => (
+  <PressableScale style={[styles.listRow, !isLast && styles.listRowBorder]} onPress={onPress} to={0.99}>
+    <View style={styles.iconWrap}>{icon}</View>
+    <Text style={[styles.listTitle, { flex: 1, color: C.textPrimary }]}>{label}</Text>
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 6l6 6-6 6" stroke={C.textMuted} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  </PressableScale>
 );
 
 const styles = StyleSheet.create({

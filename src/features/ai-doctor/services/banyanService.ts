@@ -10,6 +10,7 @@
  */
 import { assembleBanyanContext, type BanyanDiagnosis } from '../../../services/knowledge';
 import { chatComplete, isOpenAIConfigured, type ChatMessage } from '../../../services/ai/openaiClient';
+import { localBanyanReply } from './localResponder';
 import { usePlantMemoryStore } from '../store/plantMemoryStore';
 import type { ActivePlant } from '../store/chatStore';
 import type { ChatDoc } from '../../../types/firestore.types';
@@ -56,13 +57,21 @@ export async function askBanyan(input: AskBanyanInput): Promise<BanyanReply> {
     diagnosis: diagnosis ?? undefined,
   });
 
-  // 3. recent turns + current query → OpenAI
-  const turns: ChatMessage[] = history
-    .slice(-MAX_HISTORY_TURNS)
-    .map((m) => ({ role: m.role, content: m.content }));
-  turns.push({ role: 'user', content: userQuery });
-
-  const reply = await chatComplete({ system: ctx.systemPrompt, messages: turns, signal });
+  // 3. generate the reply — OpenAI when configured, else a grounded local
+  //    answer composed from the same retrieved knowledge (internal-testing mode).
+  let reply: string;
+  if (isOpenAIConfigured()) {
+    const turns: ChatMessage[] = history
+      .slice(-MAX_HISTORY_TURNS)
+      .map((m) => ({ role: m.role, content: m.content }));
+    turns.push({ role: 'user', content: userQuery });
+    reply = await chatComplete({ system: ctx.systemPrompt, messages: turns, signal });
+  } else {
+    reply = localBanyanReply(userQuery, ctx, {
+      nickname: activePlant?.nickname,
+      diagnosis: diagnosis ?? null,
+    });
+  }
 
   // 4. update memory (rolling summary + recurring issues) — never full history
   if (plantId) {

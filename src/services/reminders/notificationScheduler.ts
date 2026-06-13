@@ -146,6 +146,32 @@ export async function getPendingReminders(): Promise<ReminderPayload[]> {
   }
 }
 
+// ── Apply (enable / disable) — one place for the toggle logic ───────────────────
+
+export interface ApplyReminderResult {
+  ok: boolean;            // true if the desired state was achieved
+  needsPermission?: boolean; // true if enabling failed for lack of notif permission
+}
+
+/**
+ * Enable or disable the watering reminder for a plant. Centralises the
+ * permission + schedule/cancel dance so screens just update their own state.
+ */
+export async function applyPlantReminder(
+  plant: UserPlantDoc,
+  enabled: boolean,
+  weather?: WeatherData | null,
+): Promise<ApplyReminderResult> {
+  if (!enabled) {
+    await cancelPlantReminders(plant.plantId);
+    return { ok: true };
+  }
+  const granted = await requestNotificationPermission();
+  if (!granted) return { ok: false, needsPermission: true };
+  await scheduleWateringReminder(plant, weather);
+  return { ok: true };
+}
+
 export async function isReminderScheduled(plantId: string): Promise<boolean> {
   try {
     const all = await Notifications.getAllScheduledNotificationsAsync();

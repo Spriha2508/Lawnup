@@ -11,7 +11,7 @@ import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { theme } from '@constants/designSystem';
 import { useChatStore } from '../store/chatStore';
 import { usePlantMemoryStore } from '../store/plantMemoryStore';
-import { askBanyan, isOpenAIConfigured } from '../services/banyanService';
+import { askBanyan } from '../services/banyanService';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useOnboardingStore } from '../../onboarding/store/onboardingStore';
 import { usePlantsStore } from '../../my-plants/store/plantsStore';
@@ -62,7 +62,6 @@ export const ChatScreen: React.FC = () => {
   const abortRef = useRef<AbortController | null>(null);
 
   const city = onboardingCity || user?.city || null;
-  const configured = isOpenAIConfigured();
 
   // Enrich the active plant from the saved plant doc (health, watering cadence).
   const enrichedPlant = useMemo(() => {
@@ -90,11 +89,6 @@ export const ChatScreen: React.FC = () => {
   const send = useCallback(async (text: string, diagnosisOverride?: ReturnType<typeof consumePendingDiagnosis>) => {
     const query = text.trim();
     if (!query || isTyping) return;
-
-    if (!configured) {
-      appendMessage(makeMsg('assistant', "I'm not connected yet — an OpenAI key needs to be set for me to reply. Your question is noted!"));
-      return;
-    }
 
     // Quota gate (free: 20/day · premium: unlimited)
     const sub = useSubscriptionStore.getState();
@@ -129,7 +123,7 @@ export const ChatScreen: React.FC = () => {
       setTyping(false);
       abortRef.current = null;
     }
-  }, [isTyping, configured, enrichedPlant, user, city, appendMessage, setTyping, navigation]);
+  }, [isTyping, enrichedPlant, user, city, appendMessage, setTyping, navigation]);
 
   // On entry: record any carried-in diagnosis to memory + auto-send the opening prompt.
   useEffect(() => {
