@@ -20,17 +20,13 @@ import Animated, {
   withSpring,
   withDelay,
   interpolateColor,
-  Easing,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
-import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
-import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
 import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-const CALM = { duration: M.duration.expressive, easing: M.ease.smooth } as const;
 
 // ─── StepProgress ────────────────────────────────────────────────────────────
 export const StepProgress: React.FC<{ current: number; total: number }> = ({ current, total }) => {
@@ -176,7 +172,7 @@ interface ScaffoldProps {
 }
 
 export const OnboardingScaffold: React.FC<ScaffoldProps> = ({
-  step, eyebrow, title, subtitle, children, ctaLabel, ctaEnabled, onCta, secondaryLabel, onSecondary, scroll,
+  eyebrow, title, subtitle, children, ctaLabel, ctaEnabled, onCta, secondaryLabel, onSecondary, scroll,
 }) => {
   const cta = useSharedValue(0);
   const ctaColor = useAnimatedStyle(() => ({
@@ -191,12 +187,11 @@ export const OnboardingScaffold: React.FC<ScaffoldProps> = ({
 
   return (
     <View style={scaffold.root}>
-      <AmbientBackground />
-      <FloatingLeaves />
+      {/* Atmosphere is the persistent root world — this screen is transparent over it. */}
       <SafeAreaView style={scaffold.safe} edges={['top', 'bottom']}>
         <Body {...(bodyProps as any)}>
           <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={scaffold.header}>
-            {step ? <StepProgress current={step.current} total={step.total} /> : null}
+            {/* Progress is the JourneyVine (root-level, left edge) — no bar here. */}
             {eyebrow ? <Text style={scaffold.eyebrow}>{eyebrow}</Text> : null}
             <Text style={scaffold.title}>{title}</Text>
             {subtitle ? <Text style={scaffold.subtitle}>{subtitle}</Text> : null}
@@ -226,7 +221,7 @@ export const OnboardingScaffold: React.FC<ScaffoldProps> = ({
 };
 
 const scaffold = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.canvas },
+  root: { flex: 1, backgroundColor: 'transparent' },
   safe: { flex: 1, paddingHorizontal: 28 },
   bodyFlex: { flex: 1, paddingTop: S.lg },
   scrollContent: { paddingTop: S.lg, paddingBottom: S.lg },

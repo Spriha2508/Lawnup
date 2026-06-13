@@ -22,6 +22,9 @@ import { logger } from '../../../shared/utils/logger';
 import { track } from '../../../services/analytics/posthog';
 import type { PlantsStackParamList } from '../../../navigation/types';
 import type { UserPlantDoc } from '../../../types/firestore.types';
+import { theme } from '@constants/designSystem';
+
+const C = theme.color;
 
 type Nav = StackNavigationProp<PlantsStackParamList, 'AddPlant'>;
 type Route = RouteProp<PlantsStackParamList, 'AddPlant'>;
@@ -147,7 +150,7 @@ export const AddPlantScreen: React.FC = () => {
             value={nickname}
             onChangeText={setNickname}
             placeholder="e.g. Lucky, Basil Bhai, Luna"
-            placeholderTextColor="#B0ACA6"
+            placeholderTextColor={C.textMuted}
             maxLength={32}
             autoCorrect={false}
           />
@@ -160,7 +163,7 @@ export const AddPlantScreen: React.FC = () => {
             value={species}
             onChangeText={setSpecies}
             placeholder="e.g. Money Plant, Aloe Vera"
-            placeholderTextColor="#B0ACA6"
+            placeholderTextColor={C.textMuted}
             maxLength={64}
           />
         </FormSection>
@@ -218,7 +221,7 @@ export const AddPlantScreen: React.FC = () => {
             value={notes}
             onChangeText={setNotes}
             placeholder="Water more in summer, repot next March..."
-            placeholderTextColor="#B0ACA6"
+            placeholderTextColor={C.textMuted}
             multiline
             maxLength={300}
             textAlignVertical="top"
@@ -258,7 +261,7 @@ const FormSection: React.FC<{
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F5F1E8',
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
@@ -267,8 +270,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#DDD4C7',
-    backgroundColor: '#F5F1E8',
+    borderBottomColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: 'transparent',
   },
   headerBack: {
     width: 32,
@@ -276,29 +279,29 @@ const styles = StyleSheet.create({
   headerBackText: {
     fontFamily: 'Nunito-Bold',
     fontSize: 22,
-    color: '#111111',
+    color: C.textPrimary,
   },
   headerTitle: {
     fontFamily: 'Cormorant-SemiBold',
     fontSize: 20,
-    color: '#111111',
+    color: C.textPrimary,
   },
   scroll: {
     padding: 20,
     gap: 24,
   },
   fromScanBadge: {
-    backgroundColor: 'rgba(111,148,62,0.07)',
+    backgroundColor: C.primaryWash,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: 'rgba(111,148,62,0.20)',
+    borderColor: C.primary,
   },
   fromScanText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 13,
-    color: '#6F943E',
+    color: C.primary,
   },
   formSection: {
     gap: 8,
@@ -306,24 +309,24 @@ const styles = StyleSheet.create({
   formLabel: {
     fontFamily: 'Nunito-Bold',
     fontSize: 15,
-    color: '#111111',
+    color: C.textPrimary,
   },
   formHint: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: '#9E9A94',
+    color: C.textMuted,
     marginTop: -4,
   },
   input: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.input,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
+    borderColor: C.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
-    color: '#111111',
+    color: C.textPrimary,
   },
   notesInput: {
     minHeight: 88,
@@ -339,8 +342,8 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
-    backgroundColor: '#EEE7DA',
+    borderColor: C.border,
+    backgroundColor: C.input,
   },
   locationGrid: {
     flexDirection: 'row',
@@ -352,20 +355,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
-    backgroundColor: '#EEE7DA',
+    borderColor: C.border,
+    backgroundColor: C.input,
   },
   chipActive: {
-    backgroundColor: '#111111',
-    borderColor: '#111111',
+    backgroundColor: C.primary,
+    borderColor: C.primary,
   },
   chipText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 14,
-    color: '#111111',
+    color: C.textPrimary,
   },
   chipTextActive: {
-    color: '#fff',
+    color: C.onPrimary,
   },
   ctaBar: {
     position: 'absolute',
@@ -374,12 +377,12 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: 'rgba(245,241,232,0.97)',
+    backgroundColor: C.canvas,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#DDD4C7',
+    borderTopColor: C.border,
   },
   saveBtn: {
-    backgroundColor: '#111111',
+    backgroundColor: C.primary,
     borderRadius: 999,
     height: 56,
     alignItems: 'center',
@@ -391,7 +394,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
-    color: '#fff',
+    color: C.onPrimary,
     letterSpacing: 0.2,
   },
 });

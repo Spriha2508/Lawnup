@@ -135,10 +135,11 @@ export interface UsageDoc {
 export interface PlantMemoryDoc {
   plantId: string;
   nickname: string;
-  memorySummary: string;
+  memorySummary: string;        // rolling conversation summary (NOT full history)
   recurringIssues: string[];
   userCarePattern: string;
   recoveryHistory: string[];
+  recentDiagnoses?: { name: string; date: string; healthy: boolean }[]; // most-recent first
   lastUpdated: Timestamp;
   totalInteractions: number;
 }

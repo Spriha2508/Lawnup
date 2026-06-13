@@ -1,5 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, View, Text, StyleSheet } from 'react-native';
+import { theme } from '@constants/designSystem';
+
+const C = theme.color;
 
 // Calm, ambient processing orb — purely visual. Messaging and progress live in
 // ProcessingScreen so there is a single, uncluttered message area. Kept to a few
@@ -59,14 +62,14 @@ const styles = StyleSheet.create({
     width: RING + 30,
     height: RING + 30,
     borderRadius: (RING + 30) / 2,
-    backgroundColor: 'rgba(111,148,62,0.10)',
+    backgroundColor: 'rgba(200,162,78,0.12)',
   },
   haloOuter: {
     position: 'absolute',
     width: RING + 56,
     height: RING + 56,
     borderRadius: (RING + 56) / 2,
-    backgroundColor: 'rgba(111,148,62,0.045)',
+    backgroundColor: 'rgba(200,162,78,0.05)',
   },
   arc: {
     position: 'absolute',
@@ -74,7 +77,7 @@ const styles = StyleSheet.create({
     height: RING,
     borderRadius: RING / 2,
     borderWidth: 2,
-    borderColor: 'rgba(127,176,105,0.7)',
+    borderColor: 'rgba(214,180,104,0.7)',
     borderTopColor: 'transparent',
     borderRightColor: 'transparent',
   },
@@ -82,10 +85,10 @@ const styles = StyleSheet.create({
     width: RING - 64,
     height: RING - 64,
     borderRadius: (RING - 64) / 2,
-    backgroundColor: '#6F943E',
+    backgroundColor: C.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#6F943E',
+    shadowColor: C.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 18,
@@ -93,6 +96,6 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 26,
-    color: 'rgba(255,255,255,0.92)',
+    color: C.onPrimary,
   },
 });

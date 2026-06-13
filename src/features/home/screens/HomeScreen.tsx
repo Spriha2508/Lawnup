@@ -6,10 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import Animated, {
-  FadeInDown, FadeInUp,
+  FadeInDown, FadeInUp, Easing,
   useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, interpolate, Extrapolation,
+  withRepeat, withTiming, withDelay,
 } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { useAuthStore } from '../../auth/store/authStore';
 import { usePlantsStore } from '../../my-plants/store/plantsStore';
 import { useOnboardingStore } from '../../onboarding/store/onboardingStore';
@@ -20,12 +21,11 @@ import { getTodayNarrative } from '../../../services/reminders/reminderService';
 import { getWeatherInsight, getSeasonalTip } from '../utils/homeInsights';
 import { HealthRing } from '@shared/components/motion/HealthRing';
 import { PressableScale } from '@shared/components/motion/PressableScale';
-import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
 import { theme } from '@constants/designSystem';
 import type { WeatherData } from '../../../services/weather/weatherService';
 import type { UserPlantDoc } from '../../../types/firestore.types';
 
-const { width: W } = Dimensions.get('window');
+const { width: W, height: SCREEN_H } = Dimensions.get('window');
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 const H_PAD = S.xl;
 const PLANT_CARD_W = Math.floor(W * 0.42);
@@ -62,6 +62,38 @@ const EMERGENCIES = [
 
 const AnimatedScrollView = Animated.ScrollView;
 
+// ── Time-aware sky — the homepage wakes up every time it opens ──────────────
+const skyColorForHour = (): string => {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 9) return 'rgba(212,168,83,0.18)';   // dawn gold
+  if (h >= 9 && h < 17) return 'rgba(74,222,128,0.14)';  // forest day
+  if (h >= 17 && h < 19) return 'rgba(212,168,83,0.12)'; // amber dusk
+  return 'rgba(30,20,80,0.20)';                          // indigo night
+};
+
+const TimeSky: React.FC = () => {
+  const v = useSharedValue(0);
+  useEffect(() => {
+    // Signature moment: the sky brightens over 1.5s on mount (200ms delay).
+    v.value = withDelay(200, withTiming(1, { duration: 1500, easing: M.ease.smooth }));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const style = useAnimatedStyle(() => ({ opacity: v.value }));
+  const sky = useMemo(skyColorForHour, []);
+  return (
+    <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, height: SCREEN_H * 0.35 }, style]} pointerEvents="none">
+      <Svg width="100%" height="100%">
+        <Defs>
+          <LinearGradient id="home-sky" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={sky} stopOpacity={1} />
+            <Stop offset="1" stopColor={sky} stopOpacity={0} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#home-sky)" />
+      </Svg>
+    </Animated.View>
+  );
+};
+
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
@@ -77,6 +109,13 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     if (city) getCurrentWeather(city).then(setWeather).catch(() => {});
   }, [city]);
+
+  // Hero "breathing" — nothing on screen is ever fully static.
+  const breathe = useSharedValue(0);
+  useEffect(() => {
+    breathe.value = withRepeat(withTiming(1, { duration: M.loop.breath, easing: Easing.inOut(Easing.sin) }), -1, true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const blobStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + breathe.value * 0.08 }], opacity: 0.55 + breathe.value * 0.45 }));
 
   const firstName = user?.name?.split(' ')[0] ?? 'Gardener';
   const avatarChar = user?.name ? user.name[0].toUpperCase() : 'G';
@@ -117,7 +156,8 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      <AmbientBackground animated={false} vignette={false} />
+      {/* Atmosphere is the persistent root world — Home is transparent over it. */}
+      <TimeSky />
 
       {/* Sticky compact header */}
       <Animated.View style={[styles.compactBar, { paddingTop: insets.top + 4, borderBottomColor: C.border }, compactBarStyle]}>
@@ -138,6 +178,11 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.dateLabel}>{getDateLabel()}</Text>
           <Text style={styles.greeting}>{getGreeting()}</Text>
           <Text style={styles.firstName}>{firstName}</Text>
+          {weather && (
+            <Text style={styles.skyWeather}>
+              {weather.tempC}° · {weather.humidity}% humidity{city ? ` · ${city}` : ''}
+            </Text>
+          )}
         </Animated.View>
 
         {/* Premium banner */}
@@ -184,7 +229,7 @@ export const HomeScreen: React.FC = () => {
         {/* Hero scan CTA */}
         <Animated.View entering={FadeInDown.delay(160).duration(M.duration.expressive)} style={{ marginBottom: SECTION_GAP }}>
           <PressableScale style={styles.scanCard} onPress={() => navigation.navigate('Scan')} to={0.97}>
-            <View style={styles.scanBlob} />
+            <Animated.View style={[styles.scanBlob, blobStyle]} />
             <Text style={styles.scanLabel}>AI PLANT SCAN</Text>
             <Text style={styles.scanTitle}>Identify any plant{'\n'}in seconds</Text>
             <Text style={styles.scanBody}>Species ID, health check, and a personalised care guide — instantly.</Text>
@@ -336,7 +381,7 @@ const CareRow: React.FC<{ plant: UserPlantDoc; index: number; isLast: boolean; o
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.canvas },
+  root: { flex: 1, backgroundColor: 'transparent' },
   content: { paddingHorizontal: H_PAD, paddingBottom: 140 },
 
   compactBar: {
@@ -351,7 +396,8 @@ const styles = StyleSheet.create({
   bigHeader: { marginBottom: S.xl },
   dateLabel: { ...T.eyebrow, color: C.textMuted, letterSpacing: 1.8, marginBottom: S.xs + 2 },
   greeting: { ...T.bodyStrong, fontFamily: F.sans, color: C.textMuted, marginBottom: 2 },
-  firstName: { fontFamily: F.serifMediumItalic, fontSize: 44, lineHeight: 48, letterSpacing: -0.5, color: C.textPrimary },
+  firstName: { fontFamily: F.serifMediumItalic, fontSize: 48, lineHeight: 52, letterSpacing: -0.6, color: C.textPrimary },
+  skyWeather: { ...T.caption, color: C.textMuted, marginTop: S.sm, letterSpacing: 0.3 },
 
   premiumBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1A2416', borderRadius: R.lg, paddingHorizontal: S.lg, paddingVertical: S.md, marginBottom: S.lg, overflow: 'hidden' },
   premiumEyebrow: { ...T.statLabel, color: C.primary, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 3 },

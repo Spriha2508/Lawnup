@@ -18,12 +18,16 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 export default ({ config }: ConfigContext): ExpoConfig => {
   const openWeatherKey = process.env.EXPO_PUBLIC_OPENWEATHER_KEY ?? '';
   const plantIdKey = process.env.PLANT_ID_KEY ?? '';
+  const openaiKey = process.env.OPENAI_API_KEY ?? '';
 
   if (!openWeatherKey) {
     console.warn('[LawnUp] EXPO_PUBLIC_OPENWEATHER_KEY not set — weather card will be hidden');
   }
   if (!plantIdKey) {
     console.warn('[LawnUp] PLANT_ID_KEY not set — client-side scanning will fail (internal-testing mode)');
+  }
+  if (!openaiKey) {
+    console.warn('[LawnUp] OPENAI_API_KEY not set — Dr. Banyan AI replies will be disabled (internal-testing mode)');
   }
 
   return {
@@ -32,6 +36,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...config.extra,
       openWeatherKey,
       plantIdKey,
+      openaiKey,
     },
   } as ExpoConfig;
 };

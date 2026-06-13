@@ -1,4 +1,5 @@
 export type PlanId = 'free' | 'premium_monthly' | 'premium_annual';
+export type PremiumTier = 'monthly' | 'annual';
 
 export type FeatureName =
   | 'unlimitedScans'
@@ -9,23 +10,34 @@ export type FeatureName =
   | 'reminders'
   | 'priorityAI';
 
-// Single source of truth for scan quotas (client UX gate; server enforces the same).
-// Free users: 3 scans per calendar week (resets Monday). Premium: unlimited (-1).
+// ── Quotas (PRD, 2026-06-13) ────────────────────────────────────────────────
+// Free:    unlimited plants · 3 scans / WEEK · 20 AI messages / DAY.
+// Premium: 80 scans / MONTH (monthly plan) · 100 scans / MONTH (annual plan) ·
+//          unlimited AI messages.
+// Client-side enforcement (Spark / no Functions deploy); mirror server-side later.
 export const FREE_WEEKLY_SCAN_LIMIT = 3;
-export const PREMIUM_WEEKLY_SCAN_LIMIT = -1;
+export const PREMIUM_MONTHLY_SCAN_LIMIT = 80;  // monthly plan, per calendar month
+export const PREMIUM_ANNUAL_SCAN_LIMIT = 100;  // annual plan, per calendar month
+export const FREE_DAILY_MESSAGE_LIMIT = 20;
+export const PREMIUM_DAILY_MESSAGE_LIMIT = -1; // unlimited
 
+/** Per-month scan cap for the active premium tier. */
+export function premiumScanLimit(tier: PremiumTier): number {
+  return tier === 'annual' ? PREMIUM_ANNUAL_SCAN_LIMIT : PREMIUM_MONTHLY_SCAN_LIMIT;
+}
+
+// Premium-locked features. Per PRD, plants + AI Doctor are FREE (metered), so
+// they are NOT in this list — premium's value is higher quotas + these perks.
 export const PREMIUM_FEATURES: FeatureName[] = [
   'unlimitedScans',
-  'aiDoctor',
   'diseaseDetection',
   'advancedWeather',
-  'unlimitedPlants',
   'reminders',
   'priorityAI',
 ];
 
 export const FEATURE_LABELS: Record<FeatureName, string> = {
-  unlimitedScans:   'Unlimited AI scans',
+  unlimitedScans:   'More scans every month',
   aiDoctor:         'AI Doctor — personalised care',
   diseaseDetection: 'Disease detection',
   advancedWeather:  'Advanced weather insights',
@@ -42,8 +54,8 @@ export interface PlanDef {
   perMonthNote?: string;
   savingsBadge?: string;
   isPopular?: boolean;
-  scanLimit: number;
-  plantLimit: number;
+  scanLimit: number;   // scans per period (free: per week · premium: per month)
+  plantLimit: number;  // -1 = unlimited
   features: FeatureName[];
 }
 
@@ -54,7 +66,7 @@ export const PLAN_DEFS: PlanDef[] = [
     price: 0,
     period: 'forever',
     scanLimit: FREE_WEEKLY_SCAN_LIMIT,
-    plantLimit: 10,
+    plantLimit: -1,
     features: [],
   },
   {
@@ -62,19 +74,19 @@ export const PLAN_DEFS: PlanDef[] = [
     label: 'Premium Monthly',
     price: 199,
     period: '/ month',
-    scanLimit: PREMIUM_WEEKLY_SCAN_LIMIT,
+    scanLimit: PREMIUM_MONTHLY_SCAN_LIMIT,
     plantLimit: -1,
     features: PREMIUM_FEATURES,
   },
   {
     id: 'premium_annual',
     label: 'Premium Annual',
-    price: 1990,
+    price: 2189,
     period: '/ year',
-    perMonthNote: 'Just ₹166 per month',
-    savingsBadge: 'SAVE 17%',
+    perMonthNote: 'Just ₹182 per month',
+    savingsBadge: 'SAVE 8%',
     isPopular: true,
-    scanLimit: PREMIUM_WEEKLY_SCAN_LIMIT,
+    scanLimit: PREMIUM_ANNUAL_SCAN_LIMIT,
     plantLimit: -1,
     features: PREMIUM_FEATURES,
   },

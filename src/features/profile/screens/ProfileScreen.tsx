@@ -93,7 +93,7 @@ export const ProfileScreen: React.FC = () => {
             <Animated.View entering={FadeInDown.delay(140).duration(M.duration.expressive)} style={styles.premiumBanner}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.premiumLabel}>LAWNUP PREMIUM</Text>
-                <Text style={styles.premiumTitle}>Unlimited scans,{'\n'}zero limits.</Text>
+                <Text style={styles.premiumTitle}>More scans,{'\n'}deeper care.</Text>
                 {remaining >= 0 && remaining <= 1 && (
                   <Text style={styles.premiumScansLeft}>{remaining === 0 ? 'No free scans left this week' : `${remaining} free scan left this week`}</Text>
                 )}
@@ -171,7 +171,7 @@ const SoonRow: React.FC<{ icon: React.ReactNode; label: string; isLast: boolean 
 );
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.canvas },
+  root: { flex: 1, backgroundColor: 'transparent' },
   content: { paddingHorizontal: S.xl, paddingTop: S.sm },
   screenLabel: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2, marginBottom: S['2xl'] },
 

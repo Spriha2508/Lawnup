@@ -19,11 +19,10 @@ const { width: W } = Dimensions.get('window');
 
 // Feature comparison rows
 const FEATURE_ROWS: Array<{ feature: FeatureName; freeValue: string; premiumValue: string }> = [
-  { feature: 'unlimitedScans',   freeValue: `${FREE_WEEKLY_SCAN_LIMIT} / week`, premiumValue: 'Unlimited' },
-  { feature: 'aiDoctor',         freeValue: '—',                                premiumValue: 'Coming soon' },
+  { feature: 'unlimitedScans',   freeValue: `${FREE_WEEKLY_SCAN_LIMIT} / week`, premiumValue: '80–100 / month' },
+  { feature: 'aiDoctor',         freeValue: '20 / day',                         premiumValue: 'Unlimited' },
   { feature: 'diseaseDetection', freeValue: '—',                               premiumValue: 'Included' },
   { feature: 'advancedWeather',  freeValue: 'Basic',                           premiumValue: 'Full insights' },
-  { feature: 'unlimitedPlants',  freeValue: '10 plants',                       premiumValue: 'Unlimited' },
   { feature: 'reminders',        freeValue: '—',                               premiumValue: 'Smart reminders' },
   { feature: 'priorityAI',       freeValue: '—',                               premiumValue: 'Priority' },
 ];
@@ -76,10 +75,10 @@ export const PaywallScreen: React.FC = () => {
     // For now: activate mock premium so the app works end-to-end.
     if (__DEV__) {
       activateMockPremium(true);
-      setPlan('premium');
+      setPlan('premium', undefined, selectedPlan);
       navigation.goBack();
     }
-  }, [activateMockPremium, setPlan, navigation]);
+  }, [activateMockPremium, setPlan, navigation, selectedPlan]);
 
   return (
     <View style={styles.root}>
@@ -237,7 +236,7 @@ export const PaywallScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: '#F5F1E8' },
+  root:   { flex: 1, backgroundColor: 'transparent' },
   scroll: { paddingBottom: 40 },
 
   // ── Hero ──────────────────────────────────────────────────────────────────

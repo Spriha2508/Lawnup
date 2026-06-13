@@ -1,268 +1,309 @@
 /**
- * AnimatedSplash — a cinematic, Skia-free growth sequence (renders identically
- * on every build). Reanimated + react-native-svg.
+ * AnimatedSplash — "Midnight Conservatory" bonsai (per DESIGN_SYSTEM.md).
  *
- * The scene moves through time-of-day: NIGHT → DAWN → MORNING. A plant grows
- * from the soil while ambient life drifts from every direction — leaves falling
- * from the top, rising from the bottom, and spilling out from the centre, plus
- * water droplets that fall and ripple. It ends in a soft morning bloom that
- * eases into the app. ~4.4s, tap-to-skip after 1.5s.
+ *   0–0.9s   Brass moonlight blooms in the void; the glazed pot settles.
+ *   0.3–1.4s The TRUNK draws itself in one brass stroke (ink finding form).
+ *   1.2–2.2s BRANCHES draw outward, staggered — the bonsai reaches.
+ *   2.1–3.1s CHERRY BLOSSOMS pop at the branch tips (orchid spring-bloom).
+ *   2.6–5.0s PETALS drift down, swaying, fading near the floor.
+ *   3.2–4.1s The wordmark "LawnUp" rises with a brass glow; tagline follows.
+ *   EXIT     (tap from 2s, or auto at 5.2s) content fades + expands away.
  *
- * Contract preserved: absolute overlay, calls onDone() exactly once.
+ * Reanimated + react-native-svg, UI-thread, no setTimeout.
+ * Emotion: STILLNESS → WONDER. Contract: absolute overlay, onDone() exactly once.
  */
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Pressable } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, useAnimatedProps,
-  withTiming, withDelay, withRepeat, cancelAnimation, Easing,
+  withTiming, withDelay, withRepeat, withSpring, cancelAnimation, runOnJS, Easing,
+  interpolate, type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Path, Circle, Defs, LinearGradient, RadialGradient, Stop, Rect } from 'react-native-svg';
+import Svg, { Path, Circle, Ellipse, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { theme } from '@constants/designSystem';
 
 const { width: W, height: H } = Dimensions.get('window');
 const cx = W / 2;
-const baseY = H * 0.56;
+const { fonts: F, motion: M } = theme;
 
-const GOLD = '#CBB682';
-const SAGE = '#9DBE6E';
-const SAGE_DEEP = '#6E8C46';
-const CREAM = theme.color.canvas;
+// Midnight Conservatory palette (brass-led, orchid bloom accent).
+const VOID = '#0A0D0B';
+const BRASS = '#C8A24E';        // trunk / branches / brand
+const BRASS_BRIGHT = '#F0E0BE'; // highlight along the bark
+const BRASS_DARK = '#9A7A30';
+const ORCHID = '#C77DAE';       // blossom core
+const ORCHID_SOFT = '#E8C6DD';  // blossom petal / falling petals
+const POT_FILL = '#1C1612';     // dark glazed ceramic
+const WORD_COLOR = '#F3EFE9';
+const TAG_COLOR = '#8B8475';
 
-const TOTAL = 4400;
-const SKIP_AFTER = 1500;
+const TOTAL = 5200;
+const SKIP_AT = 2000;
+const WORD = 'LawnUp';
+const WORD_Y = H * 0.66;
+
+// ── Geometry (computed once at module load) ──────────────────────────────────
+const baseY = H * 0.54;          // trunk base / pot lip
+const POT_BOT = baseY + 28;
+
+const POT_D = `M ${cx - 58} ${baseY} L ${cx + 58} ${baseY} L ${cx + 46} ${POT_BOT} L ${cx - 46} ${POT_BOT} Z`;
+const POT_RIM_D = `M ${cx - 66} ${baseY} L ${cx + 66} ${baseY}`;
+
+// One sinuous trunk, base → crown.
+const TRUNK_D =
+  `M ${cx} ${baseY} ` +
+  `C ${cx - 20} ${baseY - 44} ${cx + 22} ${baseY - 78} ${cx + 4} ${baseY - 120} ` +
+  `C ${cx - 10} ${baseY - 146} ${cx + 6} ${baseY - 166} ${cx - 6} ${baseY - 190}`;
+const TRUNK_LEN = 240;
+
+// Branches reaching from points along the trunk. len = approx path length for draw.
+const BRANCHES: { d: string; len: number }[] = [
+  { d: `M ${cx + 1} ${baseY - 92}  C ${cx - 30} ${baseY - 98}  ${cx - 58} ${baseY - 92}  ${cx - 86} ${baseY - 112}`, len: 110 },
+  { d: `M ${cx + 3} ${baseY - 120} C ${cx + 34} ${baseY - 122} ${cx + 64} ${baseY - 120} ${cx + 90} ${baseY - 140}`, len: 110 },
+  { d: `M ${cx - 3} ${baseY - 158} C ${cx - 28} ${baseY - 166} ${cx - 48} ${baseY - 172} ${cx - 66} ${baseY - 190}`, len: 90 },
+  { d: `M ${cx - 6} ${baseY - 190} C ${cx - 2} ${baseY - 202}  ${cx + 14} ${baseY - 206} ${cx + 30} ${baseY - 216}`, len: 60 },
+];
+
+// Blossom pads at the branch tips + a mid-trunk pad.
+const PADS = [
+  { x: cx - 86, y: baseY - 112 },
+  { x: cx + 90, y: baseY - 140 },
+  { x: cx - 66, y: baseY - 190 },
+  { x: cx + 30, y: baseY - 216 },
+  { x: cx + 4,  y: baseY - 120 },
+];
+
+type Bloom = { x: number; y: number; r: number; delay: number };
+const BLOOMS: Bloom[] = PADS.flatMap((p, pi) =>
+  Array.from({ length: 3 }, (_, j) => {
+    const a = (j * 2.3 + pi) * 1.7;
+    const rad = 6 + ((pi + j) % 3) * 6;
+    return {
+      x: p.x + Math.cos(a) * rad,
+      y: p.y + Math.sin(a) * rad,
+      r: 4.2 + ((pi + j) % 3) * 1.1,
+      delay: 2100 + (pi * 3 + j) * 70,
+    };
+  }),
+);
+
+type Petal = { startX: number; sway: number; size: number; dur: number; phase: number; rot: number };
+const PETALS: Petal[] = Array.from({ length: 16 }, (_, i) => ({
+  startX: cx - 96 + ((i * 0.41) % 1) * 192,
+  sway: 18 + (i % 4) * 12,
+  size: 4 + (i % 3),
+  dur: 4200 + (i % 5) * 900,
+  phase: (i * 0.137) % 1,
+  rot: (i % 2 === 0 ? 1 : -1) * (180 + (i % 3) * 120),
+}));
+
+const FALL_FROM = baseY - 210;     // petals begin around the crown
+const FALL_TO = POT_BOT + 40;      // and settle just past the pot
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const LEAF_D = 'M0 -7 C5 -3 5 5 0 8 C-5 5 -5 -3 0 -7 Z';
 
-// ── Generic drifting particle (leaf), any direction via y0→y1 ────────────────
-type PSeed = { x: number; xDrift: number; y0: number; y1: number; dur: number; phase: number; size: number; rot: number; op: number; color: string };
-const DriftParticle: React.FC<{ seed: PSeed }> = ({ seed }) => {
-  const t = useSharedValue(0);
+// ── A cherry blossom that springs open at a branch tip ───────────────────────
+const Blossom: React.FC<{ b: Bloom; gate: SharedValue<number> }> = ({ b, gate }) => {
+  const s = useSharedValue(0);
   useEffect(() => {
-    t.value = withDelay(seed.phase * seed.dur, withRepeat(withTiming(1, { duration: seed.dur, easing: Easing.linear }), -1, false));
+    s.value = withDelay(b.delay, withSpring(1, M.spring.bouncy));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const style = useAnimatedStyle(() => {
-    const p = t.value;
-    return {
-      opacity: Math.sin(p * Math.PI) * seed.op,
-      transform: [
-        { translateX: seed.x + Math.sin(p * Math.PI * 2 + seed.phase * 6) * seed.xDrift },
-        { translateY: seed.y0 + p * (seed.y1 - seed.y0) },
-        { rotate: `${seed.rot + p * 90}deg` },
-        { scale: seed.size },
-      ],
-    };
-  });
+  const style = useAnimatedStyle(() => ({
+    opacity: gate.value * Math.min(1, s.value * 1.2),
+    transform: [{ scale: s.value }],
+  }));
   return (
-    <Animated.View style={[styles.particle, style]} pointerEvents="none">
-      <Svg width={22} height={22} viewBox="0 0 22 22"><Path d={LEAF_D} transform="translate(11 11)" fill={seed.color} /></Svg>
+    <Animated.View style={[{ position: 'absolute', left: b.x - b.r * 2, top: b.y - b.r * 2, width: b.r * 4, height: b.r * 4 }, style]} pointerEvents="none">
+      <Svg width={b.r * 4} height={b.r * 4}>
+        <Circle cx={b.r * 2} cy={b.r * 2} r={b.r} fill={ORCHID_SOFT} />
+        <Circle cx={b.r * 2} cy={b.r * 2} r={b.r * 0.62} fill={ORCHID} />
+        <Circle cx={b.r * 2} cy={b.r * 2} r={b.r * 0.22} fill={BRASS_BRIGHT} />
+      </Svg>
     </Animated.View>
   );
 };
 
-// ── Falling water droplet + ripple ───────────────────────────────────────────
-type DropSeed = { x: number; phase: number; dur: number; topY: number; landY: number };
-const Droplet: React.FC<{ seed: DropSeed }> = ({ seed }) => {
+// ── A petal drifting down from the canopy ────────────────────────────────────
+const FallingPetal: React.FC<{ p: Petal; gate: SharedValue<number> }> = ({ p, gate }) => {
   const t = useSharedValue(0);
   useEffect(() => {
-    t.value = withDelay(seed.phase * seed.dur, withRepeat(withTiming(1, { duration: seed.dur, easing: Easing.linear }), -1, false));
+    t.value = withDelay(2600 + p.phase * 1600, withRepeat(withTiming(1, { duration: p.dur, easing: Easing.linear }), -1, false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const dropStyle = useAnimatedStyle(() => {
-    const p = Math.min(1, t.value / 0.6);
-    const fall = p * p;
-    return { opacity: t.value < 0.6 ? 0.85 : 0, transform: [{ translateX: seed.x }, { translateY: seed.topY + fall * (seed.landY - seed.topY) }, { scaleY: 1 + p * 0.5 }] };
-  });
-  const rippleStyle = useAnimatedStyle(() => {
-    const r = t.value > 0.55 && t.value < 0.85 ? (t.value - 0.55) / 0.3 : 0;
-    return { opacity: r > 0 ? (1 - r) * 0.5 : 0, transform: [{ translateX: seed.x - 10 }, { translateY: seed.landY - 10 }, { scale: 0.3 + r * 1.3 }] };
+  const style = useAnimatedStyle(() => {
+    const v = t.value;
+    const y = FALL_FROM + (FALL_TO - FALL_FROM) * v;
+    const x = p.startX + Math.sin(v * Math.PI * 2 + p.phase * 6) * p.sway;
+    const rot = v * p.rot;
+    // fade in at top, out near the floor
+    const fade = interpolate(v, [0, 0.12, 0.82, 1], [0, 1, 1, 0]);
+    return {
+      opacity: gate.value * fade,
+      transform: [{ translateX: x }, { translateY: y }, { rotate: `${rot}deg` }],
+    };
   });
   return (
-    <>
-      <Animated.View style={[styles.particle, dropStyle]} pointerEvents="none">
-        <Svg width={8} height={12} viewBox="0 0 8 12"><Path d="M4 0 C7 5 7 9 4 11 C1 9 1 5 4 0 Z" fill="rgba(206,228,238,0.92)" /></Svg>
-      </Animated.View>
-      <Animated.View style={[styles.particle, rippleStyle]} pointerEvents="none">
-        <Svg width={20} height={20} viewBox="0 0 20 20"><Circle cx={10} cy={10} r={8} stroke="rgba(206,228,238,0.8)" strokeWidth={1} fill="none" /></Svg>
-      </Animated.View>
-    </>
+    <Animated.View style={[{ position: 'absolute', left: 0, top: 0 }, style]} pointerEvents="none">
+      <Svg width={p.size * 2} height={p.size * 2}>
+        <Ellipse cx={p.size} cy={p.size} rx={p.size} ry={p.size * 0.6} fill={ORCHID_SOFT} />
+      </Svg>
+    </Animated.View>
   );
+};
+
+// ── A wordmark letter emerging with spring weight ────────────────────────────
+const Letter: React.FC<{ ch: string; delay: number }> = ({ ch, delay }) => {
+  const o = useSharedValue(0);
+  const s = useSharedValue(0.9);
+  const y = useSharedValue(10);
+  useEffect(() => {
+    o.value = withDelay(delay, withTiming(1, { duration: 320, easing: M.ease.decelerate }));
+    s.value = withDelay(delay, withSpring(1, M.spring.gentle));
+    y.value = withDelay(delay, withSpring(0, M.spring.gentle));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const style = useAnimatedStyle(() => ({ opacity: o.value, transform: [{ translateY: y.value }, { scale: s.value }] }));
+  return <Animated.Text style={[styles.letter, style]}>{ch}</Animated.Text>;
 };
 
 interface Props { onDone: () => void }
 
 export const AnimatedSplash: React.FC<Props> = ({ onDone }) => {
   const calledRef = useRef(false);
-  const [skipReady, setSkipReady] = useState(false);
+  const [armed, setArmed] = useState(false);
 
-  const grow = useSharedValue(0);
-  const stemDraw = useSharedValue(1);
-  const glow = useSharedValue(0);
-  const breathe = useSharedValue(0);
-  const dawn = useSharedValue(0);     // night → dawn
-  const morning = useSharedValue(0);  // → morning bloom (also the app transition)
-  const wordOp = useSharedValue(0);
-  const wordY = useSharedValue(14);
+  const glow = useSharedValue(0);       // brass moonlight
+  const pot = useSharedValue(0);        // pot settle
+  const trunkDraw = useSharedValue(0);  // trunk stroke reveal
+  const branchDraw = useSharedValue(0); // branches stroke reveal
+  const bloomGate = useSharedValue(0);  // blossoms visible
+  const petalGate = useSharedValue(0);  // petals visible
+  const word = useSharedValue(0);
+  const tag = useSharedValue(0);
   const skipOp = useSharedValue(0);
   const container = useSharedValue(1);
-
-  // Mixed-direction leaves: fall (top), rise (bottom), spill (centre-out)
-  const leaves = useMemo<PSeed[]>(() => {
-    const out: PSeed[] = [];
-    const col = (i: number) => (i % 3 === 0 ? GOLD : i % 3 === 1 ? SAGE : SAGE_DEEP);
-    // fall from top
-    for (let i = 0; i < 4; i++) out.push({ x: W * (0.12 + i * 0.24), xDrift: 22 + i * 6, y0: -40, y1: H + 40, dur: 7600 + i * 1100, phase: (i * 0.31) % 1, size: 0.7 + (i % 3) * 0.18, rot: i * 40, op: 0.22, color: col(i) });
-    // rise from bottom
-    for (let i = 0; i < 3; i++) out.push({ x: W * (0.2 + i * 0.3), xDrift: 26 + i * 8, y0: H + 40, y1: -40, dur: 8800 + i * 1200, phase: (i * 0.5 + 0.2) % 1, size: 0.8 + (i % 2) * 0.2, rot: i * 70, op: 0.2, color: col(i + 1) });
-    // spill from centre outward/up
-    for (let i = 0; i < 3; i++) out.push({ x: cx + (i - 1) * 60, xDrift: 50 + i * 14, y0: baseY - 80, y1: -40, dur: 7000 + i * 900, phase: (i * 0.4 + 0.5) % 1, size: 0.6 + (i % 2) * 0.2, rot: i * 55, op: 0.24, color: col(i + 2) });
-    return out;
-  }, []);
-
-  const drops = useMemo<DropSeed[]>(() => ([
-    { x: cx - 40, phase: 0.0,  dur: 3200, topY: baseY - 150, landY: baseY - 60 },
-    { x: cx + 50, phase: 0.35, dur: 3800, topY: baseY - 130, landY: baseY - 30 },
-    { x: cx + 8,  phase: 0.6,  dur: 3400, topY: -20,         landY: baseY - 90 },
-    { x: W * 0.2, phase: 0.2,  dur: 4200, topY: -20,         landY: H * 0.42 },
-  ]), []);
 
   const finish = useCallback(() => { if (calledRef.current) return; calledRef.current = true; onDone(); }, [onDone]);
 
   useEffect(() => {
-    const easeOut = Easing.out(Easing.cubic);
-    const easeInOut = Easing.inOut(Easing.cubic);
-    glow.value = withTiming(1, { duration: 1100, easing: easeOut });
-    breathe.value = withRepeat(withTiming(1, { duration: 3600, easing: Easing.inOut(Easing.sin) }), -1, true);
-    grow.value = withDelay(500, withTiming(1, { duration: 1600, easing: easeOut }));
-    stemDraw.value = withDelay(500, withTiming(0, { duration: 1500, easing: easeOut }));
-    // time of day
-    dawn.value = withDelay(1300, withTiming(1, { duration: 1500, easing: easeInOut }));
-    morning.value = withDelay(TOTAL - 1300, withTiming(1, { duration: 1100, easing: easeInOut }));
-    // wordmark
-    wordOp.value = withDelay(2400, withTiming(1, { duration: 800, easing: easeOut }));
-    wordY.value = withDelay(2400, withTiming(0, { duration: 800, easing: easeOut }));
-    container.value = withDelay(TOTAL - 320, withTiming(0, { duration: 320, easing: easeOut }));
+    glow.value = withDelay(200, withTiming(1, { duration: 1100, easing: M.ease.smooth }));
+    pot.value = withDelay(200, withTiming(1, { duration: 600, easing: M.ease.decelerate }));
 
-    const skipT = setTimeout(() => { setSkipReady(true); skipOp.value = withTiming(1, { duration: 500 }); }, SKIP_AFTER);
-    const doneT = setTimeout(finish, TOTAL);
-    return () => { clearTimeout(skipT); clearTimeout(doneT); finish(); };
+    // the bonsai draws itself: trunk first, then branches reach out
+    trunkDraw.value = withDelay(300, withTiming(1, { duration: 1100, easing: M.ease.smooth }));
+    branchDraw.value = withDelay(1200, withTiming(1, { duration: 1000, easing: M.ease.smooth }));
+
+    // canopy blooms, then petals begin to fall
+    bloomGate.value = withDelay(2050, withTiming(1, { duration: 300 }));
+    petalGate.value = withDelay(2600, withTiming(1, { duration: 600 }));
+
+    // the brand rises beneath the tree
+    word.value = withDelay(3200, withTiming(1, { duration: 100 }));
+    tag.value = withDelay(3900, withTiming(1, { duration: 450, easing: M.ease.smooth }));
+
+    skipOp.value = withDelay(SKIP_AT, withTiming(1, { duration: 400 }, (f) => { if (f) runOnJS(setArmed)(true); }));
+
+    container.value = withDelay(TOTAL - 450, withTiming(0, { duration: 450, easing: M.ease.smooth }, (f) => { if (f) runOnJS(finish)(); }));
+    return () => { cancelAnimation(container); finish(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSkip = useCallback(() => {
-    if (!skipReady || calledRef.current) return;
+  const skipNow = useCallback(() => {
+    if (!armed || calledRef.current) return;
     cancelAnimation(container);
-    container.value = withTiming(0, { duration: 300 });
-    setTimeout(finish, 300);
-  }, [skipReady, finish, container]);
+    // eslint-disable-next-line react-hooks/immutability -- shared-value write in a tap handler
+    container.value = withTiming(0, { duration: 380, easing: M.ease.smooth }, (f) => { if (f) runOnJS(finish)(); });
+  }, [armed, finish]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const PH = 180, PW = 120;
-  const plantStyle = useAnimatedStyle(() => ({
-    opacity: Math.min(1, grow.value * 1.4),
-    transform: [{ translateY: PH / 2 }, { scale: 0.15 + grow.value * 0.85 }, { translateY: -PH / 2 }],
+  // ── Animated props / styles ────────────────────────────────────────────────
+  const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value * 0.5, transform: [{ scale: 0.7 + glow.value * 0.4 }] }));
+  const potStyle = useAnimatedStyle(() => ({ opacity: pot.value, transform: [{ translateY: (1 - pot.value) * 10 }] }));
+  const trunkProps = useAnimatedProps(() => ({ strokeDashoffset: TRUNK_LEN * (1 - trunkDraw.value) }));
+  const wordStyle = useAnimatedStyle(() => ({ opacity: word.value }));
+  const tagStyle = useAnimatedStyle(() => ({ opacity: tag.value }));
+  const skipStyle = useAnimatedStyle(() => ({ opacity: skipOp.value * 0.55 }));
+  const containerStyle = useAnimatedStyle(() => ({
+    opacity: container.value,
+    transform: [{ scale: 1 + (1 - container.value) * 0.05 }],
   }));
-  const stemProps = useAnimatedProps(() => ({ strokeDashoffset: stemDraw.value * 230 }));
-  const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value * (0.55 + breathe.value * 0.4), transform: [{ scale: 0.9 + breathe.value * 0.16 }] }));
-  const dawnStyle = useAnimatedStyle(() => ({ opacity: dawn.value * 0.85 }));
-  const morningStyle = useAnimatedStyle(() => ({ opacity: morning.value }));
-  const containerStyle = useAnimatedStyle(() => ({ opacity: container.value }));
-  const wordStyle = useAnimatedStyle(() => ({ opacity: wordOp.value, transform: [{ translateY: wordY.value }] }));
-  const skipStyle = useAnimatedStyle(() => ({ opacity: skipOp.value }));
 
   return (
     <Animated.View style={[styles.root, containerStyle]}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={handleSkip}>
-        {/* NIGHT base */}
-        <Svg style={StyleSheet.absoluteFill} width={W} height={H}>
-          <Defs>
-            <LinearGradient id="sp-night" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#0A1410" /><Stop offset="1" stopColor="#06090A" />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width={W} height={H} fill="url(#sp-night)" />
-        </Svg>
-
-        {/* DAWN warm layer (fades in behind plant) */}
-        <Animated.View style={[StyleSheet.absoluteFill, dawnStyle]} pointerEvents="none">
-          <Svg style={StyleSheet.absoluteFill} width={W} height={H}>
-            <Defs>
-              <LinearGradient id="sp-dawn" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor="#1A130C" /><Stop offset="0.55" stopColor="#3A2415" /><Stop offset="1" stopColor="#6E4220" />
-              </LinearGradient>
-            </Defs>
-            <Rect x="0" y="0" width={W} height={H} fill="url(#sp-dawn)" />
-          </Svg>
-        </Animated.View>
-
-        {/* Breathing light behind plant */}
+      <Pressable style={StyleSheet.absoluteFill} onPress={skipNow}>
+        {/* brass moonlight glow behind the tree */}
         <Animated.View style={[styles.glow, glowStyle]} pointerEvents="none">
-          <Svg width={380} height={380}>
-            <Defs>
-              <RadialGradient id="sp-glow" cx="50%" cy="50%" r="50%">
-                <Stop offset="0" stopColor="#E8CF8E" stopOpacity={0.5} />
-                <Stop offset="0.5" stopColor="#A7C47C" stopOpacity={0.18} />
-                <Stop offset="1" stopColor="#A7C47C" stopOpacity={0} />
-              </RadialGradient>
-            </Defs>
-            <Circle cx={190} cy={190} r={190} fill="url(#sp-glow)" />
+          <Svg width={W} height={W}>
+            <Defs><RadialGradient id="bonsai-glow" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={BRASS} stopOpacity={0.30} />
+              <Stop offset="0.55" stopColor={BRASS} stopOpacity={0.07} />
+              <Stop offset="1" stopColor={BRASS} stopOpacity={0} />
+            </RadialGradient></Defs>
+            <Circle cx={W / 2} cy={W / 2} r={W / 2} fill="url(#bonsai-glow)" />
           </Svg>
         </Animated.View>
 
-        {/* Ambient leaves (all directions) */}
-        {leaves.map((s, i) => <DriftParticle key={`l${i}`} seed={s} />)}
-
-        {/* Growing plant */}
-        <Animated.View style={[styles.plant, { width: PW, height: PH, left: cx - PW / 2, top: baseY - PH }, plantStyle]} pointerEvents="none">
-          <Svg width={PW} height={PH} viewBox="0 0 120 180">
-            <AnimatedPath d="M60 180 C50 130 70 82 60 30" stroke={GOLD} strokeWidth={2} strokeLinecap="round" fill="none" strokeDasharray={230} animatedProps={stemProps} />
-            <Path d="M60 120 C78 116 92 104 96 86 C84 92 68 104 60 120 Z" fill={SAGE} opacity={0.92} />
-            <Path d="M60 120 C76 112 88 102 95 88" stroke={GOLD} strokeWidth={0.9} fill="none" opacity={0.6} />
-            <Path d="M60 80 C42 76 28 64 24 46 C36 52 52 64 60 80 Z" fill={SAGE_DEEP} opacity={0.95} />
-            <Path d="M60 80 C44 72 32 62 25 48" stroke={GOLD} strokeWidth={0.9} fill="none" opacity={0.6} />
-            <Path d="M60 44 C74 42 86 32 90 18 C80 24 68 34 60 44 Z" fill={SAGE} opacity={0.9} />
-          </Svg>
-        </Animated.View>
-
-        {/* Falling droplets */}
-        {drops.map((s, i) => <Droplet key={`d${i}`} seed={s} />)}
-
-        {/* MORNING bloom → eases into the app */}
-        <Animated.View style={[StyleSheet.absoluteFill, morningStyle]} pointerEvents="none">
+        {/* glazed pot */}
+        <Animated.View style={[StyleSheet.absoluteFill, potStyle]} pointerEvents="none">
           <Svg style={StyleSheet.absoluteFill} width={W} height={H}>
-            <Defs>
-              <LinearGradient id="sp-morning" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor="#F5F1E8" /><Stop offset="0.6" stopColor="#EAF0DC" /><Stop offset="1" stopColor="#F1F6E8" />
-              </LinearGradient>
-            </Defs>
-            <Rect x="0" y="0" width={W} height={H} fill="url(#sp-morning)" />
+            <Path d={POT_D} fill={POT_FILL} stroke={BRASS_DARK} strokeWidth={1.5} strokeLinejoin="round" />
+            <Path d={POT_RIM_D} stroke={BRASS} strokeWidth={3} strokeLinecap="round" />
           </Svg>
         </Animated.View>
 
-        {/* Wordmark */}
-        <Animated.View style={[styles.wordWrap, wordStyle]} pointerEvents="none">
-          <Animated.Text style={styles.brand}>Lawnup</Animated.Text>
-          <View style={styles.rule} />
-          <Animated.Text style={styles.tagline}>YOUR AI PLANT COMPANION</Animated.Text>
+        {/* the bonsai — trunk + branches drawing themselves in brass */}
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Svg style={StyleSheet.absoluteFill} width={W} height={H}>
+            {/* trunk: soft under-glow + bright bark line */}
+            <AnimatedPath d={TRUNK_D} stroke={BRASS} strokeOpacity={0.25} strokeWidth={8} strokeLinecap="round" fill="none" strokeDasharray={TRUNK_LEN} animatedProps={trunkProps} />
+            <AnimatedPath d={TRUNK_D} stroke={BRASS_BRIGHT} strokeWidth={2.4} strokeLinecap="round" fill="none" strokeDasharray={TRUNK_LEN} animatedProps={trunkProps} />
+            {BRANCHES.map((br, i) => (
+              <Branch key={i} d={br.d} len={br.len} draw={branchDraw} />
+            ))}
+          </Svg>
+        </View>
+
+        {/* cherry blossoms at the tips */}
+        {BLOOMS.map((b, i) => <Blossom key={i} b={b} gate={bloomGate} />)}
+
+        {/* petals drifting down */}
+        {PETALS.map((p, i) => <FallingPetal key={i} p={p} gate={petalGate} />)}
+
+        {/* WORDMARK rising beneath the tree */}
+        <Animated.View style={[styles.wordWrap, { top: WORD_Y - 26 }, wordStyle]} pointerEvents="none">
+          <View style={styles.wordRow}>
+            {WORD.split('').map((ch, i) => <Letter key={i} ch={ch} delay={3200 + i * 40} />)}
+          </View>
+        </Animated.View>
+        <Animated.View style={[styles.tagWrap, tagStyle]} pointerEvents="none">
+          <Animated.Text style={styles.tagline}>GROW SOMETHING BEAUTIFUL</Animated.Text>
         </Animated.View>
 
-        {skipReady && (
-          <Animated.View style={[styles.skipWrap, skipStyle]} pointerEvents="none">
-            <Animated.Text style={styles.skipText}>Tap to skip</Animated.Text>
-          </Animated.View>
-        )}
+        {/* skip */}
+        <Animated.View style={[styles.skipWrap, skipStyle]} pointerEvents="none">
+          <Animated.Text style={styles.skipText}>Tap to skip</Animated.Text>
+        </Animated.View>
       </Pressable>
     </Animated.View>
   );
 };
 
+// ── A single branch stroke (own animated offset off the shared draw value) ────
+const Branch: React.FC<{ d: string; len: number; draw: SharedValue<number> }> = ({ d, len, draw }) => {
+  const props = useAnimatedProps(() => ({ strokeDashoffset: len * (1 - draw.value) }));
+  return (
+    <>
+      <AnimatedPath d={d} stroke={BRASS} strokeOpacity={0.22} strokeWidth={5} strokeLinecap="round" fill="none" strokeDasharray={len} animatedProps={props} />
+      <AnimatedPath d={d} stroke={BRASS_BRIGHT} strokeWidth={1.6} strokeLinecap="round" fill="none" strokeDasharray={len} animatedProps={props} />
+    </>
+  );
+};
+
 const styles = StyleSheet.create({
-  root: { ...StyleSheet.absoluteFillObject, zIndex: theme.z.splash, overflow: 'hidden', backgroundColor: '#06090A' },
-  particle: { position: 'absolute', top: 0, left: 0 },
-  glow: { position: 'absolute', width: 380, height: 380, left: cx - 190, top: baseY - 100 - 190, alignItems: 'center', justifyContent: 'center' },
-  plant: { position: 'absolute' },
-  wordWrap: { position: 'absolute', left: 0, right: 0, top: baseY + 48, alignItems: 'center' },
-  brand: { fontFamily: theme.fonts.serifMediumItalic, fontSize: 48, color: '#F2EEE3', letterSpacing: 0.5 },
-  rule: { width: 34, height: 1, backgroundColor: GOLD, opacity: 0.6, marginVertical: 14 },
-  tagline: { fontFamily: theme.fonts.sansMedium, fontSize: 10.5, color: 'rgba(203,182,126,0.8)', letterSpacing: 3.4 },
-  skipWrap: { position: 'absolute', bottom: theme.spacing['5xl'], left: 0, right: 0, alignItems: 'center' },
-  skipText: { fontFamily: theme.fonts.sansMedium, fontSize: 12, color: 'rgba(242,238,227,0.5)', letterSpacing: 0.5 },
+  root: { ...StyleSheet.absoluteFillObject, zIndex: theme.z.splash, overflow: 'hidden', backgroundColor: VOID },
+  glow: { position: 'absolute', left: 0, top: baseY - 150 - W / 2, width: W, height: W },
+  wordWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  wordRow: { flexDirection: 'row' },
+  letter: { fontFamily: F.serif, fontSize: 42, lineHeight: 48, color: WORD_COLOR, letterSpacing: 1, textShadowColor: 'rgba(200,162,78,0.45)', textShadowRadius: 18, textShadowOffset: { width: 0, height: 0 } },
+  tagWrap: { position: 'absolute', left: 0, right: 0, top: H * 0.72, alignItems: 'center' },
+  tagline: { fontFamily: F.sansMedium, fontSize: 11, color: TAG_COLOR, letterSpacing: 2.5 },
+  skipWrap: { position: 'absolute', bottom: theme.spacing['4xl'], right: theme.spacing['2xl'] },
+  skipText: { fontFamily: F.sansMedium, fontSize: 12, color: 'rgba(243,239,233,0.7)', letterSpacing: 0.4 },
 });

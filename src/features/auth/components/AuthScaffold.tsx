@@ -1,9 +1,10 @@
 /**
- * AuthScaffold — shared immersive composition for Login / Signup.
+ * AuthScaffold — shared immersive composition for Login / Signup / Forgot.
  *
- * Layered depth: cinematic AmbientBackground → a breathing PlantEmblem hero
- * over open space → the form on a floating, elevated surface panel. Plus a
- * soft (non-harsh) error treatment. Calm motion choreography.
+ * Continues the Welcome environment for one unbroken atmosphere: cinematic
+ * AmbientBackground + light pouring from above + botanicals drifting at depth.
+ * Typography leads (no emblem chrome); the form floats on a soft frosted
+ * surface rather than a heavy opaque card. Calm motion choreography.
  */
 
 import React from 'react';
@@ -11,11 +12,8 @@ import {
   View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
-import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
-import { FloatingLeaves } from '@shared/components/motion/FloatingLeaves';
-import { PlantEmblem } from '@shared/components/motion/PlantEmblem';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
 
@@ -67,8 +65,7 @@ interface Props {
 
 export const AuthScaffold: React.FC<Props> = ({ onBack, eyebrow, headline, subtitle, children }) => (
   <View style={styles.root}>
-    <AmbientBackground />
-    <FloatingLeaves />
+    {/* Atmosphere is the persistent root world — this screen is transparent over it. */}
     <KAV>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView
@@ -83,18 +80,15 @@ export const AuthScaffold: React.FC<Props> = ({ onBack, eyebrow, headline, subti
             </Svg>
           </PressableScale>
 
-          {/* Hero over ambient */}
+          {/* Typography-led hero over the living environment */}
           <View style={styles.hero}>
-            <Animated.View entering={FadeIn.duration(M.duration.cinematic)} style={styles.emblem}>
-              <PlantEmblem size={76} />
-            </Animated.View>
             <Animated.Text entering={calm(0)} style={styles.eyebrow}>{eyebrow}</Animated.Text>
             <Animated.Text entering={calm(1)} style={styles.headline}>{headline}</Animated.Text>
             <Animated.Text entering={calm(2)} style={styles.subtitle}>{subtitle}</Animated.Text>
           </View>
 
-          {/* Floating form panel */}
-          <Animated.View entering={FadeInDown.delay(320).duration(M.duration.expressive)} style={styles.panel}>
+          {/* Form floats directly on the atmosphere — boxless, light */}
+          <Animated.View entering={FadeInDown.delay(320).duration(M.duration.expressive)} style={styles.formArea}>
             {children}
           </Animated.View>
         </ScrollView>
@@ -104,27 +98,20 @@ export const AuthScaffold: React.FC<Props> = ({ onBack, eyebrow, headline, subti
 );
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.canvas },
+  root: { flex: 1, backgroundColor: 'transparent' },
   flex: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: S.sm, paddingBottom: S['3xl'] },
 
   backBtn: {
     width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.55)', marginBottom: S.lg,
+    backgroundColor: 'rgba(255,255,255,0.4)', marginBottom: S.xl,
   },
 
   hero: { paddingHorizontal: S.xs, marginBottom: S['2xl'] },
-  emblem: { marginBottom: S.xl, marginLeft: -S.xs },
-  eyebrow: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2.6, marginBottom: S.md },
-  headline: { fontFamily: F.serifMedium, fontSize: 46, lineHeight: 50, letterSpacing: -0.6, color: C.textPrimary, marginBottom: S.md },
-  subtitle: { ...T.bodyLg, fontFamily: F.sans, color: C.textSecondary, lineHeight: 24, maxWidth: '94%' },
+  eyebrow: { ...T.eyebrow, color: C.textMuted, letterSpacing: 3, marginBottom: S.md },
+  headline: { fontFamily: F.serif, fontSize: 52, lineHeight: 56, letterSpacing: -0.8, color: C.textPrimary, marginBottom: S.lg },
+  subtitle: { ...T.bodyLg, fontFamily: F.sans, color: C.textSecondary, lineHeight: 25, maxWidth: '94%' },
 
-  panel: {
-    backgroundColor: C.card,
-    borderRadius: R.sheet,
-    padding: S.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.6)',
-    ...theme.shadows.lg,
-  },
+  // Boxless: the form floats on the living atmosphere — lighter, more premium.
+  formArea: { marginTop: S.xs },
 });

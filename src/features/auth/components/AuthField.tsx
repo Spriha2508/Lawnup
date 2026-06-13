@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { theme } from '@constants/designSystem';
 
-const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
+const { color: C, spacing: S, typography: T, motion: M } = theme;
 const webOutline = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {};
 
 interface Props extends TextInputProps {
@@ -28,16 +28,17 @@ export const AuthField: React.FC<Props> = ({ label, isPassword = false, onFocus,
   const handleFocus = useCallback((e: any) => { focus.value = withTiming(1, { duration: M.duration.standard, easing: M.ease.smooth }); onFocus?.(e); }, [onFocus]); // eslint-disable-line
   const handleBlur  = useCallback((e: any) => { focus.value = withTiming(0, { duration: M.duration.standard, easing: M.ease.smooth }); onBlur?.(e); }, [onBlur]); // eslint-disable-line
 
-  const fieldStyle = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(focus.value, [0, 1], [C.border, C.primary]),
-    backgroundColor: interpolateColor(focus.value, [0, 1], ['rgba(255,255,255,0.55)', 'rgba(255,255,255,0.92)']),
+  // Light, boxless: just a baseline that lights up on focus + a growing accent.
+  const baseStyle = useAnimatedStyle(() => ({
+    borderBottomColor: interpolateColor(focus.value, [0, 1], [C.border, C.primarySoft]),
   }));
+  const accentStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: focus.value }], opacity: focus.value }));
   const labelStyle = useAnimatedStyle(() => ({ color: interpolateColor(focus.value, [0, 1], [C.textMuted, C.primary]) }));
 
   return (
     <View style={styles.wrap}>
       <Animated.Text style={[styles.label, labelStyle]}>{label}</Animated.Text>
-      <Animated.View style={[styles.field, fieldStyle]}>
+      <Animated.View style={[styles.field, baseStyle]}>
         <TextInput
           style={[styles.input, webOutline as object]}
           placeholderTextColor={C.textFaint}
@@ -51,19 +52,22 @@ export const AuthField: React.FC<Props> = ({ label, isPassword = false, onFocus,
             <Text style={styles.toggleText}>{show ? 'Hide' : 'Show'}</Text>
           </Pressable>
         ) : null}
+        <Animated.View style={[styles.accent, accentStyle]} pointerEvents="none" />
       </Animated.View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: S.lg },
-  label: { ...T.eyebrow, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: S.sm },
+  wrap: { marginBottom: S.xl },
+  label: { ...T.eyebrow, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: S.xs },
   field: {
     flexDirection: 'row', alignItems: 'center',
-    borderRadius: R.lg, borderWidth: 1.5, paddingHorizontal: S.lg, height: 56,
+    borderBottomWidth: 1.5, paddingBottom: S.sm, paddingTop: S.xs,
+    position: 'relative',
   },
-  input: { flex: 1, ...T.body, color: C.textPrimary, paddingVertical: 0 },
+  input: { flex: 1, ...T.bodyLg, color: C.textPrimary, paddingVertical: 4 },
+  accent: { position: 'absolute', left: 0, right: 0, bottom: -1.5, height: 1.5, backgroundColor: C.primary },
   toggle: { paddingVertical: S.xs, paddingLeft: S.sm },
   toggleText: { ...T.label, fontSize: 13, color: C.primary },
 });

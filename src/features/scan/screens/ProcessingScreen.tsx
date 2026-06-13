@@ -21,7 +21,9 @@ import { ProcessingAnimation } from '../components/ProcessingAnimation';
 import { logger } from '../../../shared/utils/logger';
 import { UpgradePrompt } from '../../subscription/components/UpgradePrompt';
 import type { ScanStackParamList } from '../../../navigation/types';
+import { theme } from '@constants/designSystem';
 
+const C = theme.color;
 const { width: SW, height: SH } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'Processing'>;
 type Route = RouteProp<ScanStackParamList, 'Processing'>;
@@ -241,7 +243,7 @@ export const ProcessingScreen: React.FC = () => {
         <Animated.View style={[styles.retryContent, { opacity: retryOpacity }]}>
           <View style={styles.retryMarkWrap}>
             <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-              <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill="rgba(167,196,124,0.6)" />
+              <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill="rgba(200,162,78,0.6)" />
               <Path d="M12 3V21" stroke="rgba(255,255,255,0.4)" strokeWidth={1.2} strokeLinecap="round" />
             </Svg>
           </View>
@@ -348,7 +350,7 @@ export const ProcessingScreen: React.FC = () => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#060D09',
+    backgroundColor: C.canvas,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -367,7 +369,7 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: 'rgba(111,148,62,0.07)',
+    backgroundColor: 'rgba(200,162,78,0.08)',
     alignSelf: 'center',
     top: SH / 2 - 160,
   },
@@ -419,7 +421,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 3,
-    backgroundColor: '#7FB069',
+    backgroundColor: C.primary,
   },
   trustLine: {
     marginTop: 14,
@@ -444,7 +446,7 @@ const styles = StyleSheet.create({
   retryTitle: {
     fontSize: 22,
     fontFamily: 'Cormorant-SemiBold',
-    color: '#FFFFFF',
+    color: C.textPrimary,
     textAlign: 'center',
     lineHeight: 30,
     marginBottom: 14,
@@ -495,7 +497,7 @@ const styles = StyleSheet.create({
   btnRetakeText: {
     fontSize: 15,
     fontFamily: 'Nunito-SemiBold',
-    color: '#FFFFFF',
+    color: C.textPrimary,
   },
   btnGallery: {
     paddingVertical: 12,

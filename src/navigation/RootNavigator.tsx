@@ -147,7 +147,7 @@ export const RootNavigator = memo(function RootNavigator() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#6F943E" />
+        <ActivityIndicator size="large" color="#4ADE80" />
         <Text style={styles.loadingText}>Starting LawnUp...</Text>
       </View>
     );
@@ -173,12 +173,12 @@ export const RootNavigator = memo(function RootNavigator() {
 const styles = StyleSheet.create({
   loading: {
     flex: 1,
-    backgroundColor: '#F5F1E8',
+    backgroundColor: '#040D08',
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    color:      '#6F943E',
+    color:      '#4ADE80',
     fontSize:   16,
     fontFamily: 'Nunito-Regular',
     marginTop:  16,

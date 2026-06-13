@@ -15,22 +15,11 @@ const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 1_000;
 const IS_PLANT_THRESHOLD = 0.40;
 
-// ⚠️ TEMPORARY DIAGNOSTIC — hardcoded key to isolate runtime-config caching from
-// the request implementation. REMOVE after this test and restore the config read.
-const HARDCODED_KEY_TEST = 'uNLaxAsG2D9KfCrw1HXQu8Ir5pmWM4JzSqf8g786J8bMH8cZ0Y';
-
+// Key is read from the NON-PUBLIC `plantIdKey` baked via app.config.ts → extra
+// (process.env.PLANT_ID_KEY). Never hardcode the key here — it ships in a public repo.
 function resolveKey(): string {
-  if (__DEV__) {
-    console.log('[PlantId] hardcoded mode active');
-    console.log('[PlantId] key length:', HARDCODED_KEY_TEST.length);
-    console.log('[PlantId] first6:', HARDCODED_KEY_TEST.slice(0, 6));
-    console.log('[PlantId] last4:', HARDCODED_KEY_TEST.slice(-4));
-  }
-  return HARDCODED_KEY_TEST;
-
-  // ── Original config read (restore after the diagnostic) ───────────────────
-  // const raw = (Constants.expoConfig?.extra?.plantIdKey as string | undefined) ?? '';
-  // return raw.replace(/\s+/g, '').replace(/^["']+|["']+$/g, '');
+  const raw = (Constants.expoConfig?.extra?.plantIdKey as string | undefined) ?? '';
+  return raw.replace(/\s+/g, '').replace(/^["']+|["']+$/g, '');
 }
 
 function isNetworkError(err: unknown): boolean {
@@ -56,7 +45,7 @@ async function callPlantId(base64s: string[], externalSignal?: AbortSignal): Pro
     console.log('[PlantId] endpoint:', PLANT_ID_URL);
     console.log('[PlantId] method:', 'POST');
     console.log('[PlantId] auth header name:', 'Api-Key');
-    console.log('[PlantId] auth key length:', apiKey.length, '| first6:', apiKey.slice(0, 6), '| last4:', apiKey.slice(-4));
+    console.log('[PlantId] auth key present:', apiKey.length > 0);
     console.log('[PlantId] content-type:', 'application/json');
     console.log('[PlantId] body shape: { images:', base64s.length, 'item(s), health: "all" }');
   }

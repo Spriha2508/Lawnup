@@ -105,7 +105,8 @@ const TabButton: React.FC<{
 }> = memo(({ tabKey, label, focused, onPress }) => {
   const scale = useSharedValue(1);
   const anim  = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const color = focused ? C.textPrimary : C.textFaint;
+  // Dark grounded bar: inactive = soft light, active = luminous primary green.
+  const color = focused ? C.primary : 'rgba(240,253,244,0.45)';
 
   const pressIn  = useCallback(() => { scale.value = withSpring(0.88, theme.motion.spring.snappy); }, []); // eslint-disable-line
   const pressOut = useCallback(() => { scale.value = withSpring(1,    theme.motion.spring.gentle); }, []); // eslint-disable-line
@@ -183,14 +184,14 @@ export const MainTabNavigator: React.FC = () => (
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   bar: {
-    // Translucent "glass" — no native blur dependency
-    backgroundColor: 'rgba(245,241,232,0.94)',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(200,196,188,0.6)',
+    // Dark grounded glass over the void world — always visible, never floats.
+    backgroundColor: 'rgba(6,15,10,0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(74,222,128,0.12)',
     ...Platform.select({
       default: {
-        shadowColor: '#1A1A08', shadowOffset: { width: 0, height: -3 },
-        shadowOpacity: 0.05, shadowRadius: 16, elevation: 16,
+        shadowColor: '#000000', shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.3, shadowRadius: 16, elevation: 16,
       },
     }),
   },
@@ -198,8 +199,8 @@ const styles = StyleSheet.create({
 
   tabBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
   tabInner: { alignItems: 'center', gap: 4 },
-  tabLabel: { fontFamily: F.sansMedium, fontSize: 10, color: C.textFaint, letterSpacing: 0.3 },
-  tabLabelActive: { color: C.textPrimary },
+  tabLabel: { fontFamily: F.sansMedium, fontSize: 10, color: 'rgba(240,253,244,0.45)', letterSpacing: 0.3 },
+  tabLabelActive: { color: C.primary, fontFamily: F.sansBold },
   sprout: { height: 10, marginTop: 1, alignItems: 'center', justifyContent: 'center' },
 
   scanWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 4 },

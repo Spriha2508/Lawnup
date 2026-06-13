@@ -165,7 +165,7 @@ const StatItem: React.FC<{ label: string; value: number; tone?: string }> = ({ l
 );
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.canvas },
+  root: { flex: 1, backgroundColor: 'transparent' },
 
   header: { paddingHorizontal: H_PAD, paddingTop: S.sm },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: S.lg },

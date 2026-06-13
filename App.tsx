@@ -23,6 +23,8 @@ import { NotificationProvider } from './src/app/providers/NotificationProvider';
 import { ErrorBoundary } from './src/shared/components/feedback/ErrorBoundary';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AnimatedSplash } from './src/shared/components/motion/AnimatedSplash';
+import { RootAtmosphere, setAtmosphereForRoute, getActiveRouteName } from './src/shared/components/motion/RootAtmosphere';
+import { JourneyVine, setVineForRoute } from './src/shared/components/motion/JourneyVine';
 import { logger } from './src/shared/utils/logger';
 // DevOverlay is imported lazily so it is only bundled in __DEV__ builds
 const DevOverlay = __DEV__
@@ -42,29 +44,39 @@ LogBox.ignoreLogs([
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+// Transparent background + card so the single RootAtmosphere shows through every
+// screen — the world never repaints/resets on navigation.
 const NAV_THEME = {
   dark: false,
   colors: {
-    background: '#F5F1E8',
-    card: '#F5F1E8',
-    text: '#111111',
-    border: '#DDD4C7',
-    primary: '#6F943E',
-    notification: '#6F943E',
+    background: 'transparent',
+    card: 'transparent',
+    text: '#F0FDF4',
+    border: 'rgba(255,255,255,0.07)',
+    primary: '#4ADE80',
+    notification: '#4ADE80',
   },
 } as const;
+
+// Drive atmosphere depth + journey vine from the active route on every navigation.
+const handleNavState = (state: Parameters<typeof getActiveRouteName>[0]) => {
+  const name = getActiveRouteName(state);
+  setAtmosphereForRoute(name);
+  setVineForRoute(name);
+};
 
 // Isolated so that splashDone state changes in App never cascade into the nav tree.
 // DevOverlay lives INSIDE NavigationContainer so its navigation hooks have context.
 const NavTree: React.FC = memo(() => (
-  <NavigationContainer theme={NAV_THEME}>
+  <NavigationContainer theme={NAV_THEME} onStateChange={handleNavState}>
     <NotificationProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <RootNavigator />
       {DevOverlay ? <DevOverlay /> : null}
     </NotificationProvider>
   </NavigationContainer>
 ));
+NavTree.displayName = 'NavTree';
 
 function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -100,8 +112,8 @@ function App() {
 
   if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#F5F1E8', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#6F943E" size="large" />
+      <View style={{ flex: 1, backgroundColor: '#040D08', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color="#4ADE80" size="large" />
       </View>
     );
   }
@@ -111,7 +123,13 @@ function App() {
       <SafeAreaProvider>
         <ErrorBoundary screenName="App root">
           <QueryProvider>
-            <NavTree />
+            {/* One continuous world: atmosphere persists behind the transparent navigator */}
+            <View style={{ flex: 1 }}>
+              <RootAtmosphere />
+              <NavTree />
+              {/* The journey thread: grows through signup → onboarding, blooms at home */}
+              <JourneyVine />
+            </View>
           </QueryProvider>
         </ErrorBoundary>
       </SafeAreaProvider>

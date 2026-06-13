@@ -58,7 +58,7 @@ export const NicknameScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.canvas },
+  root: { flex: 1, backgroundColor: 'transparent' },
   safe: { flex: 1 },
   backBtn: { paddingHorizontal: 24, paddingTop: S.lg, paddingBottom: S.sm, alignSelf: 'flex-start' },
   backText: { ...T.bodyStrong, fontFamily: F.sansMedium, color: C.textSecondary },

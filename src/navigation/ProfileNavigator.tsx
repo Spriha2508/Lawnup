@@ -2,12 +2,13 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ProfileScreen } from '../features/profile/screens/ProfileScreen';
 import { PaywallScreen } from '../features/subscription/screens/PaywallScreen';
+import { fadeTransition } from './transitions';
 import type { ProfileStackParamList } from './types';
 
 const Stack = createStackNavigator<ProfileStackParamList>();
 
 export const ProfileNavigator: React.FC = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator screenOptions={{ headerShown: false, ...fadeTransition }}>
     <Stack.Screen name="Profile" component={ProfileScreen} />
     <Stack.Screen
       name="Paywall"

@@ -34,6 +34,9 @@ import { getCurrentWeather } from '../../../services/weather/weatherService';
 import type { WeatherData } from '../../../services/weather/weatherService';
 import type { ScanStackParamList } from '../../../navigation/types';
 import type { UserPlantDoc } from '../../../types/firestore.types';
+import { theme } from '@constants/designSystem';
+
+const C = theme.color;
 
 type Nav = StackNavigationProp<ScanStackParamList, 'ScanResult'>;
 type Route = RouteProp<ScanStackParamList, 'ScanResult'>;
@@ -196,8 +199,8 @@ export const ScanResultScreen: React.FC = () => {
       <View style={styles.errorScreen}>
         <View style={styles.errorMarkWrap}>
           <Svg width={30} height={30} viewBox="0 0 24 24" fill="none">
-            <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill="#6F943E" opacity={0.9} />
-            <Path d="M12 3V21" stroke="#F5F1E8" strokeWidth={1.3} strokeLinecap="round" />
+            <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill={C.primary} opacity={0.9} />
+            <Path d="M12 3V21" stroke={C.canvas} strokeWidth={1.3} strokeLinecap="round" />
           </Svg>
         </View>
         <Text style={styles.errorTitle}>Result not found</Text>
@@ -272,7 +275,7 @@ export const ScanResultScreen: React.FC = () => {
           {savedNickname && (
             <View style={styles.savedBanner}>
               <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
-                <Path d="M5 12.5L10 17.5L19 7" stroke="#6F943E" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M5 12.5L10 17.5L19 7" stroke={C.healthyFg} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
               <Text style={styles.savedBannerText}>{savedNickname} added to your garden</Text>
             </View>
@@ -406,8 +409,8 @@ export const ScanResultScreen: React.FC = () => {
                 <View style={styles.healthyBanner}>
                   <View style={styles.healthyIconWrap}>
                     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                      <Path d="M12 8V13M12 16.5V16.6" stroke="#6F943E" strokeWidth={2} strokeLinecap="round" />
-                      <Path d="M12 3L21 19H3L12 3Z" stroke="#6F943E" strokeWidth={1.6} strokeLinejoin="round" />
+                      <Path d="M12 8V13M12 16.5V16.6" stroke={C.primary} strokeWidth={2} strokeLinecap="round" />
+                      <Path d="M12 3L21 19H3L12 3Z" stroke={C.primary} strokeWidth={1.6} strokeLinejoin="round" />
                     </Svg>
                   </View>
                   <View style={styles.healthyTextWrap}>
@@ -424,7 +427,7 @@ export const ScanResultScreen: React.FC = () => {
                 <View style={styles.healthyBanner}>
                   <View style={styles.healthyIconWrap}>
                     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                      <Path d="M5 12.5L10 17.5L19 7" stroke="#6F943E" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+                      <Path d="M5 12.5L10 17.5L19 7" stroke={C.healthyFg} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
                     </Svg>
                   </View>
                   <View style={styles.healthyTextWrap}>
@@ -541,7 +544,7 @@ export const ScanResultScreen: React.FC = () => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F5F1E8',
+    backgroundColor: C.canvas,
   },
   backBtn: {
     position: 'absolute',
@@ -577,9 +580,9 @@ const styles = StyleSheet.create({
 
   // Tab bar — sticky header
   tabBar: {
-    backgroundColor: '#FDFAF4',
+    backgroundColor: C.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0D8C8',
+    borderBottomColor: C.border,
   },
   tabRow: {
     flexDirection: 'row',
@@ -596,16 +599,16 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#1A2416',
+    borderBottomColor: C.primary,
   },
   tabText: {
     fontSize: 11,
     fontFamily: 'Nunito-Bold',
-    color: '#BCBAB3',
+    color: C.textMuted,
     letterSpacing: 1.8,
   },
   tabTextActive: {
-    color: '#111111',
+    color: C.textPrimary,
     letterSpacing: 1.8,
   },
 
@@ -615,34 +618,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: 'rgba(111,148,62,0.10)',
+    backgroundColor: C.healthyBg,
     marginHorizontal: 20,
     marginTop: 12,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1.5,
-    borderColor: 'rgba(111,148,62,0.25)',
+    borderColor: C.healthyFg,
   },
   savedBannerText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 13,
-    color: '#6F943E',
+    color: C.healthyFg,
     textAlign: 'center',
   },
   scanCountBanner: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     marginHorizontal: 20,
     marginTop: 10,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#DDD4C7',
+    borderColor: C.border,
   },
   scanCountText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 12,
-    color: '#6E6A64',
+    color: C.textSecondary,
     textAlign: 'center',
   },
 
@@ -665,12 +668,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   confidenceBannerAmber: {
-    backgroundColor: 'rgba(176,112,0,0.07)',
-    borderColor: 'rgba(176,112,0,0.20)',
+    backgroundColor: C.waterBg,
+    borderColor: C.waterFg,
   },
   confidenceBannerMuted: {
-    backgroundColor: 'rgba(158,154,148,0.08)',
-    borderColor: 'rgba(158,154,148,0.20)',
+    backgroundColor: C.card,
+    borderColor: C.border,
   },
   confidenceText: {
     fontFamily: 'Nunito-SemiBold',
@@ -678,20 +681,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 19,
   },
-  confidenceTextAmber: { color: '#8B5E00' },
-  confidenceTextMuted:  { color: '#6B6B5E' },
+  confidenceTextAmber: { color: C.waterFg },
+  confidenceTextMuted:  { color: C.textSecondary },
 
   // Re-scan tips
   rescanTips: {
     gap: 6,
     paddingTop: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0,0,0,0.08)',
+    borderTopColor: C.divider,
   },
   rescanTipsLabel: {
     fontFamily: 'Nunito-Bold',
     fontSize: 11,
-    color: '#9E9A94',
+    color: C.textMuted,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     marginBottom: 2,
@@ -704,13 +707,13 @@ const styles = StyleSheet.create({
   rescanTipDot: {
     fontFamily: 'Nunito-Bold',
     fontSize: 14,
-    color: '#B07000',
+    color: C.primary,
     lineHeight: 20,
   },
   rescanTipText: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: '#6B6B5E',
+    color: C.textSecondary,
     lineHeight: 20,
     flex: 1,
   },
@@ -719,20 +722,20 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: 'rgba(111,148,62,0.12)',
+    backgroundColor: C.primaryWash,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(111,148,62,0.25)',
+    borderColor: C.primary,
   },
   refinementCTAText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 13,
-    color: '#4A7A20',
+    color: C.primary,
   },
 
   // Weather context
   weatherContext: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     borderRadius: 14,
     padding: 16,
     gap: 6,
@@ -740,14 +743,14 @@ const styles = StyleSheet.create({
   weatherContextEyebrow: {
     fontSize: 9,
     fontFamily: 'Nunito-SemiBold',
-    color: '#9E9A94',
+    color: C.textMuted,
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
   weatherContextText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 14,
-    color: '#3D3D35',
+    color: C.textSecondary,
     lineHeight: 21,
   },
 
@@ -756,7 +759,7 @@ const styles = StyleSheet.create({
   sectionEyebrow: {
     fontSize: 10,
     fontFamily: 'Nunito-Bold',
-    color: '#BCBAB3',
+    color: C.textMuted,
     letterSpacing: 2.2,
     textTransform: 'uppercase',
     marginBottom: 4,
@@ -764,7 +767,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'Cormorant-SemiBoldItalic',
     fontSize: 32,
-    color: '#111111',
+    color: C.textPrimary,
     lineHeight: 36,
     letterSpacing: -0.3,
     marginBottom: 4,
@@ -772,7 +775,7 @@ const styles = StyleSheet.create({
   recoveryNote: {
     fontFamily: 'Nunito-Regular',
     fontSize: 14,
-    color: '#6B6B5E',
+    color: C.textSecondary,
     marginBottom: 6,
     lineHeight: 20,
   },
@@ -782,7 +785,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     borderRadius: 16,
     padding: 16,
   },
@@ -790,23 +793,23 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(111,148,62,0.12)',
+    backgroundColor: C.healthyBg,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  healthyIcon: { fontSize: 20, color: '#6F943E' },
+  healthyIcon: { fontSize: 20, color: C.healthyFg },
   healthyTextWrap: { flex: 1 },
   healthyTitle: {
     fontFamily: 'Nunito-Bold',
     fontSize: 15,
-    color: '#111111',
+    color: C.textPrimary,
     marginBottom: 2,
   },
   healthySubtitle: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: '#6B6B5E',
+    color: C.textSecondary,
     lineHeight: 19,
   },
 
@@ -815,29 +818,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1A2416',
+    backgroundColor: C.card,
     borderRadius: 24,
     paddingHorizontal: 22,
     paddingVertical: 22,
+    borderWidth: 1,
+    borderColor: C.primary,
   },
   aiDoctorLeft: { flex: 1, gap: 8 },
   aiDoctorLabel: {
     fontSize: 9,
     fontFamily: 'Nunito-Bold',
-    color: '#6F943E',
+    color: C.primary,
     letterSpacing: 2.2,
     textTransform: 'uppercase',
   },
   aiDoctorTitle: {
     fontFamily: 'Cormorant-SemiBoldItalic',
     fontSize: 24,
-    color: '#FFFFFF',
+    color: C.textPrimary,
     lineHeight: 28,
     letterSpacing: -0.2,
     paddingRight: 14,
   },
   aiDoctorArrow: {
-    color: 'rgba(255,255,255,0.4)',
+    color: C.textMuted,
     fontSize: 22,
     fontFamily: 'Nunito-Regular',
     flexShrink: 0,
@@ -845,17 +850,17 @@ const styles = StyleSheet.create({
 
   // Scan meta (INFO tab)
   scanMeta: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     borderRadius: 16,
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#DDD4C7',
+    borderColor: C.border,
   },
   scanMetaEyebrow: {
     fontSize: 9,
     fontFamily: 'Nunito-SemiBold',
-    color: '#9E9A94',
+    color: C.textMuted,
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 2,
@@ -869,12 +874,12 @@ const styles = StyleSheet.create({
   scanMetaKey: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: '#9E9A94',
+    color: C.textMuted,
   },
   scanMetaValue: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 13,
-    color: '#111111',
+    color: C.textPrimary,
     flex: 1,
     textAlign: 'right',
   },
@@ -887,12 +892,12 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: 'rgba(245,241,232,0.97)',
+    backgroundColor: C.canvas,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(200,196,188,0.6)',
+    borderTopColor: C.border,
   },
   saveBtn: {
-    backgroundColor: '#111111',
+    backgroundColor: C.primary,
     borderRadius: 999,
     height: 56,
     alignItems: 'center',
@@ -901,14 +906,14 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
-    color: '#fff',
+    color: C.onPrimary,
     letterSpacing: 0.2,
   },
 
   // Error screen
   errorScreen: {
     flex: 1,
-    backgroundColor: '#F5F1E8',
+    backgroundColor: C.canvas,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16,
@@ -916,23 +921,23 @@ const styles = StyleSheet.create({
   },
   errorMarkWrap: {
     width: 72, height: 72, borderRadius: 26,
-    backgroundColor: 'rgba(111,148,62,0.10)',
+    backgroundColor: C.primaryWash,
     alignItems: 'center', justifyContent: 'center',
   },
   errorTitle: {
     fontFamily: 'Nunito-Bold',
     fontSize: 18,
-    color: '#111111',
+    color: C.textPrimary,
     textAlign: 'center',
   },
   errorSub: {
     fontFamily: 'Nunito-Regular',
     fontSize: 14,
-    color: '#6B6B5E',
+    color: C.textSecondary,
     textAlign: 'center',
   },
   errorBtn: {
-    backgroundColor: '#111111',
+    backgroundColor: C.primary,
     borderRadius: 999,
     paddingHorizontal: 28,
     paddingVertical: 14,
@@ -940,6 +945,6 @@ const styles = StyleSheet.create({
   errorBtnText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 15,
-    color: '#fff',
+    color: C.onPrimary,
   },
 });

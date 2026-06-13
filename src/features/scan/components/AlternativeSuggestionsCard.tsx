@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { AlternativeSuggestion } from '../../../services/api/plantIdentification';
+import { theme } from '@constants/designSystem';
+
+const C = theme.color;
 
 interface AlternativeSuggestionsCardProps {
   topName: string;
@@ -9,9 +12,9 @@ interface AlternativeSuggestionsCardProps {
 }
 
 function barColor(confidence: number): string {
-  if (confidence >= 0.60) return '#B07000';
-  if (confidence >= 0.40) return '#9E9A94';
-  return '#C4C0BA';
+  if (confidence >= 0.60) return C.primary;
+  if (confidence >= 0.40) return C.textMuted;
+  return C.textFaint;
 }
 
 const AlternativeRow: React.FC<{ alt: AlternativeSuggestion; rank: number }> = ({ alt, rank }) => {
@@ -63,24 +66,24 @@ export const AlternativeSuggestionsCard: React.FC<AlternativeSuggestionsCardProp
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#DDD4C7',
+    borderColor: C.border,
     gap: 12,
   },
   eyebrow: {
     fontSize: 9,
     fontFamily: 'Nunito-SemiBold',
-    color: '#9E9A94',
+    color: C.textMuted,
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
   subtitle: {
     fontSize: 13,
     fontFamily: 'Nunito-Regular',
-    color: '#6B6B5E',
+    color: C.textSecondary,
     lineHeight: 18,
     marginTop: -4,
   },
@@ -94,7 +97,7 @@ const styles = StyleSheet.create({
   rowRank: {
     fontSize: 13,
     fontFamily: 'Nunito-SemiBold',
-    color: '#9E9A94',
+    color: C.textMuted,
     width: 18,
     marginTop: 2,
   },
@@ -107,7 +110,7 @@ const styles = StyleSheet.create({
   rowName: {
     fontSize: 14,
     fontFamily: 'Nunito-SemiBold',
-    color: '#111111',
+    color: C.textPrimary,
     flex: 1,
   },
   rowPct: {
@@ -118,12 +121,12 @@ const styles = StyleSheet.create({
   rowScientific: {
     fontSize: 11,
     fontFamily: 'Nunito-Regular',
-    color: '#9E9A94',
+    color: C.textMuted,
     fontStyle: 'italic',
   },
   barTrack: {
     height: 3,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: C.divider,
     borderRadius: 2,
     marginTop: 2,
   },
@@ -136,7 +139,7 @@ const styles = StyleSheet.create({
   footer: {
     fontSize: 12,
     fontFamily: 'Nunito-Regular',
-    color: '#9E9A94',
+    color: C.textMuted,
     marginTop: 4,
     fontStyle: 'italic',
   },

@@ -2,15 +2,18 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { WeatherData } from '../../../services/weather/weatherService';
 import { getWeatherPlantAdvice } from '../../../services/weather/weatherAdvice';
+import { theme } from '@constants/designSystem';
+
+const C = theme.color;
 
 interface WeatherAdviceCardProps {
   weather: WeatherData;
 }
 
 const RISK_PALETTE = {
-  low:      { bg: 'rgba(111,148,62,0.07)',  border: 'rgba(111,148,62,0.18)',  accent: '#4A7A28' },
-  moderate: { bg: 'rgba(176,112,0,0.07)',   border: 'rgba(176,112,0,0.18)',   accent: '#8B5E00' },
-  high:     { bg: 'rgba(192,57,43,0.07)',   border: 'rgba(192,57,43,0.18)',   accent: '#8B2010' },
+  low:      { bg: C.healthyBg,  border: C.healthyFg,  accent: C.healthyFg },
+  moderate: { bg: C.waterBg,    border: C.waterFg,    accent: C.waterFg },
+  high:     { bg: C.criticalBg, border: C.criticalFg, accent: C.criticalFg },
 };
 
 export const WeatherAdviceCard: React.FC<WeatherAdviceCardProps> = ({ weather }) => {
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 9,
     fontFamily: 'Nunito-SemiBold',
-    color: '#9E9A94',
+    color: C.textMuted,
     letterSpacing: 1.8,
     textTransform: 'uppercase',
   },
@@ -98,7 +101,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: C.input,
     borderRadius: 12,
     padding: 12,
   },
@@ -115,7 +118,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontFamily: 'Nunito-Regular',
     fontSize: 10,
-    color: '#9E9A94',
+    color: C.textMuted,
     letterSpacing: 0.4,
   },
   statDivider: {
@@ -140,7 +143,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: '#4A4A3E',
+    color: C.textSecondary,
     lineHeight: 19,
   },
 });

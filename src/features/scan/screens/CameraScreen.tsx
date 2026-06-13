@@ -24,8 +24,10 @@ import { ScanFrame, FRAME_SIZE } from '../components/ScanFrame';
 import { analyzeImageQuality } from '../../../shared/utils/imageQuality';
 import type { ImageQualityResult } from '../../../shared/utils/imageQuality';
 import { logger } from '../../../shared/utils/logger';
+import { theme } from '@constants/designSystem';
 import type { ScanStackParamList } from '../../../navigation/types';
 
+const { color: C, spacing: S, typography: T, radii: R, fonts: F } = theme;
 const { width: SW, height: SH } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'Camera'>;
 type FlashMode = 'off' | 'on' | 'auto';
@@ -295,9 +297,7 @@ export const CameraScreen: React.FC = () => {
     : '';
 
   const pillColor =
-    qualityResult?.level === 'good'
-      ? 'rgba(123,198,126,0.90)'   // green
-      : 'rgba(255,176,32,0.90)';   // amber
+    qualityResult?.level === 'good' ? C.healthyFg : C.waterFg;
 
   // Capture button: dimmed while analysing or locked after rejection
   const captureDisabled = isCapturing || !isCameraReady || captureLocked;
@@ -377,7 +377,7 @@ export const CameraScreen: React.FC = () => {
           <View
             style={[
               styles.previewQualityBadge,
-              { backgroundColor: qualityResult.level === 'good' ? 'rgba(123,198,126,0.85)' : 'rgba(255,176,32,0.85)' },
+              { backgroundColor: qualityResult.level === 'good' ? C.healthyFg : C.waterFg },
             ]}
           >
             <Text style={styles.previewQualityText}>
@@ -519,7 +519,7 @@ export const CameraScreen: React.FC = () => {
       {/* ── Usage hydration spinner ──────────────────────────────────────────── */}
       {!isUsageHydrated && !mountError && (
         <View style={styles.overlayLoading} pointerEvents="none">
-          <ActivityIndicator size="small" color="#6F943E" />
+          <ActivityIndicator size="small" color={C.primary} />
         </View>
       )}
 
@@ -554,53 +554,48 @@ const styles = StyleSheet.create({
   },
   permissionScreen: {
     flex: 1,
-    backgroundColor: '#0A0F0A',
+    backgroundColor: C.canvas,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 32,
+    padding: S['3xl'],
   },
   permissionContent: {
     alignItems: 'center',
-    gap: 16,
+    gap: S.md,
   },
   permMark: {
     fontSize: 36,
-    color: '#6F943E',
-    marginBottom: 20,
+    color: C.primary,
+    marginBottom: S.xl,
     textAlign: 'center',
   },
   permTitle: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 24,
-    color: '#fff',
+    ...T.display2,
+    color: C.textPrimary,
     textAlign: 'center',
   },
   permSubtitle: {
-    fontFamily: 'Nunito-Regular',
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.65)',
+    ...T.body,
+    color: C.textMuted,
     textAlign: 'center',
-    lineHeight: 22,
   },
   permBtn: {
-    marginTop: 8,
-    backgroundColor: '#6F943E',
-    borderRadius: 999,
-    paddingHorizontal: 36,
+    marginTop: S.xs,
+    backgroundColor: C.inkBtn,
+    borderRadius: R.pill,
+    paddingHorizontal: S['2xl'],
     paddingVertical: 16,
     width: '100%',
     alignItems: 'center',
   },
   permBtnText: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 17,
-    color: '#fff',
+    ...T.button,
+    color: C.onInkBtn,
   },
-  permCancel: { paddingVertical: 8 },
+  permCancel: { paddingVertical: S.xs },
   permCancelText: {
-    fontFamily: 'Nunito-Regular',
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.5)',
+    ...T.body,
+    color: C.textFaint,
   },
   letterboxTop: {
     position: 'absolute',
@@ -632,13 +627,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 14,
     paddingVertical: 5,
-    borderRadius: 999,
+    borderRadius: R.pill,
   },
   qualityPillText: {
-    fontFamily: 'Nunito-SemiBold',
-    fontSize: 12,
-    color: '#fff',
-    letterSpacing: 0.2,
+    ...T.label,
+    color: C.onPrimary,
   },
   // Tip / quality warning text below scan frame
   tipContainer: {
@@ -647,17 +640,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: S['3xl'],
   },
   tipText: {
-    fontFamily: 'Nunito-SemiBold',
+    fontFamily: F.sansMedium,
     fontSize: 13,
     color: 'rgba(255,255,255,0.70)',
     textAlign: 'center',
     letterSpacing: 0.2,
   },
   tipWarning: {
-    color: '#FFB020',
+    color: C.waterFg,
     fontSize: 14,
   },
   topBar: {
@@ -678,11 +671,12 @@ const styles = StyleSheet.create({
   closeBtnText: {
     color: '#fff',
     fontSize: 14,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: F.sansBold,
   },
   hintText: {
-    fontFamily: 'Nunito-SemiBold',
-    fontSize: 13,
+    ...T.eyebrow,
+    fontSize: 11,
+    textTransform: 'uppercase',
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     flex: 1,
@@ -690,18 +684,18 @@ const styles = StyleSheet.create({
   flashBtn: {
     paddingHorizontal: 10,
     height: 30,
-    borderRadius: 8,
+    borderRadius: R.sm,
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   flashBtnText: {
     fontSize: 10,
-    fontFamily: 'Nunito-SemiBold',
+    fontFamily: F.sansMedium,
     color: 'rgba(255,255,255,0.55)',
     letterSpacing: 1,
   },
-  flashBtnOn: { color: '#FFD60A' },
+  flashBtnOn: { color: C.secondary },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -718,7 +712,7 @@ const styles = StyleSheet.create({
     width: 64,
   },
   sideBtnLabel: {
-    fontFamily: 'Nunito-SemiBold',
+    fontFamily: F.sansMedium,
     fontSize: 13,
     color: 'rgba(255,255,255,0.82)',
   },
@@ -726,14 +720,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Luminous-green ring — the one confident "go" element on the dark scene
   captureBtnOuter: {
     width: 76,
     height: 76,
     borderRadius: 38,
     borderWidth: 4,
-    borderColor: '#fff',
+    borderColor: C.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
   },
   captureBtnInner: {
     width: 58,
@@ -753,8 +753,8 @@ const styles = StyleSheet.create({
   previewHint: {
     flex: 1,
     textAlign: 'center',
-    fontFamily: 'Nunito-Bold',
-    fontSize: 17,
+    fontFamily: F.serifMediumItalic,
+    fontSize: 21,
     color: '#fff',
   },
   previewQualityBadge: {
@@ -763,12 +763,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 999,
+    borderRadius: R.pill,
   },
   previewQualityText: {
-    fontFamily: 'Nunito-SemiBold',
+    fontFamily: F.sansMedium,
     fontSize: 13,
-    color: '#fff',
+    color: C.onPrimary,
   },
   previewActions: {
     position: 'absolute',
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
   retakeBtn: {
     flex: 1,
     backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 999,
+    borderRadius: R.pill,
     height: 54,
     alignItems: 'center',
     justifyContent: 'center',
@@ -792,23 +792,22 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   retakeBtnText: {
-    fontFamily: 'Nunito-SemiBold',
+    fontFamily: F.sansMedium,
     fontSize: 15,
     color: 'rgba(255,255,255,0.9)',
   },
   usePhotoBtn: {
     flex: 2,
-    backgroundColor: '#111111',
-    borderRadius: 999,
+    backgroundColor: C.inkBtn,
+    borderRadius: R.pill,
     height: 54,
     alignItems: 'center',
     justifyContent: 'center',
+    ...theme.shadows.cta,
   },
   usePhotoBtnText: {
-    fontFamily: 'Nunito-SemiBold',
-    fontSize: 16,
-    color: '#fff',
-    letterSpacing: 0.2,
+    ...T.button,
+    color: C.onInkBtn,
   },
   captureFlash: {
     ...StyleSheet.absoluteFillObject as any,
@@ -823,43 +822,41 @@ const styles = StyleSheet.create({
   },
   overlayFull: {
     ...StyleSheet.absoluteFillObject as any,
-    backgroundColor: 'rgba(10,15,10,0.94)',
+    backgroundColor: 'rgba(4,13,8,0.94)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 32,
-    gap: 16,
+    padding: S['3xl'],
+    gap: S.md,
   },
   overlayMark: {
     fontSize: 36,
-    color: '#6F943E',
-    marginBottom: 20,
+    color: C.primary,
+    marginBottom: S.xl,
     textAlign: 'center',
   },
   overlayTitle: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 22,
-    color: '#fff',
+    ...T.display2,
+    fontSize: 30,
+    lineHeight: 34,
+    color: C.textPrimary,
     textAlign: 'center',
   },
   overlaySubtitle: {
-    fontFamily: 'Nunito-Regular',
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.65)',
+    ...T.body,
+    color: C.textMuted,
     textAlign: 'center',
-    lineHeight: 22,
   },
   overlayBtn: {
-    marginTop: 8,
-    backgroundColor: '#6F943E',
-    borderRadius: 999,
-    paddingHorizontal: 36,
+    marginTop: S.xs,
+    backgroundColor: C.inkBtn,
+    borderRadius: R.pill,
+    paddingHorizontal: S['2xl'],
     paddingVertical: 16,
     width: '100%',
     alignItems: 'center',
   },
   overlayBtnText: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 17,
-    color: '#fff',
+    ...T.button,
+    color: C.onInkBtn,
   },
 });

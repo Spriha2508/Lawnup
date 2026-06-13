@@ -10,6 +10,9 @@ import {
   Platform,
 } from 'react-native';
 import { NICKNAME_SUGGESTIONS } from '../../../constants/plants';
+import { theme } from '@constants/designSystem';
+
+const C = theme.color;
 
 interface NicknameInputCardProps {
   speciesName: string;
@@ -44,7 +47,7 @@ export const NicknameInputCard: React.FC<NicknameInputCardProps> = ({
         <TextInput
           style={styles.input}
           placeholder={suggestions[0]}
-          placeholderTextColor="#B0ACA6"
+          placeholderTextColor={C.textMuted}
           value={value}
           onChangeText={setValue}
           maxLength={24}
@@ -100,7 +103,7 @@ export const NicknameInputCard: React.FC<NicknameInputCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#F5F1E8',
+    backgroundColor: C.surface,
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 36,
@@ -112,30 +115,30 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Cormorant-SemiBold',
     fontSize: 26,
-    color: '#111111',
+    color: C.textPrimary,
     lineHeight: 30,
   },
   subtitle: {
     fontFamily: 'Nunito-Regular',
     fontSize: 14,
-    color: '#6B6B5E',
+    color: C.textSecondary,
     lineHeight: 20,
   },
   input: {
     height: 54,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
-    backgroundColor: '#EEE7DA',
+    borderColor: C.border,
+    backgroundColor: C.input,
     paddingHorizontal: 18,
     fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
-    color: '#111111',
+    color: C.textPrimary,
   },
   suggestLabel: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 11,
-    color: '#9E9A94',
+    color: C.textMuted,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
@@ -148,26 +151,26 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
-    backgroundColor: '#EEE7DA',
+    borderColor: C.border,
+    backgroundColor: C.input,
   },
   chipActive: {
-    backgroundColor: '#111111',
-    borderColor: '#111111',
+    backgroundColor: C.primary,
+    borderColor: C.primary,
   },
   chipText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 13,
-    color: '#111111',
+    color: C.textSecondary,
   },
   chipTextActive: {
-    color: '#FFFFFF',
+    color: C.onPrimary,
   },
   actions: {
     gap: 10,
   },
   confirmBtn: {
-    backgroundColor: '#111111',
+    backgroundColor: C.primary,
     borderRadius: 999,
     height: 56,
     alignItems: 'center',
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
   confirmText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
-    color: '#fff',
+    color: C.onPrimary,
     letterSpacing: 0.2,
   },
   skipBtn: {
@@ -186,6 +189,6 @@ const styles = StyleSheet.create({
   skipText: {
     fontFamily: 'Nunito-Regular',
     fontSize: 14,
-    color: '#9E9A94',
+    color: C.textMuted,
   },
 });

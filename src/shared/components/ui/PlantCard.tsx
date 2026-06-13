@@ -35,7 +35,9 @@ function scanAgo(isoDate?: string): string | null {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const PLACEHOLDER: string[] = ['#D4EDD0', '#EDD4C8', '#D4DEED', '#EDE8D4', '#D4EDE8'];
+// Deep moonlit-glass tints (jade / brass / orchid / slate / umber) for plants
+// without a photo — subtle hue variety on the void, never bright pastel.
+const PLACEHOLDER: string[] = ['#1C2A22', '#2A2418', '#2A1C28', '#1E2622', '#241E16'];
 
 export const PlantCard: React.FC<PlantCardProps> = ({ plant, width, index, onPress }) => {
   const scale = useSharedValue(1);
@@ -94,8 +96,8 @@ const styles = StyleSheet.create({
   wrapper: { marginBottom: S.md },
   card: { backgroundColor: C.card, borderRadius: R.xl, overflow: 'hidden', ...theme.shadows.card },
   imageWrap: { width: '100%', backgroundColor: C.input, overflow: 'hidden' },
-  placeholderInitial: { fontSize: 34, fontFamily: F.serifMediumItalic, color: 'rgba(0,0,0,0.24)' },
-  ringWrap: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 22, padding: 2 },
+  placeholderInitial: { fontSize: 34, fontFamily: F.serifMediumItalic, color: 'rgba(243,239,233,0.22)' },
+  ringWrap: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(10,13,11,0.55)', borderRadius: 22, padding: 2 },
   ringScore: { fontFamily: F.sansHeavy, fontSize: 12 },
   info: { paddingHorizontal: S.md, paddingTop: 10, paddingBottom: S.md },
   plantName: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary, marginBottom: 2 },

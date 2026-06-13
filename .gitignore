@@ -43,3 +43,10 @@ logs/.emulator-data/
 .idea/
 *.swp
 *.swo
+
+# Metro bundler cache
+.metro-cache/
+
+# Local splash design scratch files
+lawnup-splash.html
+lawnup-scan-splash.html

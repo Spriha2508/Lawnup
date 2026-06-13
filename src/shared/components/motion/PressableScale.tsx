@@ -26,7 +26,7 @@ interface Props extends Omit<PressableProps, 'style'> {
 }
 
 export const PressableScale: React.FC<Props> = ({
-  children, style, to = 0.95, noAnim = false, onPressIn, onPressOut, disabled, ...rest
+  children, style, to = 0.95, noAnim = false, onPressIn, onPressOut, disabled, hitSlop, ...rest
 }) => {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -47,6 +47,8 @@ export const PressableScale: React.FC<Props> = ({
       onPressIn={handleIn}
       onPressOut={handleOut}
       disabled={disabled}
+      // Forgiving touch area app-wide — a scaled Pressable can otherwise drop edge taps.
+      hitSlop={hitSlop ?? 8}
       {...rest}
     >
       {children}

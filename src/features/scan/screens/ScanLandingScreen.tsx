@@ -18,19 +18,19 @@ const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = t
 
 export const ScanLandingScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const { canScan, scansUsed, scanLimit, isUsageHydrated } = useSubscriptionStore();
+  const { canScanThisWeek, scanPeriodUsed, activeScanLimit, isPremiumActive } = useSubscriptionStore();
   const { reset, setCapturedImageUri } = useScanStore();
 
   React.useEffect(() => { reset(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCamera = () => {
-    if (isUsageHydrated && !canScan()) return;
+    if (!canScanThisWeek()) return;
     logger.scan.started();
     navigation.navigate('Camera');
   };
 
   const handleGallery = async () => {
-    if (isUsageHydrated && !canScan()) return;
+    if (!canScanThisWeek()) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.9, allowsEditing: true, aspect: [1, 1] });
@@ -42,9 +42,12 @@ export const ScanLandingScreen: React.FC = () => {
     }
   };
 
-  const scanLimitDisplay = scanLimit === -1 ? '∞' : String(scanLimit);
-  const scanPercent = scanLimit === -1 ? 0 : scansUsed / scanLimit;
-  const limitReached = isUsageHydrated && !canScan();
+  const used = scanPeriodUsed();
+  const limit = activeScanLimit();
+  const periodWord = isPremiumActive() ? 'month' : 'week';
+  const scanLimitDisplay = limit === -1 ? '∞' : String(limit);
+  const scanPercent = limit === -1 ? 0 : used / limit;
+  const limitReached = !canScanThisWeek();
 
   return (
     <View style={styles.root}>
@@ -68,13 +71,13 @@ export const ScanLandingScreen: React.FC = () => {
 
       {/* Cream sheet */}
       <Animated.View entering={FadeInUp.delay(150).duration(M.duration.expressive)} style={styles.sheet}>
-        {scanLimit !== -1 && (
+        {limit !== -1 && (
           <View style={styles.quotaRow}>
-            <Text style={styles.quotaLabel}>{scansUsed} of {scanLimitDisplay} scans used this month</Text>
+            <Text style={styles.quotaLabel}>{used} of {scanLimitDisplay} scans used this {periodWord}</Text>
             <View style={styles.quotaTrack}>
               <View style={[styles.quotaFill, { width: `${Math.min(100, scanPercent * 100)}%` as any, backgroundColor: limitReached ? C.criticalFg : C.primary }]} />
             </View>
-            {limitReached && <Text style={styles.quotaWarning}>Monthly limit reached</Text>}
+            {limitReached && <Text style={styles.quotaWarning}>{isPremiumActive() ? 'Monthly' : 'Weekly'} limit reached</Text>}
           </View>
         )}
 

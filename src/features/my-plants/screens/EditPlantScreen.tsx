@@ -18,6 +18,9 @@ import { useAuthStore } from '../../auth/store/authStore';
 import { PLANT_LOCATIONS } from '../../../constants/plants';
 import { track } from '../../../services/analytics/posthog';
 import type { PlantsStackParamList } from '../../../navigation/types';
+import { theme } from '@constants/designSystem';
+
+const C = theme.color;
 
 type Nav = StackNavigationProp<PlantsStackParamList, 'EditPlant'>;
 type Route = RouteProp<PlantsStackParamList, 'EditPlant'>;
@@ -108,7 +111,7 @@ export const EditPlantScreen: React.FC = () => {
             value={nickname}
             onChangeText={setNickname}
             placeholder="e.g. Lucky, Basil Bhai, Luna"
-            placeholderTextColor="#B0ACA6"
+            placeholderTextColor={C.textMuted}
             maxLength={32}
             autoCorrect={false}
           />
@@ -157,7 +160,7 @@ export const EditPlantScreen: React.FC = () => {
             value={notes}
             onChangeText={setNotes}
             placeholder="Water more in summer, repot next March..."
-            placeholderTextColor="#B0ACA6"
+            placeholderTextColor={C.textMuted}
             multiline
             maxLength={300}
             textAlignVertical="top"
@@ -197,7 +200,7 @@ const FormSection: React.FC<{
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F5F1E8',
+    backgroundColor: 'transparent',
   },
   errorBody: {
     flex: 1,
@@ -207,12 +210,12 @@ const styles = StyleSheet.create({
   },
   errorMark: {
     fontSize: 36,
-    color: 'rgba(111,148,62,0.4)',
+    color: 'rgba(200,162,78,0.4)',
   },
   errorText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
-    color: '#9E9A94',
+    color: C.textMuted,
   },
   header: {
     flexDirection: 'row',
@@ -221,7 +224,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#DDD4C7',
+    borderBottomColor: 'rgba(255,255,255,0.07)',
   },
   headerBack: {
     width: 32,
@@ -229,12 +232,12 @@ const styles = StyleSheet.create({
   headerBackText: {
     fontFamily: 'Nunito-Bold',
     fontSize: 22,
-    color: '#111111',
+    color: C.textPrimary,
   },
   headerTitle: {
     fontFamily: 'Cormorant-SemiBold',
     fontSize: 20,
-    color: '#111111',
+    color: C.textPrimary,
   },
   scroll: {
     padding: 20,
@@ -246,24 +249,24 @@ const styles = StyleSheet.create({
   formLabel: {
     fontFamily: 'Nunito-Bold',
     fontSize: 15,
-    color: '#111111',
+    color: C.textPrimary,
   },
   formHint: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: '#9E9A94',
+    color: C.textMuted,
     marginTop: -4,
   },
   input: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.input,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
+    borderColor: C.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
-    color: '#111111',
+    color: C.textPrimary,
   },
   notesInput: {
     minHeight: 88,
@@ -279,20 +282,20 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
-    backgroundColor: '#EEE7DA',
+    borderColor: C.border,
+    backgroundColor: C.input,
   },
   chipActive: {
-    backgroundColor: '#111111',
-    borderColor: '#111111',
+    backgroundColor: C.primary,
+    borderColor: C.primary,
   },
   chipText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 14,
-    color: '#111111',
+    color: C.textPrimary,
   },
   chipTextActive: {
-    color: '#fff',
+    color: C.onPrimary,
   },
   ctaBar: {
     position: 'absolute',
@@ -301,12 +304,12 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: 'rgba(245,241,232,0.97)',
+    backgroundColor: C.canvas,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#DDD4C7',
+    borderTopColor: C.border,
   },
   saveBtn: {
-    backgroundColor: '#111111',
+    backgroundColor: C.primary,
     borderRadius: 999,
     height: 56,
     alignItems: 'center',
@@ -318,7 +321,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
-    color: '#fff',
+    color: C.onPrimary,
     letterSpacing: 0.2,
   },
 });

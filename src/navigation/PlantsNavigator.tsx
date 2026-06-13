@@ -5,6 +5,7 @@ import { PlantDetailScreen } from '../features/my-plants/screens/PlantDetailScre
 import { AddPlantScreen } from '../features/my-plants/screens/AddPlantScreen';
 import { EditPlantScreen } from '../features/my-plants/screens/EditPlantScreen';
 import { colors } from '../constants/colors';
+import { fadeTransition } from './transitions';
 import type { PlantsStackParamList } from './types';
 
 const Stack = createStackNavigator<PlantsStackParamList>();
@@ -16,6 +17,7 @@ export const PlantsNavigator: React.FC = () => (
       headerTintColor: colors.primary,
       headerTitleStyle: { fontFamily: 'Nunito-Bold' },
       headerShown: false,
+      ...fadeTransition,
     }}
   >
     <Stack.Screen name="MyPlants" component={MyPlantsScreen} />

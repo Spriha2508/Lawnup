@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { DiseaseResult } from '../../../types/firestore.types';
+import { theme } from '@constants/designSystem';
+
+const C = theme.color;
 
 const severityMeta = (p: number): { label: string; color: string; bg: string } => {
-  if (p >= 0.75) return { label: 'High risk',  color: '#C0392B', bg: 'rgba(192,57,43,0.08)'  };
-  if (p >= 0.45) return { label: 'Moderate',   color: '#B07000', bg: 'rgba(176,112,0,0.08)'  };
-  return             { label: 'Low risk',   color: '#6F943E', bg: 'rgba(111,148,62,0.08)' };
+  if (p >= 0.75) return { label: 'High risk',  color: C.criticalFg, bg: C.criticalBg };
+  if (p >= 0.45) return { label: 'Moderate',   color: C.waterFg,    bg: C.waterBg    };
+  return             { label: 'Low risk',   color: C.healthyFg,  bg: C.healthyBg  };
 };
 
 export const DiseaseCard: React.FC<{ disease: DiseaseResult; index?: number }> = ({
@@ -42,12 +45,12 @@ export const DiseaseCard: React.FC<{ disease: DiseaseResult; index?: number }> =
         <View style={styles.body}>
           <Text style={styles.description}>{disease.description}</Text>
           {disease.treatment.biological && (
-            <TreatRow dotColor="#6F943E" label="Natural remedy" text={disease.treatment.biological} />
+            <TreatRow dotColor={C.healthyFg} label="Natural remedy" text={disease.treatment.biological} />
           )}
           {disease.treatment.chemical && (
-            <TreatRow dotColor="#9E9A94" label="Chemical treatment" text={disease.treatment.chemical} />
+            <TreatRow dotColor={C.textMuted} label="Chemical treatment" text={disease.treatment.chemical} />
           )}
-          <TreatRow dotColor="#B07000" label="Prevention" text={disease.treatment.prevention} />
+          <TreatRow dotColor={C.primary} label="Prevention" text={disease.treatment.prevention} />
         </View>
       )}
     </View>
@@ -66,7 +69,7 @@ const TreatRow: React.FC<{ dotColor: string; label: string; text: string }> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     borderRadius: 16,
     borderLeftWidth: 3.5,
     marginBottom: 10,
@@ -85,7 +88,7 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: 'Nunito-Bold',
     fontSize: 15,
-    color: '#111111',
+    color: C.textPrimary,
   },
   severityBadge: {
     flexDirection: 'row',
@@ -117,13 +120,13 @@ const styles = StyleSheet.create({
   description: {
     fontFamily: 'Nunito-Regular',
     fontSize: 14,
-    color: '#6B6B5E',
+    color: C.textSecondary,
     lineHeight: 21,
   },
   treatRow: {
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: '#F5F1E8',
+    backgroundColor: C.input,
     borderRadius: 12,
     padding: 12,
     alignItems: 'flex-start',
@@ -148,7 +151,7 @@ const styles = StyleSheet.create({
   treatText: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
-    color: '#111111',
+    color: C.textPrimary,
     lineHeight: 19,
   },
 });

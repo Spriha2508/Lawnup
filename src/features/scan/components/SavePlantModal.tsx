@@ -12,7 +12,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NicknameInputCard } from './NicknameInputCard';
 import type { ScanResult } from '../store/scanStore';
+import { theme } from '@constants/designSystem';
 
+const C = theme.color;
 const { height: SH } = Dimensions.get('window');
 
 interface SavePlantModalProps {
@@ -111,11 +113,11 @@ export const SavePlantModal: React.FC<SavePlantModalProps> = ({
             </Text>
             <View style={[
               styles.healthPill,
-              { backgroundColor: scanResult.isHealthy ? 'rgba(111,148,62,0.10)' : 'rgba(192,57,43,0.08)' },
+              { backgroundColor: scanResult.isHealthy ? C.healthyBg : C.criticalBg },
             ]}>
               <Text style={[
                 styles.healthText,
-                { color: scanResult.isHealthy ? '#6F943E' : '#C0392B' },
+                { color: scanResult.isHealthy ? C.healthyFg : C.criticalFg },
               ]}>
                 {scanResult.isHealthy ? 'Healthy' : 'Needs care'}
               </Text>
@@ -151,7 +153,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#F5F1E8',
+    backgroundColor: C.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     overflow: 'hidden',
@@ -160,7 +162,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#DDD4C7',
+    backgroundColor: C.border,
     alignSelf: 'center',
     marginTop: 10,
     marginBottom: 4,
@@ -178,16 +180,16 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   thumbPlaceholder: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#DDD4C7',
+    borderColor: C.border,
   },
   thumbInitial: {
     fontFamily: 'Cormorant-SemiBoldItalic',
     fontSize: 24,
-    color: '#9E9A94',
+    color: C.textMuted,
   },
   previewInfo: {
     flex: 1,
@@ -196,12 +198,12 @@ const styles = StyleSheet.create({
   previewName: {
     fontFamily: 'Nunito-Bold',
     fontSize: 16,
-    color: '#111111',
+    color: C.textPrimary,
   },
   previewSci: {
     fontFamily: 'Nunito-Regular',
     fontSize: 12,
-    color: '#9E9A94',
+    color: C.textMuted,
     fontStyle: 'italic',
   },
   healthPill: {
@@ -221,11 +223,11 @@ const styles = StyleSheet.create({
   },
   closeIcon: {
     fontSize: 15,
-    color: '#9E9A94',
+    color: C.textMuted,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: '#DDD4C7',
+    backgroundColor: C.border,
     marginHorizontal: 20,
   },
 });

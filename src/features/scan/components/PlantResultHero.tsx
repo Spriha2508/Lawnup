@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { theme } from '@constants/designSystem';
 
+const C = theme.color;
 const { width: SW, height: SH } = Dimensions.get('window');
 const HERO_HEIGHT = Math.round(SH * 0.56);
 
@@ -15,9 +17,9 @@ interface PlantResultHeroProps {
 }
 
 function confColor(v: number): string {
-  if (v >= 0.70) return '#6F943E';
-  if (v >= 0.50) return '#B07000';
-  return '#9E9A94';
+  if (v >= 0.70) return C.primary;   // brass — confident
+  if (v >= 0.50) return C.waterFg;   // amber — qualify
+  return C.textMuted;                // muted — uncertain
 }
 
 export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
@@ -94,7 +96,7 @@ export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
             styles.confPill,
             { backgroundColor: col + '28', borderColor: col + '55' },
           ]}>
-            <Text style={[styles.confPct, { color: col === '#9E9A94' ? 'rgba(255,255,255,0.45)' : col }]}>
+            <Text style={[styles.confPct, { color: col === C.textMuted ? 'rgba(255,255,255,0.45)' : col }]}>
               {Math.round(confidence * 100)}%
             </Text>
           </View>
@@ -107,13 +109,13 @@ export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
 const styles = StyleSheet.create({
   hero: {
     width: SW,
-    backgroundColor: '#0D1610',
+    backgroundColor: C.canvas,
     overflow: 'hidden',
   },
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1A2416',
+    backgroundColor: C.card,
   },
   placeholderMark: {
     fontSize: 48,
@@ -144,11 +146,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
-  healthPillGreen: { backgroundColor: 'rgba(50,90,20,0.82)' },
+  healthPillGreen: { backgroundColor: 'rgba(28,74,58,0.85)' },
   healthPillAmber: { backgroundColor: 'rgba(100,60,0,0.78)' },
   healthDot: { width: 6, height: 6, borderRadius: 3 },
-  dotGreen:  { backgroundColor: '#A7C47C' },
-  dotAmber:  { backgroundColor: '#FFD580' },
+  dotGreen:  { backgroundColor: C.healthyFg },
+  dotAmber:  { backgroundColor: C.waterFg },
   healthText: {
     fontFamily: 'Nunito-SemiBold',
     fontSize: 12,

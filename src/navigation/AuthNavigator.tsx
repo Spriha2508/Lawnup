@@ -1,6 +1,8 @@
 import React, { memo, useState, useCallback, useEffect, useMemo } from 'react';
 import { BackHandler } from 'react-native';
 import { AuthNavigationContext, type AuthRouteName } from './AuthNavigationContext';
+import { setAtmosphereForRoute } from '../shared/components/motion/RootAtmosphere';
+import { setVineForRoute } from '../shared/components/motion/JourneyVine';
 import { LandingScreen }       from '../features/auth/screens/LandingScreen';
 import { LoginScreen }         from '../features/auth/screens/LoginScreen';
 import { SignupScreen }        from '../features/auth/screens/SignupScreen';
@@ -19,6 +21,12 @@ export const AuthNavigator = memo(function AuthNavigator() {
 
   const current = stack[stack.length - 1];
   const canGoBack = stack.length > 1;
+
+  // Custom stack (not react-navigation) → drive the world layers manually.
+  useEffect(() => {
+    setAtmosphereForRoute(current);
+    setVineForRoute(current);
+  }, [current]);
 
   // Stable context value — only changes when navigate/goBack references change (never, due to useCallback [])
   const contextValue = useMemo(() => ({ navigate, goBack }), [navigate, goBack]);

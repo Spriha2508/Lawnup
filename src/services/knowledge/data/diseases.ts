@@ -1,0 +1,118 @@
+import type { DiseaseEntry } from '../types';
+
+/**
+ * diseaseLibrary seed — the most common issues for Indian houseplants.
+ * Definitions/treatments are authoritative; Dr. Banyan retrieves these
+ * verbatim and never invents disease definitions.
+ */
+export const DISEASES: Record<string, DiseaseEntry> = {
+  'root-rot': {
+    id: 'root-rot',
+    name: 'Root Rot',
+    type: 'fungal',
+    definition:
+      'Decay of the root system caused by waterlogged soil and fungal pathogens (often Pythium or Phytophthora), which suffocates roots and turns them brown and mushy.',
+    symptoms: ['Yellowing lower leaves', 'Wilting despite moist soil', 'Black/brown mushy roots', 'Foul smell from soil', 'Stunted growth'],
+    causes: ['Overwatering', 'Poor drainage', 'Compacted or non-draining soil', 'Pots without drainage holes'],
+    treatment: [
+      'Unpot and rinse roots; trim all black/mushy roots with sterile scissors',
+      'Repot into fresh, fast-draining mix',
+      'Water only when the top 2–3 cm of soil is dry',
+      'Apply a copper or systemic fungicide if rot is extensive',
+    ],
+    prevention: ['Use a draining pot', 'Let topsoil dry between waterings', 'Avoid letting pots sit in standing water'],
+    severity: 'high',
+    keywords: ['mushy roots', 'soft stem base', 'yellow leaves', 'wilting wet soil', 'smell', 'rot'],
+  },
+  'powdery-mildew': {
+    id: 'powdery-mildew',
+    name: 'Powdery Mildew',
+    type: 'fungal',
+    definition: 'A fungal disease that coats leaves and stems in a white-grey powdery film, thriving in humid, poorly ventilated conditions.',
+    symptoms: ['White/grey powdery patches on leaves', 'Leaf curling or yellowing', 'Distorted new growth'],
+    causes: ['High humidity with poor air circulation', 'Crowded plants', 'Water sitting on foliage at night'],
+    treatment: [
+      'Isolate the plant',
+      'Wipe affected leaves; remove heavily infected ones',
+      'Spray a neem-oil or potassium-bicarbonate solution weekly',
+      'Improve airflow and reduce leaf wetness',
+    ],
+    prevention: ['Space plants for airflow', 'Water at the soil, not the leaves', 'Avoid misting in low light'],
+    severity: 'moderate',
+    keywords: ['white powder', 'grey film', 'dusty leaves', 'mildew'],
+  },
+  'leaf-spot': {
+    id: 'leaf-spot',
+    name: 'Leaf Spot',
+    type: 'fungal',
+    definition: 'Fungal or bacterial infection producing discrete brown/black spots, often with yellow halos, that can merge and kill leaf tissue.',
+    symptoms: ['Brown or black spots with yellow rings', 'Spots merging into patches', 'Premature leaf drop'],
+    causes: ['Splashing water spreading spores', 'High humidity', 'Overcrowding'],
+    treatment: ['Remove and discard spotted leaves', 'Avoid overhead watering', 'Apply a copper-based fungicide', 'Improve ventilation'],
+    prevention: ['Water at the base', 'Quarantine new plants', 'Keep foliage dry overnight'],
+    severity: 'moderate',
+    keywords: ['brown spots', 'black spots', 'yellow halo', 'spots on leaves'],
+  },
+  'fungal-infection': {
+    id: 'fungal-infection',
+    name: 'Fungal Infection',
+    type: 'fungal',
+    definition: 'A general fungal attack on leaves, stems, or soil surface, encouraged by excess moisture and stagnant air; includes damping-off and mold.',
+    symptoms: ['Fuzzy mold on soil or stems', 'Soft darkened tissue', 'White/grey/black growth'],
+    causes: ['Excess moisture', 'Poor airflow', 'Contaminated soil or tools'],
+    treatment: ['Remove affected tissue', 'Scrape off mouldy topsoil and replace', 'Apply a broad-spectrum fungicide', 'Reduce watering and humidity'],
+    prevention: ['Sterilise tools', 'Use clean potting mix', 'Maintain airflow'],
+    severity: 'moderate',
+    keywords: ['mold', 'fungus', 'fuzzy growth', 'damping off'],
+  },
+  'nutrient-deficiency': {
+    id: 'nutrient-deficiency',
+    name: 'Nutrient Deficiency',
+    type: 'nutrient',
+    definition: 'A shortage of essential nutrients (commonly nitrogen, iron, or magnesium) causing discoloration and weak growth.',
+    symptoms: ['Pale or yellowing leaves (often between veins)', 'Slow or stunted growth', 'Small new leaves'],
+    causes: ['Depleted soil', 'Infrequent feeding', 'Incorrect soil pH locking out nutrients'],
+    treatment: ['Apply a balanced liquid fertilizer at half strength', 'Correct soil pH', 'Refresh topsoil or repot', 'Use iron chelate for interveinal yellowing'],
+    prevention: ['Feed during the growing season', 'Repot every 1–2 years', 'Use quality potting mix'],
+    severity: 'low',
+    keywords: ['pale leaves', 'yellow between veins', 'stunted', 'chlorosis', 'deficiency'],
+  },
+  overwatering: {
+    id: 'overwatering',
+    name: 'Overwatering',
+    type: 'environmental',
+    definition: 'Chronic excess soil moisture that deprives roots of oxygen, the leading cause of houseplant decline and a precursor to root rot.',
+    symptoms: ['Yellowing leaves', 'Soft, translucent leaves', 'Constantly wet soil', 'Fungus gnats', 'Mushy stem base'],
+    causes: ['Watering on a fixed schedule', 'Poor drainage', 'Oversized pots holding too much water'],
+    treatment: ['Stop watering until topsoil dries', 'Improve drainage', 'Move to brighter light to speed drying', 'Check roots for rot'],
+    prevention: ['Water by checking soil, not the calendar', 'Use draining pots and airy mix'],
+    severity: 'moderate',
+    keywords: ['wet soil', 'yellow leaves', 'soggy', 'gnats', 'too much water'],
+  },
+  underwatering: {
+    id: 'underwatering',
+    name: 'Underwatering',
+    type: 'environmental',
+    definition: 'Insufficient water leaving soil bone-dry and roots unable to sustain the plant, common in Indian summers.',
+    symptoms: ['Crispy brown leaf edges', 'Drooping/wilting', 'Dry, pulling-away soil', 'Slow growth'],
+    causes: ['Infrequent watering', 'Hydrophobic dried-out soil', 'High heat and low humidity'],
+    treatment: ['Soak the pot in water for 15–20 minutes to rehydrate', 'Resume regular watering', 'Mist in dry heat', 'Move out of harsh afternoon sun'],
+    prevention: ['Check soil more often in summer', 'Group plants to raise humidity', 'Mulch the topsoil'],
+    severity: 'low',
+    keywords: ['crispy edges', 'dry soil', 'drooping', 'wilting dry', 'brown tips'],
+  },
+  sunburn: {
+    id: 'sunburn',
+    name: 'Sunburn / Leaf Scorch',
+    type: 'environmental',
+    definition: 'Tissue damage from excessive direct sunlight, especially harsh Indian afternoon sun on shade-loving plants.',
+    symptoms: ['Bleached or brown crispy patches', 'Faded/whitened leaves', 'Damage on the sun-facing side'],
+    causes: ['Sudden move to direct sun', 'Harsh afternoon exposure', 'Magnified light through glass'],
+    treatment: ['Move to bright indirect light', 'Trim severely scorched leaves', 'Keep well watered while recovering'],
+    prevention: ['Acclimatise gradually to brighter spots', 'Filter harsh afternoon sun with a sheer curtain'],
+    severity: 'low',
+    keywords: ['bleached', 'scorched', 'crispy patches', 'faded leaves', 'too much sun'],
+  },
+};
+
+export const ALL_DISEASES: DiseaseEntry[] = Object.values(DISEASES);

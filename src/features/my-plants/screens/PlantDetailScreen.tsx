@@ -34,6 +34,9 @@ import {
 } from '../../../services/reminders/notificationScheduler';
 import type { WeatherData } from '../../../services/weather/weatherService';
 import type { PlantsStackParamList } from '../../../navigation/types';
+import { theme } from '@constants/designSystem';
+
+const C = theme.color;
 
 type Route = RouteProp<PlantsStackParamList, 'PlantDetail'>;
 type Nav   = StackNavigationProp<PlantsStackParamList, 'PlantDetail'>;
@@ -42,9 +45,9 @@ const { width: SW } = Dimensions.get('window');
 const HERO_H = Math.round(SW * 0.88);
 
 const HEALTH_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  Healthy:           { label: 'Thriving',       color: '#6F943E', bg: 'rgba(111,148,62,0.10)' },
-  'Needs Attention': { label: 'Needs attention', color: '#B07000', bg: 'rgba(176,112,0,0.10)'  },
-  Critical:          { label: 'Critical',        color: '#C0392B', bg: 'rgba(192,57,43,0.08)'  },
+  Healthy:           { label: 'Thriving',       color: C.healthyFg,  bg: C.healthyBg  },
+  'Needs Attention': { label: 'Needs attention', color: C.waterFg,    bg: C.waterBg    },
+  Critical:          { label: 'Critical',        color: C.criticalFg, bg: C.criticalBg },
 };
 
 function shortDate(date: Date): string {
@@ -63,10 +66,10 @@ function relativeDate(isoOrDate: string | Date): string {
 }
 
 function confidenceTier(c: number): { label: string; color: string } {
-  if (c >= 0.85) return { label: 'High confidence', color: '#6F943E' };
-  if (c >= 0.70) return { label: 'Reasonably confident', color: '#5A8032' };
-  if (c >= 0.50) return { label: 'Moderate confidence', color: '#B07000' };
-  return             { label: 'Low confidence', color: '#9E9A94' };
+  if (c >= 0.85) return { label: 'High confidence', color: C.primary };
+  if (c >= 0.70) return { label: 'Reasonably confident', color: C.primaryDark };
+  if (c >= 0.50) return { label: 'Moderate confidence', color: C.waterFg };
+  return             { label: 'Low confidence', color: C.textMuted };
 }
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -164,8 +167,8 @@ export const PlantDetailScreen: React.FC = () => {
         <View style={styles.errorBody}>
           <View style={styles.errorMarkWrap}>
             <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-              <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill="#6F943E" opacity={0.85} />
-              <Path d="M12 3V21" stroke="#F5F1E8" strokeWidth={1.3} strokeLinecap="round" />
+              <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill={C.primary} opacity={0.85} />
+              <Path d="M12 3V21" stroke={C.canvas} strokeWidth={1.3} strokeLinecap="round" />
             </Svg>
           </View>
           <Text style={styles.errorTitle}>Plant not found</Text>
@@ -191,9 +194,9 @@ export const PlantDetailScreen: React.FC = () => {
   const waterMessage  = generateWateringMessage(plant, weather);
   const initial       = plant.nickname.charAt(0).toUpperCase();
 
-  const waterStatusColor = waterInfo.status === 'overdue' ? '#C0392B'
-    : waterInfo.status === 'today' ? '#B07000'
-    : '#6F943E';
+  const waterStatusColor = waterInfo.status === 'overdue' ? C.criticalFg
+    : waterInfo.status === 'today' ? C.waterFg
+    : C.healthyFg;
 
   return (
     <Animated.View style={[styles.root, { opacity: fadeAnim }]}>
@@ -273,13 +276,13 @@ export const PlantDetailScreen: React.FC = () => {
             />
             <StatCard
               icon="clock"
-              iconColor="#6F943E"
+              iconColor={C.primary}
               value={daysSinceWater === 0 ? 'Today' : `${daysSinceWater}d ago`}
               label="Last watered"
             />
             <StatCard
               icon="repeat"
-              iconColor="#9E9A94"
+              iconColor={C.textMuted}
               value={plant.wateringFrequencyDays === 1 ? 'Daily' : `${plant.wateringFrequencyDays}d`}
               label="Frequency"
             />
@@ -347,7 +350,7 @@ export const PlantDetailScreen: React.FC = () => {
               <InfoRow
                 label="Next due"
                 value={waterInfo.status === 'overdue' ? 'Overdue — water now' : shortDate(nextWater)}
-                valueColor={waterInfo.status === 'overdue' ? '#C0392B' : undefined}
+                valueColor={waterInfo.status === 'overdue' ? C.criticalFg : undefined}
               />
               <Divider />
               <InfoRow
@@ -362,13 +365,13 @@ export const PlantDetailScreen: React.FC = () => {
             <Text style={styles.sectionEyebrow}>PLANT HISTORY</Text>
             <View style={styles.timeline}>
               <TimelineRow
-                dot="#6F943E"
+                dot={C.primary}
                 title="Added to garden"
                 subtitle={shortDate(plant.createdAt.toDate())}
               />
               {plant.scanDate && (
                 <TimelineRow
-                  dot="#9E9A94"
+                  dot={C.textMuted}
                   title="Last scanned"
                   subtitle={relativeDate(plant.scanDate)}
                   detail={plant.scanConfidence != null
@@ -381,7 +384,7 @@ export const PlantDetailScreen: React.FC = () => {
               )}
               {plant.location && (
                 <TimelineRow
-                  dot="#DDD4C7"
+                  dot={C.border}
                   title="Location"
                   subtitle={plant.location}
                   isLast
@@ -389,7 +392,7 @@ export const PlantDetailScreen: React.FC = () => {
               )}
               {!plant.location && (
                 <TimelineRow
-                  dot="#DDD4C7"
+                  dot={C.border}
                   title="Identification"
                   subtitle={plant.speciesName}
                   isLast
@@ -415,8 +418,8 @@ export const PlantDetailScreen: React.FC = () => {
                   value={remindersOn}
                   onValueChange={handleReminderToggle}
                   disabled={reminderLoading}
-                  trackColor={{ false: '#DDD4C7', true: 'rgba(111,148,62,0.5)' }}
-                  thumbColor={remindersOn ? '#6F943E' : '#9E9A94'}
+                  trackColor={{ false: C.border, true: 'rgba(200,162,78,0.5)' }}
+                  thumbColor={remindersOn ? C.primary : C.textMuted}
                 />
               </View>
             </View>
@@ -512,7 +515,7 @@ const StatCard: React.FC<{
 
 const CareRow: React.FC<{ icon: string; label: string; text: string }> = ({ icon, label, text }) => (
   <View style={styles.careRow}>
-    <View style={styles.careRowIconWrap}><DetailIcon name={icon} color="#6F943E" size={15} /></View>
+    <View style={styles.careRowIconWrap}><DetailIcon name={icon} color={C.primary} size={15} /></View>
     <View style={styles.careRowContent}>
       <Text style={styles.careRowLabel}>{label}</Text>
       <Text style={styles.careRowText}>{text}</Text>
@@ -544,7 +547,7 @@ const TimelineRow: React.FC<{
       <Text style={styles.timelineTitle}>{title}</Text>
       <Text style={styles.timelineSub}>{subtitle}</Text>
       {detail && (
-        <Text style={[styles.timelineDetail, { color: detailColor ?? '#9E9A94' }]}>
+        <Text style={[styles.timelineDetail, { color: detailColor ?? C.textMuted }]}>
           {detail}
         </Text>
       )}
@@ -555,21 +558,21 @@ const TimelineRow: React.FC<{
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F1E8' },
+  root: { flex: 1, backgroundColor: 'transparent' },
   scrollContent: { paddingBottom: 60 },
 
   // Error
-  errorScreen: { flex: 1, backgroundColor: '#F5F1E8' },
+  errorScreen: { flex: 1, backgroundColor: C.canvas },
   backBtnOverlay: { margin: 20, alignSelf: 'flex-start' },
   errorBody: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32 },
-  errorMarkWrap: { width: 64, height: 64, borderRadius: 24, backgroundColor: 'rgba(111,148,62,0.10)', alignItems: 'center', justifyContent: 'center' },
-  errorTitle: { fontFamily: 'Nunito-Bold', fontSize: 18, color: '#111111' },
-  errorSub: { fontFamily: 'Nunito-Regular', fontSize: 14, color: '#6B6B5E', textAlign: 'center' },
+  errorMarkWrap: { width: 64, height: 64, borderRadius: 24, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center' },
+  errorTitle: { fontFamily: 'Nunito-Bold', fontSize: 18, color: C.textPrimary },
+  errorSub: { fontFamily: 'Nunito-Regular', fontSize: 14, color: C.textSecondary, textAlign: 'center' },
 
   // Hero
-  hero: { width: SW, backgroundColor: '#1A2416' },
+  hero: { width: SW, backgroundColor: C.card },
   heroPlaceholder: {
-    backgroundColor: '#1A2416',
+    backgroundColor: C.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -625,7 +628,7 @@ const styles = StyleSheet.create({
 
   // Water message bar
   waterMessage: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -641,10 +644,10 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: 10 },
   statCard: {
     flex: 1,
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#DDD4C7',
+    borderColor: C.border,
     paddingVertical: 16,
     paddingHorizontal: 10,
     alignItems: 'center',
@@ -654,13 +657,13 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: 'Nunito-ExtraBold',
     fontSize: 14,
-    color: '#111111',
+    color: C.textPrimary,
     textAlign: 'center',
   },
   statLabel: {
     fontFamily: 'Nunito-Regular',
     fontSize: 9,
-    color: '#9E9A94',
+    color: C.textMuted,
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -670,87 +673,87 @@ const styles = StyleSheet.create({
   section: { gap: 10 },
   sectionEyebrow: {
     fontSize: 10, fontFamily: 'Nunito-SemiBold',
-    color: '#9E9A94', letterSpacing: 2, textTransform: 'uppercase',
+    color: C.textMuted, letterSpacing: 2, textTransform: 'uppercase',
   },
   sectionTitle: {
-    fontFamily: 'Cormorant-SemiBold', fontSize: 24, color: '#111111', lineHeight: 28,
+    fontFamily: 'Cormorant-SemiBold', fontSize: 24, color: C.textPrimary, lineHeight: 28,
   },
 
   // Today's Conditions
   conditionsCard: {
-    backgroundColor: '#EEE7DA', borderRadius: 18, padding: 18,
-    borderWidth: 1, borderColor: '#DDD4C7', gap: 12,
+    backgroundColor: C.card, borderRadius: 18, padding: 18,
+    borderWidth: 1, borderColor: C.border, gap: 12,
   },
   conditionsTop: {
     flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
   },
   conditionsTemp: {
-    fontFamily: 'Cormorant-SemiBold', fontSize: 32, color: '#111111',
+    fontFamily: 'Cormorant-SemiBold', fontSize: 32, color: C.textPrimary,
   },
   conditionsDesc: {
-    fontFamily: 'Nunito-Regular', fontSize: 13, color: '#6B6B5E',
+    fontFamily: 'Nunito-Regular', fontSize: 13, color: C.textSecondary,
     textTransform: 'capitalize', marginTop: 2,
   },
   conditionsRight: { alignItems: 'flex-end', gap: 2 },
   conditionsStat: {
-    fontFamily: 'Nunito-ExtraBold', fontSize: 22, color: '#111111',
+    fontFamily: 'Nunito-ExtraBold', fontSize: 22, color: C.textPrimary,
   },
   conditionsStatLabel: {
-    fontFamily: 'Nunito-Regular', fontSize: 11, color: '#9E9A94',
+    fontFamily: 'Nunito-Regular', fontSize: 11, color: C.textMuted,
   },
   conditionsAlert: {
-    fontFamily: 'Nunito-SemiBold', fontSize: 13, color: '#B07000',
+    fontFamily: 'Nunito-SemiBold', fontSize: 13, color: C.waterFg,
     lineHeight: 19, paddingTop: 4,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#DDD4C7',
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border,
   },
   conditionsTipsList: { gap: 6 },
   conditionsTipRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   conditionsTipDot: {
-    fontFamily: 'Nunito-Bold', fontSize: 14, color: '#6F943E', lineHeight: 20,
+    fontFamily: 'Nunito-Bold', fontSize: 14, color: C.primary, lineHeight: 20,
   },
   conditionsTipText: {
-    fontFamily: 'Nunito-Regular', fontSize: 13, color: '#6B6B5E', lineHeight: 20, flex: 1,
+    fontFamily: 'Nunito-Regular', fontSize: 13, color: C.textSecondary, lineHeight: 20, flex: 1,
   },
 
   // Care guide list
   careList: {
-    backgroundColor: '#EEE7DA', borderRadius: 18,
-    borderWidth: 1, borderColor: '#DDD4C7',
+    backgroundColor: C.card, borderRadius: 18,
+    borderWidth: 1, borderColor: C.border,
     overflow: 'hidden',
   },
   careRow: {
     flexDirection: 'row', gap: 12, padding: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#DDD4C7',
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.border,
     alignItems: 'flex-start',
   },
   careRowIconWrap: { marginTop: 1, width: 18, alignItems: 'center' },
   careRowContent: { flex: 1, gap: 2 },
   careRowLabel: {
-    fontFamily: 'Nunito-SemiBold', fontSize: 10, color: '#9E9A94',
+    fontFamily: 'Nunito-SemiBold', fontSize: 10, color: C.textMuted,
     letterSpacing: 0.8, textTransform: 'uppercase',
   },
   careRowText: {
-    fontFamily: 'Nunito-Regular', fontSize: 13, color: '#111111', lineHeight: 19,
+    fontFamily: 'Nunito-Regular', fontSize: 13, color: C.textPrimary, lineHeight: 19,
   },
 
   // Info card (watering details, reminder)
   infoCard: {
-    backgroundColor: '#EEE7DA', borderRadius: 18,
-    borderWidth: 1, borderColor: '#DDD4C7',
+    backgroundColor: C.card, borderRadius: 18,
+    borderWidth: 1, borderColor: C.border,
     paddingHorizontal: 18, paddingVertical: 14, gap: 10,
   },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  infoKey: { fontFamily: 'Nunito-Regular', fontSize: 14, color: '#6B6B5E' },
+  infoKey: { fontFamily: 'Nunito-Regular', fontSize: 14, color: C.textSecondary },
   infoVal: {
-    fontFamily: 'Nunito-SemiBold', fontSize: 14, color: '#111111',
+    fontFamily: 'Nunito-SemiBold', fontSize: 14, color: C.textPrimary,
     textAlign: 'right', flexShrink: 1, marginLeft: 8,
   },
-  divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#DDD4C7' },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: C.border },
 
   // Timeline (Plant History)
   timeline: {
-    backgroundColor: '#EEE7DA', borderRadius: 18,
-    borderWidth: 1, borderColor: '#DDD4C7',
+    backgroundColor: C.card, borderRadius: 18,
+    borderWidth: 1, borderColor: C.border,
     paddingHorizontal: 18, paddingTop: 14, paddingBottom: 4,
   },
   timelineRow: {
@@ -759,10 +762,10 @@ const styles = StyleSheet.create({
   timelineRowLast: { paddingBottom: 10 },
   timelineDotWrap: { alignItems: 'center', paddingTop: 3 },
   timelineDot: { width: 8, height: 8, borderRadius: 4 },
-  timelineLine: { width: 1, flex: 1, backgroundColor: '#DDD4C7', marginTop: 4 },
+  timelineLine: { width: 1, flex: 1, backgroundColor: C.border, marginTop: 4 },
   timelineContent: { flex: 1, gap: 2, paddingBottom: 2 },
-  timelineTitle: { fontFamily: 'Nunito-SemiBold', fontSize: 13, color: '#111111' },
-  timelineSub: { fontFamily: 'Nunito-Regular', fontSize: 12, color: '#6B6B5E' },
+  timelineTitle: { fontFamily: 'Nunito-SemiBold', fontSize: 13, color: C.textPrimary },
+  timelineSub: { fontFamily: 'Nunito-Regular', fontSize: 12, color: C.textSecondary },
   timelineDetail: { fontFamily: 'Nunito-SemiBold', fontSize: 11 },
 
   // Reminder
@@ -770,48 +773,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
   reminderLeft: { flex: 1, gap: 3 },
-  reminderTitle: { fontFamily: 'Nunito-SemiBold', fontSize: 14, color: '#111111' },
-  reminderSub: { fontFamily: 'Nunito-Regular', fontSize: 12, color: '#6B6B5E' },
+  reminderTitle: { fontFamily: 'Nunito-SemiBold', fontSize: 14, color: C.textPrimary },
+  reminderSub: { fontFamily: 'Nunito-Regular', fontSize: 12, color: C.textSecondary },
 
   // Notes
-  notesText: { fontFamily: 'Nunito-Regular', fontSize: 14, color: '#111111', lineHeight: 22 },
+  notesText: { fontFamily: 'Nunito-Regular', fontSize: 14, color: C.textPrimary, lineHeight: 22 },
   notesEmpty: {
-    backgroundColor: '#EEE7DA', borderRadius: 18,
-    borderWidth: 1, borderColor: '#DDD4C7',
+    backgroundColor: C.card, borderRadius: 18,
+    borderWidth: 1, borderColor: C.border,
     paddingHorizontal: 18, paddingVertical: 16, gap: 8,
   },
   notesEmptyText: {
-    fontFamily: 'Nunito-Regular', fontSize: 13, color: '#9E9A94', lineHeight: 20,
+    fontFamily: 'Nunito-Regular', fontSize: 13, color: C.textMuted, lineHeight: 20,
   },
-  notesEmptyLink: { fontFamily: 'Nunito-SemiBold', fontSize: 13, color: '#6F943E' },
+  notesEmptyLink: { fontFamily: 'Nunito-SemiBold', fontSize: 13, color: C.primary },
 
   // AI Doctor CTA
   aiCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#1A2416', borderRadius: 20, padding: 20,
+    backgroundColor: C.card, borderRadius: 20, padding: 20,
+    borderWidth: 1, borderColor: C.primary,
   },
   aiCardLabel: {
-    fontSize: 9, fontFamily: 'Nunito-SemiBold', color: '#6F943E',
+    fontSize: 9, fontFamily: 'Nunito-SemiBold', color: C.primary,
     letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6,
   },
   aiCardTitle: {
-    fontFamily: 'Cormorant-SemiBold', fontSize: 20, color: '#FFFFFF', lineHeight: 24,
+    fontFamily: 'Cormorant-SemiBold', fontSize: 20, color: C.textPrimary, lineHeight: 24,
   },
   aiCardArrow: {
-    color: 'rgba(255,255,255,0.4)', fontSize: 20, fontFamily: 'Nunito-Regular',
+    color: C.textMuted, fontSize: 20, fontFamily: 'Nunito-Regular',
   },
 
   // Delete
   deleteBtn: {
     paddingVertical: 14, alignItems: 'center',
-    borderWidth: 1, borderColor: 'rgba(192,57,43,0.25)',
-    borderRadius: 14, backgroundColor: 'rgba(192,57,43,0.04)',
+    borderWidth: 1, borderColor: C.criticalFg,
+    borderRadius: 14, backgroundColor: C.criticalBg,
   },
   deleteBtnText: {
-    fontFamily: 'Nunito-SemiBold', fontSize: 14, color: '#C0392B',
+    fontFamily: 'Nunito-SemiBold', fontSize: 14, color: C.criticalFg,
   },
   addedDate: {
-    fontFamily: 'Nunito-Regular', fontSize: 12, color: '#B0ACA6', textAlign: 'center',
+    fontFamily: 'Nunito-Regular', fontSize: 12, color: C.textMuted, textAlign: 'center',
     paddingBottom: 8,
   },
 });
