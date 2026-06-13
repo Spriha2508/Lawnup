@@ -300,7 +300,7 @@ export const HomeScreen: React.FC = () => {
         {/* Today's Care */}
         {duePlants.length > 0 && (
           <View style={{ marginBottom: SECTION_GAP }}>
-            <SectionHeader label="TODAY'S CARE" actionLabel="Reminders →" onAction={() => navigation.navigate('Profile', { screen: 'Reminders' })} />
+            <SectionHeader label="TODAY'S CARE" actionLabel="All tasks →" onAction={() => navigation.navigate('Plants', { screen: 'Tasks' })} />
             <View style={styles.careCard}>
               {duePlants.slice(0, 4).map((plant, i) => (
                 <CareRow key={plant.plantId} plant={plant} index={i} isLast={i === Math.min(duePlants.length, 4) - 1}

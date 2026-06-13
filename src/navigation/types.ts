@@ -35,6 +35,7 @@ export type PlantsStackParamList = {
   EditPlant: { plantId: string };
   SoilAdvisor: { plantId?: string; speciesName?: string };
   LightAssessment: { plantId?: string; speciesName?: string };
+  Tasks: undefined;
 };
 
 // AI Doctor Stack
