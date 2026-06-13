@@ -93,7 +93,7 @@ const TimeSky: React.FC = () => {
     v.value = withDelay(200, withTiming(1, { duration: 1500, easing: M.ease.smooth }));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const style = useAnimatedStyle(() => ({ opacity: v.value }));
-  const sky = useMemo(skyColorForHour, []);
+  const sky = useMemo(() => skyColorForHour(), []);
   return (
     <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, height: SCREEN_H * 0.35 }, style]} pointerEvents="none">
       <Svg width="100%" height="100%">
