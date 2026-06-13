@@ -4,6 +4,7 @@ import { MyPlantsScreen } from '../features/my-plants/screens/MyPlantsScreen';
 import { PlantDetailScreen } from '../features/my-plants/screens/PlantDetailScreen';
 import { AddPlantScreen } from '../features/my-plants/screens/AddPlantScreen';
 import { EditPlantScreen } from '../features/my-plants/screens/EditPlantScreen';
+import { SoilAdvisorScreen } from '../features/my-plants/screens/SoilAdvisorScreen';
 import { colors } from '../constants/colors';
 import { fadeTransition } from './transitions';
 import type { PlantsStackParamList } from './types';
@@ -24,5 +25,6 @@ export const PlantsNavigator: React.FC = () => (
     <Stack.Screen name="PlantDetail" component={PlantDetailScreen} />
     <Stack.Screen name="AddPlant" component={AddPlantScreen} />
     <Stack.Screen name="EditPlant" component={EditPlantScreen} />
+    <Stack.Screen name="SoilAdvisor" component={SoilAdvisorScreen} />
   </Stack.Navigator>
 );

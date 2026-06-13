@@ -449,6 +449,24 @@ export const PlantDetailScreen: React.FC = () => {
             </View>
           )}
 
+          {/* Soil Advisor */}
+          <TouchableOpacity
+            style={styles.soilRow}
+            onPress={() => navigation.navigate('SoilAdvisor', { plantId: plant.plantId })}
+            activeOpacity={0.82}
+          >
+            <View style={styles.soilIcon}>
+              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                <Path d="M4 16h16M6 16c0-3 2-5 6-5s6 2 6 5M12 11V4" stroke={C.primary} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.soilTitle}>Soil & repotting</Text>
+              <Text style={styles.soilSub}>See the ideal mix for {plant.nickname}</Text>
+            </View>
+            <Text style={styles.soilArrow}>→</Text>
+          </TouchableOpacity>
+
           {/* AI Doctor CTA */}
           <TouchableOpacity
             style={styles.aiCard}
@@ -789,6 +807,16 @@ const styles = StyleSheet.create({
   notesEmptyLink: { fontFamily: 'Nunito-SemiBold', fontSize: 13, color: C.primary },
 
   // AI Doctor CTA
+  soilRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: C.card, borderRadius: 20, padding: 18,
+    borderWidth: 1, borderColor: C.border, ...theme.shadows.sm,
+  },
+  soilIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center' },
+  soilTitle: { fontFamily: 'Nunito-Bold', fontSize: 15, color: C.textPrimary, marginBottom: 2 },
+  soilSub: { fontFamily: 'Nunito-Regular', fontSize: 13, color: C.textSecondary },
+  soilArrow: { fontSize: 18, color: C.textMuted },
+
   aiCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: C.card, borderRadius: 20, padding: 20,
