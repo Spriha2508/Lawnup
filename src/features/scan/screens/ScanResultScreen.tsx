@@ -14,6 +14,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Timestamp } from 'firebase/firestore';
 import { useScanStore } from '../store/scanStore';
+import { useScanHistoryStore } from '../store/scanHistoryStore';
 import { usePlantsStore } from '../../my-plants/store/plantsStore';
 import { savePlantToCloud } from '../../my-plants/services/plantService';
 import { useAuthStore } from '../../auth/store/authStore';
@@ -124,6 +125,16 @@ export const ScanResultScreen: React.FC = () => {
         confidence: scanResult.confidence,
         isHealthy: scanResult.isHealthy,
         diseaseCount: scanResult.diseases.length,
+      });
+      // Record into scan history (persisted, on-device)
+      useScanHistoryStore.getState().addEntry({
+        scanId: scanResult.scanId,
+        imageUri: scanResult.imageUri,
+        commonName: scanResult.commonName,
+        scientificName: scanResult.scientificName,
+        confidence: scanResult.confidence,
+        isHealthy: scanResult.isHealthy,
+        date: scanResult.scanDate ?? new Date().toISOString(),
       });
     }
 

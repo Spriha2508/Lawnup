@@ -50,6 +50,9 @@ export type RemindersStackParamList = {
 // Profile Stack
 export type ProfileStackParamList = {
   Profile: undefined;
+  EditProfile: undefined;
+  ScanHistory: undefined;
+  HelpSupport: undefined;
   Reminders: undefined;
   AddReminder: { plantId?: string };
   Paywall: undefined;

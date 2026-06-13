@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
   Linking,
+  Alert,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -55,13 +56,26 @@ export const CameraScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { isGranted, isDenied, request } = useCameraPermission();
 
-  // Allow-camera CTA: request the OS permission. If the system can no longer
-  // show the prompt (user previously chose "Don't allow"), the request resolves
-  // without a dialog — so deep-link to app settings instead of doing nothing.
+  // Allow-camera CTA. Granting re-renders this screen into the live camera. If
+  // it does NOT grant for any reason (declined, OS won't re-prompt, or a stale
+  // build with no camera permission baked in), always give the user a way out
+  // via Settings — so the button is never a dead tap.
+  const openCameraSettings = () =>
+    Alert.alert(
+      'Camera access needed',
+      'To scan and identify plants, allow Camera for LawnUp in Settings → Permissions.',
+      [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Open settings', onPress: () => Linking.openSettings().catch(() => {}) },
+      ],
+    );
+
   const handleAllowCamera = useCallback(async () => {
-    const { granted, canAskAgain } = await request();
-    if (!granted && !canAskAgain) {
-      Linking.openSettings().catch(() => {});
+    try {
+      const { granted } = await request();
+      if (!granted) openCameraSettings();
+    } catch {
+      openCameraSettings();
     }
   }, [request]);
   const { setCapturedImageUri } = useScanStore();

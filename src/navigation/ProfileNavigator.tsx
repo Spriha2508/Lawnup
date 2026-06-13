@@ -1,6 +1,9 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ProfileScreen } from '../features/profile/screens/ProfileScreen';
+import { EditProfileScreen } from '../features/profile/screens/EditProfileScreen';
+import { ScanHistoryScreen } from '../features/profile/screens/ScanHistoryScreen';
+import { HelpSupportScreen } from '../features/profile/screens/HelpSupportScreen';
 import { PaywallScreen } from '../features/subscription/screens/PaywallScreen';
 import { RemindersScreen } from '../features/reminders/screens/RemindersScreen';
 import { AddReminderScreen } from '../features/reminders/screens/AddReminderScreen';
@@ -12,6 +15,9 @@ const Stack = createStackNavigator<ProfileStackParamList>();
 export const ProfileNavigator: React.FC = () => (
   <Stack.Navigator screenOptions={{ headerShown: false, ...fadeTransition }}>
     <Stack.Screen name="Profile" component={ProfileScreen} />
+    <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+    <Stack.Screen name="ScanHistory" component={ScanHistoryScreen} />
+    <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
     <Stack.Screen name="Reminders" component={RemindersScreen} />
     <Stack.Screen name="AddReminder" component={AddReminderScreen} />
     <Stack.Screen

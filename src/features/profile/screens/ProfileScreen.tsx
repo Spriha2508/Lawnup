@@ -157,10 +157,10 @@ export const ProfileScreen: React.FC = () => {
           <Animated.View entering={FadeInDown.delay(250).duration(M.duration.expressive)}>
             <Text style={styles.sectionLabel}>ACCOUNT</Text>
             <View style={styles.listCard}>
-              <SoonRow icon={<EditIcon />} label="Edit profile" isLast={false} />
+              <NavRow icon={<EditIcon />} label="Edit profile" isLast={false} onPress={() => navigation.navigate('EditProfile')} />
               <NavRow icon={<BellIcon />} label="Reminders" isLast={false} onPress={() => navigation.navigate('Reminders')} />
               <SoonRow icon={<ThemeIcon />} label="Appearance (dark mode)" isLast={false} />
-              <SoonRow icon={<HistoryIcon />} label="Scan history" isLast />
+              <NavRow icon={<HistoryIcon />} label="Scan history" isLast onPress={() => navigation.navigate('ScanHistory')} />
             </View>
           </Animated.View>
 
@@ -168,7 +168,7 @@ export const ProfileScreen: React.FC = () => {
           <Animated.View entering={FadeInDown.delay(300).duration(M.duration.expressive)}>
             <Text style={styles.sectionLabel}>SUPPORT</Text>
             <View style={styles.listCard}>
-              <SoonRow icon={<HelpIcon />} label="Help & support" isLast />
+              <NavRow icon={<HelpIcon />} label="Help & support" isLast onPress={() => navigation.navigate('HelpSupport')} />
             </View>
           </Animated.View>
 
