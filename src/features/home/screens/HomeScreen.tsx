@@ -17,6 +17,8 @@ import { useOnboardingStore } from '../../onboarding/store/onboardingStore';
 import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
 import { isDueForWater, computeHealthScore, getIKImageUrl } from '../../../shared/utils/plantUtils';
 import { getCurrentWeather } from '../../../services/weather/weatherService';
+import { getAirQuality, type AirQualityData } from '../../../services/weather/aqiService';
+import { aqiRules, type AqiBand } from '../../../services/knowledge';
 import { getTodayNarrative } from '../../../services/reminders/reminderService';
 import { getWeatherInsight, getSeasonalTip } from '../utils/homeInsights';
 import { HealthRing } from '@shared/components/motion/HealthRing';
@@ -70,6 +72,11 @@ const VALUE_PROPS = [
 
 const AnimatedScrollView = Animated.ScrollView;
 
+const bandColor = (band: AqiBand): string =>
+  band === 'good' || band === 'satisfactory' ? C.healthyFg
+    : band === 'moderate' ? C.waterFg
+    : C.criticalFg;
+
 // ── Time-aware sky — the homepage wakes up every time it opens ──────────────
 const skyColorForHour = (): string => {
   const h = new Date().getHours();
@@ -111,12 +118,18 @@ export const HomeScreen: React.FC = () => {
   const isPremiumActive = useSubscriptionStore(s => s.isPremiumActive);
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [aqi, setAqi] = useState<AirQualityData | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const isPremium = isPremiumActive();
 
   useEffect(() => {
-    if (city) getCurrentWeather(city).then(setWeather).catch(() => {});
+    if (city) {
+      getCurrentWeather(city).then(setWeather).catch(() => {});
+      getAirQuality(city).then(setAqi).catch(() => {});
+    }
   }, [city]);
+
+  const aqiAdvice = useMemo(() => aqiRules(aqi?.aqi), [aqi]);
 
   // Hero "breathing" — nothing on screen is ever fully static.
   const breathe = useSharedValue(0);
@@ -225,6 +238,21 @@ export const HomeScreen: React.FC = () => {
                 <Text style={styles.weatherHumLabel}>humidity</Text>
               </View>
             )}
+          </Animated.View>
+        )}
+
+        {/* Air quality · plant guidance (India-first) */}
+        {aqi && aqiAdvice && (
+          <Animated.View entering={FadeInDown.delay(90).duration(M.duration.expressive)} style={styles.aqiCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardEyebrow}>AIR QUALITY{city ? ` · ${city}` : ''}</Text>
+              <Text style={styles.aqiBand}>{aqiAdvice.label}</Text>
+              <Text style={styles.aqiBody}>{aqiAdvice.rules[0]}</Text>
+            </View>
+            <View style={styles.aqiBadge}>
+              <Text style={[styles.aqiNum, { color: bandColor(aqiAdvice.band) }]}>{aqi.aqi}</Text>
+              <Text style={styles.aqiNumLabel}>AQI</Text>
+            </View>
           </Animated.View>
         )}
 
@@ -441,6 +469,18 @@ const styles = StyleSheet.create({
   weatherTemp: { fontFamily: F.serifMedium, fontSize: 38, lineHeight: 40, color: C.textPrimary },
   weatherHum: { fontFamily: F.sansHeavy, fontSize: 13, color: C.primary },
   weatherHumLabel: { ...T.caption, fontSize: 10, color: C.textMuted },
+
+  // AQI card
+  aqiCard: {
+    flexDirection: 'row', alignItems: 'center', gap: S.lg,
+    backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, marginBottom: S.lg,
+    borderWidth: 1, borderColor: C.border, ...theme.shadows.card,
+  },
+  aqiBand: { ...T.h3, color: C.textPrimary, marginBottom: S.xs },
+  aqiBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 20 },
+  aqiBadge: { alignItems: 'center', minWidth: 48 },
+  aqiNum: { fontFamily: F.sansHeavy, fontSize: 30, letterSpacing: -0.5 },
+  aqiNumLabel: { ...T.statLabel, fontSize: 10, color: C.textMuted, letterSpacing: 1 },
 
   narrativeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: S.md, marginBottom: SECTION_GAP, paddingRight: S.sm },
   narrativeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.primary, marginTop: 6 },
