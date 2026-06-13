@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { useCameraPermissions } from 'expo-camera';
 import { logger } from '../../../shared/utils/logger';
 
@@ -19,13 +20,23 @@ interface UseCameraPermissionResult {
 }
 
 export const useCameraPermission = (): UseCameraPermissionResult => {
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
 
   useEffect(() => {
     if (permission?.status === 'denied') {
       logger.scan.failed('Camera permission denied');
     }
   }, [permission?.status]);
+
+  // Re-read the permission when the app returns to the foreground — so enabling
+  // it in system Settings is picked up without leaving the screen. Passive
+  // (`getPermission`) never shows a prompt.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') getPermission?.();
+    });
+    return () => sub.remove();
+  }, [getPermission]);
 
   const request = async (): Promise<PermissionRequestResult> => {
     const result = await requestPermission();
