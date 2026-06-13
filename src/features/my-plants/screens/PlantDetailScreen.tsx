@@ -467,6 +467,25 @@ export const PlantDetailScreen: React.FC = () => {
             <Text style={styles.soilArrow}>→</Text>
           </TouchableOpacity>
 
+          {/* Light check */}
+          <TouchableOpacity
+            style={styles.soilRow}
+            onPress={() => navigation.navigate('LightAssessment', { plantId: plant.plantId })}
+            activeOpacity={0.82}
+          >
+            <View style={styles.soilIcon}>
+              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                <Path d="M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M3 12h2M19 12h2M5.6 18.4L7 17M17 7l1.4-1.4" stroke={C.primary} strokeWidth={1.7} strokeLinecap="round" />
+                <Path d="M12 8a4 4 0 100 8 4 4 0 000-8z" stroke={C.primary} strokeWidth={1.7} />
+              </Svg>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.soilTitle}>Light check</Text>
+              <Text style={styles.soilSub}>Is this spot bright enough for {plant.nickname}?</Text>
+            </View>
+            <Text style={styles.soilArrow}>→</Text>
+          </TouchableOpacity>
+
           {/* AI Doctor CTA */}
           <TouchableOpacity
             style={styles.aiCard}
