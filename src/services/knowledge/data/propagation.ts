@@ -95,6 +95,21 @@ export const PROPAGATION_METHODS: Record<string, PropagationMethod> = {
     timeToRoot: '2–4 weeks',
     notes: 'Works for money plant, pothos, philodendron, coleus, mint.',
   },
+  'seed': {
+    id: 'seed',
+    name: 'From Seed',
+    steps: [
+      'Sow seeds in a tray or pot of moist, fine seed-starting mix',
+      'Cover lightly with soil (about twice the seed\'s thickness) and mist',
+      'Keep warm and consistently moist in bright, indirect light',
+      'Thin seedlings once they have 2–3 true leaves',
+      'Transplant the strongest seedlings to their final pot or bed',
+    ],
+    difficulty: 'easy',
+    bestSeason: 'monsoon',
+    timeToRoot: '1–3 weeks to germinate',
+    notes: 'Best for herbs and vegetables — coriander, fenugreek, chilli, tomato, spinach, marigold.',
+  },
 };
 
 export const ALL_PROPAGATION: PropagationMethod[] = Object.values(PROPAGATION_METHODS);

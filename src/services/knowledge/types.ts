@@ -28,7 +28,8 @@ export type PropagationMethodId =
   | 'division'
   | 'offsets'
   | 'air-layering'
-  | 'water-propagation';
+  | 'water-propagation'
+  | 'seed';
 
 export type DiseaseId =
   | 'root-rot'
