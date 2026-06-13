@@ -10,10 +10,14 @@ import { OnboardingScaffold, SelectCard } from '../components/OnboardingKit';
 const CARD_W = (Dimensions.get('window').width - 56 - 12) / 2;
 
 const GOALS = [
-  { id: 'identify',  label: 'Keep them alive', desc: 'Never miss a watering' },
-  { id: 'ai',        label: 'Help them thrive', desc: 'Smart, seasonal care' },
-  { id: 'diseases',  label: 'Diagnose issues',  desc: 'Spot trouble early' },
-  { id: 'reminders', label: 'Build a jungle',   desc: 'Grow my collection' },
+  { id: 'healthy',   icon: '🌿', label: 'Keep plants healthy',  desc: 'Thriving, not just surviving' },
+  { id: 'learn',     icon: '📖', label: 'Learn plant care',     desc: 'Build green-thumb know-how' },
+  { id: 'identify',  icon: '🔍', label: 'Identify plants',      desc: 'Name any unknown plant' },
+  { id: 'balcony',   icon: '🪴', label: 'Balcony garden',       desc: 'Make the most of small space' },
+  { id: 'herbs',     icon: '🌱', label: 'Grow herbs',           desc: 'Tulsi, mint, basil & more' },
+  { id: 'veggies',   icon: '🍅', label: 'Grow vegetables',      desc: 'Homegrown & fresh' },
+  { id: 'decorate',  icon: '🏡', label: 'Decorate with plants', desc: 'Style my home with green' },
+  { id: 'confident', icon: '💚', label: 'Confident parent',     desc: 'Grow real green-thumb confidence' },
 ];
 
 export const GoalScreen: React.FC = () => {
@@ -48,12 +52,14 @@ export const GoalScreen: React.FC = () => {
       onCta={handleFinish}
       secondaryLabel={isLoading ? undefined : 'Skip for now'}
       onSecondary={handleFinish}
+      scroll
     >
       <View style={styles.grid}>
         {GOALS.map((g, i) => (
           <SelectCard
             key={g.id}
             index={i}
+            icon={g.icon}
             label={g.label}
             descriptor={g.desc}
             active={selected.includes(g.id)}

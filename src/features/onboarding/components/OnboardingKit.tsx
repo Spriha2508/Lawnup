@@ -10,7 +10,7 @@
  */
 
 import React, { useEffect, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   FadeInDown,
@@ -18,13 +18,42 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withSpring,
+  withSequence,
   withDelay,
   interpolateColor,
 } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
+const { width: SCRW, height: SCRH } = Dimensions.get('window');
+
+// ─── Soft botanical backdrop — gentle pastel light pools (sage · blush · butter ·
+//     sky) so the personalisation screens feel warm and colourful, not flat. ───
+const ScaffoldBackdrop: React.FC = () => (
+  <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <Svg width={SCRW} height={SCRH}>
+      <Defs>
+        <RadialGradient id="ob-sage" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor="#9DBE8F" stopOpacity={0.32} /><Stop offset="1" stopColor="#9DBE8F" stopOpacity={0} />
+        </RadialGradient>
+        <RadialGradient id="ob-blush" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor="#F4B8CE" stopOpacity={0.30} /><Stop offset="1" stopColor="#F4B8CE" stopOpacity={0} />
+        </RadialGradient>
+        <RadialGradient id="ob-butter" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor="#F2D98C" stopOpacity={0.28} /><Stop offset="1" stopColor="#F2D98C" stopOpacity={0} />
+        </RadialGradient>
+        <RadialGradient id="ob-sky" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor="#A9CBE0" stopOpacity={0.24} /><Stop offset="1" stopColor="#A9CBE0" stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Circle cx={SCRW * 0.16} cy={SCRH * 0.10} r={SCRW * 0.52} fill="url(#ob-sage)" />
+      <Circle cx={SCRW * 0.95} cy={SCRH * 0.20} r={SCRW * 0.58} fill="url(#ob-blush)" />
+      <Circle cx={SCRW * 0.88} cy={SCRH * 0.82} r={SCRW * 0.58} fill="url(#ob-butter)" />
+      <Circle cx={SCRW * 0.08} cy={SCRH * 0.80} r={SCRW * 0.52} fill="url(#ob-sky)" />
+    </Svg>
+  </View>
+);
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -78,6 +107,8 @@ const Check: React.FC<{ progress: { value: number } }> = ({ progress: p }) => {
 interface SelectCardProps {
   label: string;
   descriptor?: string;
+  /** botanical emoji/glyph shown in the card's icon chip */
+  icon?: string;
   active: boolean;
   onPress: () => void;
   index?: number;
@@ -87,22 +118,39 @@ interface SelectCardProps {
   width?: number;
 }
 
-export const SelectCard: React.FC<SelectCardProps> = ({ label, descriptor, active, onPress, index = 0, tall, width }) => {
+export const SelectCard: React.FC<SelectCardProps> = ({ label, descriptor, icon, active, onPress, index = 0, tall, width }) => {
   const sel = useSharedValue(active ? 1 : 0);
   const press = useSharedValue(0);
+  const pop = useSharedValue(1);
+  const appear = useSharedValue(0);
+
+  // Explicit staggered entrance (always runs on mount, unlike layout `entering`).
+  useEffect(() => {
+    appear.value = withDelay(index * 70, withSpring(1, { damping: 15, stiffness: 130, mass: 0.6 }));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     sel.value = withTiming(active ? 1 : 0, { duration: M.duration.standard, easing: M.ease.smooth });
+    // a little spring "pop" the moment a card is chosen
+    if (active) pop.value = withSequence(withTiming(1.07, { duration: 130, easing: M.ease.smooth }), withSpring(1, M.spring.snappy));
   }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const appearStyle = useAnimatedStyle(() => ({
+    opacity: appear.value,
+    transform: [{ translateY: (1 - appear.value) * 26 }, { scale: 0.9 + appear.value * 0.1 }],
+  }));
 
   const cardStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(sel.value, [0, 1], [C.card, C.primary]),
     borderColor: interpolateColor(sel.value, [0, 1], [C.border, C.primary]),
-    transform: [{ scale: 1 - press.value * 0.03 }, { translateY: -sel.value * 3 }],
-    shadowOpacity: 0.06 + sel.value * 0.12,
+    transform: [{ scale: (1 - press.value * 0.03) * pop.value }, { translateY: -sel.value * 3 }],
+    shadowOpacity: 0.05 + sel.value * 0.13,
   }));
   const labelStyle = useAnimatedStyle(() => ({ color: interpolateColor(sel.value, [0, 1], [C.textPrimary, C.onPrimary]) }));
   const descStyle  = useAnimatedStyle(() => ({ color: interpolateColor(sel.value, [0, 1], [C.textMuted, 'rgba(255,255,255,0.82)']) }));
+  const iconBgStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(sel.value, [0, 1], [C.primaryWash, 'rgba(255,255,255,0.20)']),
+  }));
   const ringStyle  = useAnimatedStyle(() => ({
     borderColor: interpolateColor(sel.value, [0, 1], [C.border, 'rgba(255,255,255,0.9)']),
     backgroundColor: interpolateColor(sel.value, [0, 1], ['rgba(0,0,0,0)', 'rgba(255,255,255,0.18)']),
@@ -113,8 +161,7 @@ export const SelectCard: React.FC<SelectCardProps> = ({ label, descriptor, activ
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(140 + index * 70).duration(M.duration.expressive)}
-      style={[selectStyles.wrap, width ? { flex: undefined, width } : null]}
+      style={[selectStyles.wrap, width != null ? { width, flexGrow: 0, flexShrink: 0 } : { flex: 1 }, appearStyle]}
     >
       <AnimatedPressable
         onPress={onPress}
@@ -122,37 +169,52 @@ export const SelectCard: React.FC<SelectCardProps> = ({ label, descriptor, activ
         onPressOut={onOut}
         style={[selectStyles.card, tall && selectStyles.cardTall, cardStyle]}
       >
-        <Animated.View style={[selectStyles.ring, ringStyle]}>
-          <Check progress={sel} />
-        </Animated.View>
-        <View>
-          <Animated.Text style={[selectStyles.label, labelStyle]}>{label}</Animated.Text>
-          {descriptor ? <Animated.Text style={[selectStyles.desc, descStyle]}>{descriptor}</Animated.Text> : null}
+        {/* top row: botanical icon chip + selection check */}
+        <View style={selectStyles.topRow}>
+          {icon ? (
+            <Animated.View style={[selectStyles.iconChip, iconBgStyle]}>
+              <Text style={selectStyles.iconText}>{icon}</Text>
+            </Animated.View>
+          ) : <View style={selectStyles.iconChip} />}
+          <Animated.View style={[selectStyles.ring, ringStyle]}>
+            <Check progress={sel} />
+          </Animated.View>
         </View>
+
+        <Animated.Text style={[selectStyles.label, labelStyle]} numberOfLines={2}>{label}</Animated.Text>
+        {descriptor ? <Animated.Text style={[selectStyles.desc, descStyle]} numberOfLines={2}>{descriptor}</Animated.Text> : null}
       </AnimatedPressable>
     </Animated.View>
   );
 };
 
 const selectStyles = StyleSheet.create({
-  wrap: { flex: 1 },
+  wrap: {},
   card: {
-    minHeight: 96,
+    minHeight: 112,
     borderRadius: R.xl,
     borderWidth: 1,
     padding: S.lg,
-    justifyContent: 'space-between',
     shadowColor: '#1C3520',
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 16,
     elevation: 3,
   },
-  cardTall: { minHeight: 132 },
-  ring: {
-    width: 24, height: 24, borderRadius: 12, borderWidth: 1.5,
-    alignSelf: 'flex-end', alignItems: 'center', justifyContent: 'center',
+  cardTall: { minHeight: 124 },
+  topRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: S.md,
   },
-  label: { fontFamily: F.serifMedium, fontSize: 21, lineHeight: 25, marginBottom: 3 },
+  iconChip: {
+    width: 38, height: 38, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  iconText: { fontSize: 20, lineHeight: 24 },
+  ring: {
+    width: 22, height: 22, borderRadius: 11, borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  label: { fontFamily: F.serifMedium, fontSize: 18, lineHeight: 22, marginBottom: 2 },
   desc: { fontFamily: F.sans, fontSize: 12, lineHeight: 16 },
 });
 
@@ -182,12 +244,13 @@ export const OnboardingScaffold: React.FC<ScaffoldProps> = ({
 
   const Body = scroll ? ScrollView : View;
   const bodyProps = scroll
-    ? { showsVerticalScrollIndicator: false, contentContainerStyle: scaffold.scrollContent }
+    ? { showsVerticalScrollIndicator: false, style: scaffold.scrollFlex, contentContainerStyle: scaffold.scrollContent }
     : { style: scaffold.bodyFlex };
 
   return (
     <View style={scaffold.root}>
-      {/* Atmosphere is the persistent root world — this screen is transparent over it. */}
+      {/* Soft colourful light pools behind the persistent root atmosphere. */}
+      <ScaffoldBackdrop />
       <SafeAreaView style={scaffold.safe} edges={['top', 'bottom']}>
         <Body {...(bodyProps as any)}>
           <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={scaffold.header}>
@@ -224,12 +287,13 @@ const scaffold = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   safe: { flex: 1, paddingHorizontal: 28 },
   bodyFlex: { flex: 1, paddingTop: S.lg },
-  scrollContent: { paddingTop: S.lg, paddingBottom: S.lg },
+  scrollFlex: { flex: 1 },
+  scrollContent: { paddingTop: S.lg, paddingBottom: S['2xl'], flexGrow: 1 },
   header: { marginBottom: S['2xl'] },
   eyebrow: { ...T.eyebrow, color: C.textMuted, marginBottom: S.md },
   title: { fontFamily: F.serifMedium, fontSize: 40, lineHeight: 44, letterSpacing: -0.4, color: C.textPrimary },
   subtitle: { ...T.bodyMd, color: C.textSecondary, lineHeight: 21, marginTop: S.md },
-  children: { flex: 1 },
+  children: {},
   ctaWrap: { paddingTop: S.md, paddingBottom: S.sm, gap: S.md, alignItems: 'center' },
   cta: { width: '100%', borderRadius: R.pill, paddingVertical: 17, alignItems: 'center' },
   ctaText: { ...T.button, fontFamily: F.sansMedium, color: C.onInkBtn },

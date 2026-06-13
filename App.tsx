@@ -8,12 +8,12 @@ import { registerRootComponent } from 'expo';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import {
-  CormorantGaramond_400Regular,
-  CormorantGaramond_400Regular_Italic,
-  CormorantGaramond_600SemiBold,
-  CormorantGaramond_600SemiBold_Italic,
-  CormorantGaramond_700Bold,
-} from '@expo-google-fonts/cormorant-garamond';
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_400Regular_Italic,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_600SemiBold_Italic,
+  PlusJakartaSans_700Bold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -70,7 +70,7 @@ const handleNavState = (state: Parameters<typeof getActiveRouteName>[0]) => {
 const NavTree: React.FC = memo(() => (
   <NavigationContainer theme={NAV_THEME} onStateChange={handleNavState}>
     <NotificationProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <RootNavigator />
       {DevOverlay ? <DevOverlay /> : null}
     </NotificationProvider>
@@ -94,11 +94,11 @@ function App() {
       'Nunito-SemiBold':          require('./assets/fonts/Nunito-SemiBold.ttf'),
       'Nunito-Bold':              require('./assets/fonts/Nunito-Bold.ttf'),
       'Nunito-ExtraBold':         require('./assets/fonts/Nunito-ExtraBold.ttf'),
-      'Cormorant-Regular':        CormorantGaramond_400Regular,
-      'Cormorant-Italic':         CormorantGaramond_400Regular_Italic,
-      'Cormorant-SemiBold':       CormorantGaramond_600SemiBold,
-      'Cormorant-SemiBoldItalic': CormorantGaramond_600SemiBold_Italic,
-      'Cormorant-Bold':           CormorantGaramond_700Bold,
+      'Jakarta-Regular':        PlusJakartaSans_400Regular,
+      'Jakarta-Italic':         PlusJakartaSans_400Regular_Italic,
+      'Jakarta-SemiBold':       PlusJakartaSans_600SemiBold,
+      'Jakarta-SemiBoldItalic': PlusJakartaSans_600SemiBold_Italic,
+      'Jakarta-Bold':           PlusJakartaSans_700Bold,
     })
       .catch(() => {})
       .finally(async () => {
@@ -112,8 +112,8 @@ function App() {
 
   if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#040D08', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#4ADE80" size="large" />
+      <View style={{ flex: 1, backgroundColor: '#F7F4EC', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color="#5E7F61" size="large" />
       </View>
     );
   }

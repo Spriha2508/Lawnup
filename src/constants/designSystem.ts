@@ -14,7 +14,7 @@
  * ║  ORCHID, and green survives only as sparing jade + health semantics.        ║
  * ║                                                                            ║
  * ║  Fonts in play (loaded in App.tsx):                                         ║
- * ║    Serif / display  → Cormorant Garamond  (conservatory elegance)          ║
+ * ║    Serif / display  → Plus Jakarta Sans  (conservatory elegance)          ║
  * ║    Sans  / UI+body  → Nunito              (legible on small screens)        ║
  * ║                                                                            ║
  * ║  TWO themes ship (DESIGN_SYSTEM.md: "dark premium home, light content"):    ║
@@ -148,16 +148,16 @@ const radii = {
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * 4 · TYPOGRAPHY
- *   serif* → Cormorant (hero/display personality)
+ *   serif* → Plus Jakarta Sans (hero/display personality)
  *   everything else → Nunito (UI + body). Body never below 14sp.
  * ──────────────────────────────────────────────────────────────────────────── */
 
 const fonts = {
-  serif:          'Cormorant-Regular',
-  serifItalic:    'Cormorant-Italic',
-  serifMedium:    'Cormorant-SemiBold',
-  serifMediumItalic: 'Cormorant-SemiBoldItalic',
-  serifBold:      'Cormorant-Bold',
+  serif:          'Jakarta-Regular',
+  serifItalic:    'Jakarta-Italic',
+  serifMedium:    'Jakarta-SemiBold',
+  serifMediumItalic: 'Jakarta-SemiBoldItalic',
+  serifBold:      'Jakarta-Bold',
   sans:           'Nunito-Regular',
   sansMedium:     'Nunito-SemiBold',
   sansBold:       'Nunito-Bold',
@@ -456,12 +456,64 @@ const darkColor: Record<keyof typeof lightColor, string> = {
   scrim:       'rgba(0,0,0,0.65)',
 } as const;
 
+/* ── BOTANICAL DAYLIGHT map — THE ACTIVE THEME (2026-06-13 pivot). ───────────────
+ *    A premium botanical companion: warm ivory pages, cream + white cards, soft
+ *    SAGE brand, botanical greens, a warm clay secondary and a gentle blossom
+ *    accent. 70% light / 30% dark — dark is reserved for Splash / Camera /
+ *    Processing / opt-in hero sections only. Text is warm charcoal (readable).
+ *    Reverses the dark "Midnight Conservatory" direction. ── */
+const botanicalLight: Record<keyof typeof lightColor, string> = {
+  // Surfaces (warm ivory → cream → white)
+  canvas:      '#F7F4EC', // warm ivory page
+  surface:     '#F1EBDF', // recessed cream section
+  card:        '#FFFFFF', // white card
+  input:       '#F3EEE4', // soft cream field
+  tabBar:      '#FFFFFF', // white tab bar (hairline border)
+
+  // Brand — soft sage / botanical green
+  primary:     '#5E7F61', // soft sage (brand + CTAs)
+  primaryDark: '#46603F', // deep botanical (pressed / emphasis)
+  primarySoft: '#88A487', // light sage
+  primaryWash: 'rgba(94,127,97,0.12)', // sage tint background
+  onPrimary:   '#FFFFFF', // text on sage
+
+  // Secondary — warm clay (botanical warmth, sparing)
+  secondary:     '#C2683C', // clay / terracotta
+  secondarySoft: '#DDA17E',
+  marigold:      '#E0A93F', // warm gold — streaks / highlights
+
+  // Accent — soft blossom (flowering moments / special states)
+  accent:      '#CE7E9A', // gentle rose-blossom
+  accentWash:  'rgba(206,126,154,0.12)',
+
+  // Dark CTA (occasional forest-green button on light)
+  inkBtn:      '#2E3A2C', // deep forest
+  onInkBtn:    '#F7F4EC',
+
+  // Text — warm charcoal on light (readable, never cold)
+  textPrimary:   '#2A2E27', // warm charcoal
+  textSecondary: '#5A5F54', // muted olive-grey
+  textMuted:     '#8A8D80', // soft grey-green
+  textFaint:     'rgba(42,46,39,0.32)',
+
+  // Lines
+  border:      '#E7E0D2', // warm hairline
+  divider:     '#EDE7DA',
+
+  // Semantic / health (tuned to read on warm light)
+  healthyFg:   '#3E7D4F', healthyBg:   '#E3F0E5',
+  waterFg:     '#B5781E', waterBg:     '#F8ECCF',
+  criticalFg:  '#C0463C', criticalBg:  '#F7E3DF',
+
+  scrim:       'rgba(30,28,22,0.45)',
+} as const;
+
 /* ─────────────────────────────────────────────────────────────────────────────
  * 11 · EXPORT
  * ──────────────────────────────────────────────────────────────────────────── */
 
 export const theme = {
-  color: darkColor,    // ← ACTIVE: Midnight Conservatory dark theme (screens use theme.color.*)
+  color: botanicalLight,  // ← ACTIVE: Botanical Daylight (warm light; screens use theme.color.*)
   palette,             // raw scales when a specific shade is needed
   spacing,
   radii,
@@ -476,7 +528,8 @@ export const theme = {
   opacity,
   hitSlop,
   border,
-  // dark map travels with the theme so a future ThemeProvider can swap it in
+  // dark map travels with the theme so the 30% dark scenes (Camera / Processing /
+  // hero) can opt into it explicitly via `theme.dark.color` or `colorDark`.
   dark: { color: darkColor },
 } as const;
 
@@ -484,7 +537,7 @@ export const theme = {
 export {
   palette, spacing, radii, fonts, typography, shadows,
   gradients, glass, atmosphere, motion, z, opacity, hitSlop, border,
-  lightColor as colorLight, darkColor as colorDark,
+  botanicalLight as colorActive, lightColor as colorLight, darkColor as colorDark,
 };
 
 export type Theme = typeof theme;

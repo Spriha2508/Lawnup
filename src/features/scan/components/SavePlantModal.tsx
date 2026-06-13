@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     borderColor: C.border,
   },
   thumbInitial: {
-    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontFamily: 'Jakarta-SemiBoldItalic',
     fontSize: 24,
     color: C.textMuted,
   },

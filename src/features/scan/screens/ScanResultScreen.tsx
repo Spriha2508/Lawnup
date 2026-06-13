@@ -20,6 +20,7 @@ import { useAuthStore } from '../../auth/store/authStore';
 import { useOnboardingStore } from '../../onboarding/store/onboardingStore';
 import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
 import { UpgradePrompt } from '../../subscription/components/UpgradePrompt';
+import { LeafCelebration } from '@shared/components/motion/LeafCelebration';
 import Svg, { Path } from 'react-native-svg';
 import { PlantResultHero } from '../components/PlantResultHero';
 import { AICompanionSummary } from '../components/AICompanionSummary';
@@ -537,6 +538,9 @@ export const ScanResultScreen: React.FC = () => {
           }
         }}
       />
+
+      {/* Scan-success celebration — a leaf & blossom burst on a real identification */}
+      {conf >= 0.5 && <LeafCelebration originY={insets.top + 90} />}
     </View>
   );
 };
@@ -765,7 +769,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   sectionTitle: {
-    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontFamily: 'Jakarta-SemiBoldItalic',
     fontSize: 32,
     color: C.textPrimary,
     lineHeight: 36,
@@ -834,7 +838,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   aiDoctorTitle: {
-    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontFamily: 'Jakarta-SemiBoldItalic',
     fontSize: 24,
     color: C.textPrimary,
     lineHeight: 28,

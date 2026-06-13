@@ -9,15 +9,17 @@ type Nav = StackNavigationProp<OnboardingStackParamList, 'PlaceType'>;
 const CARD_W = (Dimensions.get('window').width - 56 - 12) / 2;
 
 const OPTIONS = [
-  { id: 'apartment', label: 'Apartment', desc: 'Indoor light & cozy corners' },
-  { id: 'garden',    label: 'Garden',    desc: 'Open soil, sun & space' },
-  { id: 'balcony',   label: 'Balcony',   desc: 'Pots, rails & city air' },
-  { id: 'mix',       label: 'Mix of all', desc: 'A little of everything' },
+  { id: 'apartment', icon: '🏢', label: 'Apartment', desc: 'Indoor light & cozy corners' },
+  { id: 'garden',    icon: '🌳', label: 'Garden',    desc: 'Open soil, sun & space' },
+  { id: 'balcony',   icon: '🪴', label: 'Balcony',   desc: 'Pots, rails & city air' },
+  { id: 'mix',       icon: '🏡', label: 'Mix of all', desc: 'A little of everything' },
 ];
 
 export const PlaceTypeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
+  const toggle = (id: string) =>
+    setSelected(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]));
 
   return (
     <OnboardingScaffold
@@ -26,18 +28,20 @@ export const PlaceTypeScreen: React.FC = () => {
       title={'Where will your\nplants live?'}
       subtitle="So we tailor light and watering advice to your space."
       ctaLabel="Continue"
-      ctaEnabled={!!selected}
+      ctaEnabled={selected.length > 0}
       onCta={() => navigation.navigate('SkillLevel')}
+      scroll
     >
       <View style={styles.grid}>
         {OPTIONS.map((o, i) => (
           <SelectCard
             key={o.id}
             index={i}
+            icon={o.icon}
             label={o.label}
             descriptor={o.desc}
-            active={selected === o.id}
-            onPress={() => setSelected(o.id)}
+            active={selected.includes(o.id)}
+            onPress={() => toggle(o.id)}
             width={CARD_W}
             tall
           />

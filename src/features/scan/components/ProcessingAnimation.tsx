@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, View, Text, StyleSheet } from 'react-native';
 import { theme } from '@constants/designSystem';
 
-const C = theme.color;
+// Dark scan scene accent (renders inside the dark ProcessingScreen).
+const C = theme.dark.color;
 
 // Calm, ambient processing orb — purely visual. Messaging and progress live in
 // ProcessingScreen so there is a single, uncluttered message area. Kept to a few

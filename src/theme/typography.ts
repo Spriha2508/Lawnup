@@ -1,5 +1,5 @@
 // LawnUp typography scale.
-// Headings: Nunito-ExtraBold (Cormorant Garamond can be substituted once installed)
+// Headings: Nunito-ExtraBold (Plus Jakarta Sans can be substituted once installed)
 // Body: Nunito-Regular / SemiBold / Bold
 
 export const typography = {

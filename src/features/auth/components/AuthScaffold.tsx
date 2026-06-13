@@ -9,15 +9,56 @@
 
 import React from 'react';
 import {
-  View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet,
+  View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Defs, RadialGradient, Stop, Circle, G } from 'react-native-svg';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
+const { width: AW, height: AH } = Dimensions.get('window');
+
+// ─── Warm botanical backdrop — soft light pools + foliage framing the corners,
+//     so the auth screens feel like the warmest, most welcoming moment. ────────
+const leafD = (L: number) => {
+  const w = L * 0.5;
+  return `M0 0 C ${L * 0.5} ${-w} ${L} ${-w * 0.4} ${L} 0 C ${L} ${w * 0.4} ${L * 0.5} ${w} 0 0 Z`;
+};
+const AUTH_GREENS = ['#6FA06B', '#5E7F61', '#88B07E', '#4E7C4A'];
+const AUTH_LEAVES = (() => {
+  const arr: { x: number; y: number; L: number; rot: number; c: string }[] = [];
+  for (let k = 0; k < 8; k++) arr.push({ x: AW * 0.04, y: AH * 1.0, L: 36 + (k % 3) * 12, rot: -88 + k * 13, c: AUTH_GREENS[k % 4] });
+  for (let k = 0; k < 8; k++) arr.push({ x: AW * 0.96, y: AH * 1.0, L: 36 + (k % 3) * 12, rot: -92 - k * 13, c: AUTH_GREENS[(k + 1) % 4] });
+  return arr;
+})();
+
+const AuthBackdrop: React.FC = () => (
+  <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <Svg width={AW} height={AH}>
+      <Defs>
+        <RadialGradient id="au-blush" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor="#F4B8CE" stopOpacity={0.28} /><Stop offset="1" stopColor="#F4B8CE" stopOpacity={0} />
+        </RadialGradient>
+        <RadialGradient id="au-sage" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor="#9DBE8F" stopOpacity={0.30} /><Stop offset="1" stopColor="#9DBE8F" stopOpacity={0} />
+        </RadialGradient>
+        <RadialGradient id="au-butter" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor="#F2D98C" stopOpacity={0.26} /><Stop offset="1" stopColor="#F2D98C" stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Circle cx={AW * 0.86} cy={AH * 0.06} r={AW * 0.62} fill="url(#au-blush)" />
+      <Circle cx={AW * 0.08} cy={AH * 0.30} r={AW * 0.56} fill="url(#au-sage)" />
+      <Circle cx={AW * 0.92} cy={AH * 0.72} r={AW * 0.52} fill="url(#au-butter)" />
+      {AUTH_LEAVES.map((lf, i) => (
+        <G key={i} transform={`translate(${lf.x}, ${lf.y}) rotate(${lf.rot})`} opacity={0.5}>
+          <Path d={leafD(lf.L)} fill={lf.c} />
+        </G>
+      ))}
+    </Svg>
+  </View>
+);
 
 const KAV: React.FC<{ children: React.ReactNode }> =
   Platform.OS === 'ios'
@@ -65,7 +106,8 @@ interface Props {
 
 export const AuthScaffold: React.FC<Props> = ({ onBack, eyebrow, headline, subtitle, children }) => (
   <View style={styles.root}>
-    {/* Atmosphere is the persistent root world — this screen is transparent over it. */}
+    {/* Warm botanical backdrop over the persistent root atmosphere. */}
+    <AuthBackdrop />
     <KAV>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView
@@ -87,8 +129,8 @@ export const AuthScaffold: React.FC<Props> = ({ onBack, eyebrow, headline, subti
             <Animated.Text entering={calm(2)} style={styles.subtitle}>{subtitle}</Animated.Text>
           </View>
 
-          {/* Form floats directly on the atmosphere — boxless, light */}
-          <Animated.View entering={FadeInDown.delay(320).duration(M.duration.expressive)} style={styles.formArea}>
+          {/* Form sits on a soft white card — warm & welcoming */}
+          <Animated.View entering={FadeInDown.delay(320).duration(M.duration.expressive)} style={styles.formCard}>
             {children}
           </Animated.View>
         </ScrollView>
@@ -104,7 +146,8 @@ const styles = StyleSheet.create({
 
   backBtn: {
     width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.4)', marginBottom: S.xl,
+    backgroundColor: C.card, borderWidth: 1, borderColor: C.border, marginBottom: S.xl,
+    ...theme.shadows.sm,
   },
 
   hero: { paddingHorizontal: S.xs, marginBottom: S['2xl'] },
@@ -112,6 +155,16 @@ const styles = StyleSheet.create({
   headline: { fontFamily: F.serif, fontSize: 52, lineHeight: 56, letterSpacing: -0.8, color: C.textPrimary, marginBottom: S.lg },
   subtitle: { ...T.bodyLg, fontFamily: F.sans, color: C.textSecondary, lineHeight: 25, maxWidth: '94%' },
 
-  // Boxless: the form floats on the living atmosphere — lighter, more premium.
-  formArea: { marginTop: S.xs },
+  // The form sits on a soft white card for a warm, welcoming feel.
+  formCard: {
+    marginTop: S.xs,
+    backgroundColor: C.card,
+    borderRadius: R.xl,
+    paddingHorizontal: S.xl,
+    paddingTop: S.xl,
+    paddingBottom: S.lg,
+    borderWidth: 1,
+    borderColor: C.border,
+    ...theme.shadows.card,
+  },
 });

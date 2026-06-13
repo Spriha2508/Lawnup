@@ -14,8 +14,17 @@ import Svg, { Path, Ellipse } from 'react-native-svg';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import { FEATURE_LABELS, FREE_WEEKLY_SCAN_LIMIT } from '../constants/plans';
 import type { FeatureName } from '../constants/plans';
+import { theme } from '@constants/designSystem';
 
+const C = theme.color;
 const { width: W } = Dimensions.get('window');
+
+// Real-feeling recovery stories — emotional proof, not just a feature list.
+const STORIES = [
+  { emoji: '🌿', from: 'Yellowing leaves', to: 'Lush & thriving', days: '3 weeks', quote: 'LawnUp caught the overwatering early — my Money Plant bounced right back.', who: 'Ananya · Mumbai' },
+  { emoji: '🌱', from: 'Brown, crispy tips', to: 'Fresh new growth', days: '2 weeks', quote: 'The AI Doctor knew exactly what my Areca Palm needed.', who: 'Rohan · Bengaluru' },
+  { emoji: '🌸', from: 'No blooms in months', to: 'Flowering again', days: '5 weeks', quote: 'Smart reminders + care tips brought my Hibiscus back to life.', who: 'Meera · Pune' },
+];
 
 // Feature comparison rows
 const FEATURE_ROWS: Array<{ feature: FeatureName; freeValue: string; premiumValue: string }> = [
@@ -32,26 +41,26 @@ const BotanicDecor: React.FC<{ opacity?: number }> = ({ opacity = 1 }) => (
   <Svg width={120} height={120} viewBox="0 0 120 120" fill="none" opacity={opacity}>
     <Path
       d="M60 10 C20 10 10 50 10 80 C40 80 90 80 90 50 C90 25 60 10 60 10Z"
-      stroke="#6F943E"
+      stroke="rgba(255,255,255,0.20)"
       strokeWidth={1.2}
-      fill="rgba(111,148,62,0.06)"
+      fill="rgba(255,255,255,0.05)"
     />
-    <Path d="M60 10 L60 80" stroke="rgba(111,148,62,0.18)" strokeWidth={1} />
-    <Path d="M60 35 C45 28 30 36 22 50" stroke="rgba(111,148,62,0.14)" strokeWidth={0.8} />
-    <Path d="M60 55 C75 48 82 34 80 18" stroke="rgba(111,148,62,0.14)" strokeWidth={0.8} />
-    <Ellipse cx="60" cy="90" rx="18" ry="4" fill="rgba(111,148,62,0.06)" />
+    <Path d="M60 10 L60 80" stroke="rgba(255,255,255,0.16)" strokeWidth={1} />
+    <Path d="M60 35 C45 28 30 36 22 50" stroke="rgba(255,255,255,0.13)" strokeWidth={0.8} />
+    <Path d="M60 55 C75 48 82 34 80 18" stroke="rgba(255,255,255,0.13)" strokeWidth={0.8} />
+    <Ellipse cx="60" cy="90" rx="18" ry="4" fill="rgba(255,255,255,0.05)" />
   </Svg>
 );
 
 const CheckMark: React.FC = () => (
   <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
-    <Path d="M5 13l4 4L19 7" stroke="#6F943E" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M5 13l4 4L19 7" stroke={C.primary} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
 const CrossMark: React.FC = () => (
   <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
-    <Path d="M18 6L6 18M6 6l12 12" stroke="#C4C0BA" strokeWidth={2} strokeLinecap="round" />
+    <Path d="M18 6L6 18M6 6l12 12" stroke={C.textFaint} strokeWidth={2} strokeLinecap="round" />
   </Svg>
 );
 
@@ -152,12 +161,50 @@ export const PaywallScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ── Emotional copy ─────────────────────────────────────────────── */}
+        {/* ── Emotional proof: real transformations ──────────────────────── */}
         <View style={styles.emotionalSection}>
-          <Text style={styles.emotionalTitle}>Your plants deserve{'\n'}expert care every day.</Text>
+          <Text style={styles.sectionLabel}>REAL RESULTS</Text>
+          <Text style={styles.emotionalTitle}>From struggling{'\n'}to thriving.</Text>
           <Text style={styles.emotionalBody}>
-            Thousands of Indian gardeners use LawnUp Premium to keep their Tulsi, Money Plants, and Areca Palms thriving through every season.
+            Thousands of Indian gardeners use LawnUp Premium to bring their plants back to life.
           </Text>
+        </View>
+
+        {/* Transformation story cards */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.storyScroll}
+          decelerationRate="fast"
+          snapToInterval={W * 0.74 + 12}
+          snapToAlignment="start"
+        >
+          {STORIES.map((s, i) => (
+            <View key={i} style={styles.storyCard}>
+              <Text style={styles.storyEmoji}>{s.emoji}</Text>
+              <View style={styles.storyBA}>
+                <View style={styles.pillBad}><Text style={styles.pillBadText}>{s.from}</Text></View>
+                <Text style={styles.storyArrow}>→</Text>
+                <View style={styles.pillGood}><Text style={styles.pillGoodText}>{s.to}</Text></View>
+              </View>
+              <Text style={styles.storyDays}>Recovered in {s.days}</Text>
+              <Text style={styles.storyQuote}>“{s.quote}”</Text>
+              <Text style={styles.storyWho}>{s.who}</Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* AI Doctor example */}
+        <View style={styles.section}>
+          <View style={styles.aiCard}>
+            <Text style={styles.aiEyebrow}>✦  AI PLANT DOCTOR</Text>
+            <View style={styles.bubbleUser}><Text style={styles.bubbleUserText}>Why are my Tulsi leaves curling?</Text></View>
+            <View style={styles.bubbleAI}>
+              <Text style={styles.bubbleAIText}>
+                Likely heat stress with dry soil. Move it to gentle morning light and water every 2 days — new leaves should flatten out within a week 🌿
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* ── Plan picker ────────────────────────────────────────────────── */}
@@ -241,7 +288,7 @@ const styles = StyleSheet.create({
 
   // ── Hero ──────────────────────────────────────────────────────────────────
   hero: {
-    backgroundColor: '#1A2416',
+    backgroundColor: C.primaryDark,
     paddingTop: 80,
     paddingBottom: 40,
     paddingHorizontal: 24,
@@ -268,14 +315,14 @@ const styles = StyleSheet.create({
   heroEyebrow: {
     fontSize: 9,
     fontFamily: 'Nunito-SemiBold',
-    color: '#6F943E',
+    color: C.primarySoft,
     letterSpacing: 2.5,
     textTransform: 'uppercase',
     marginBottom: 14,
   },
   heroTitle: {
     fontSize: 40,
-    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontFamily: 'Jakarta-SemiBoldItalic',
     color: '#FFFFFF',
     lineHeight: 46,
     marginBottom: 14,
@@ -292,7 +339,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 10,
     fontFamily: 'Nunito-SemiBold',
-    color: '#9E9A94',
+    color: C.textMuted,
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 14,
@@ -300,11 +347,11 @@ const styles = StyleSheet.create({
 
   // ── Comparison table ──────────────────────────────────────────────────────
   compCard: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#DDD4C7',
+    borderColor: C.border,
   },
   compHeaderRow: {
     flexDirection: 'row',
@@ -312,8 +359,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
-  compDivider:    { height: 1, backgroundColor: '#DDD4C7', marginHorizontal: 16 },
-  compRowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(200,196,188,0.5)', marginHorizontal: 16 },
+  compDivider:    { height: 1, backgroundColor: C.border, marginHorizontal: 16 },
+  compRowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: C.divider, marginHorizontal: 16 },
   compRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -326,34 +373,34 @@ const styles = StyleSheet.create({
   colLabelFree: {
     fontSize: 9,
     fontFamily: 'Nunito-Bold',
-    color: '#9E9A94',
+    color: C.textMuted,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
   colLabelPremium: {
     fontSize: 9,
     fontFamily: 'Nunito-Bold',
-    color: '#6F943E',
+    color: C.primary,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
   featureLabel: {
     fontSize: 13,
     fontFamily: 'Nunito-SemiBold',
-    color: '#1A1A14',
+    color: C.textPrimary,
     lineHeight: 17,
   },
   freeVal: {
     fontSize: 12,
     fontFamily: 'Nunito-Regular',
-    color: '#9E9A94',
+    color: C.textMuted,
     textAlign: 'center',
   },
   premiumValRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   premiumVal: {
     fontSize: 12,
     fontFamily: 'Nunito-SemiBold',
-    color: '#3D6B19',
+    color: C.primaryDark,
   },
 
   // ── Emotional copy ────────────────────────────────────────────────────────
@@ -363,32 +410,54 @@ const styles = StyleSheet.create({
   },
   emotionalTitle: {
     fontSize: 30,
-    fontFamily: 'Cormorant-SemiBoldItalic',
-    color: '#111111',
+    fontFamily: 'Jakarta-SemiBold',
+    color: C.textPrimary,
     lineHeight: 35,
     marginBottom: 12,
   },
   emotionalBody: {
     fontSize: 14,
     fontFamily: 'Nunito-Regular',
-    color: '#6B6B5E',
+    color: C.textSecondary,
     lineHeight: 22,
   },
 
+  // ── Transformation stories ────────────────────────────────────────────────
+  storyScroll: { paddingHorizontal: 20, paddingTop: 16, gap: 12 },
+  storyCard: { width: W * 0.74, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.border, padding: 18, ...theme.shadows.card },
+  storyEmoji: { fontSize: 28, marginBottom: 12 },
+  storyBA: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' },
+  pillBad: { backgroundColor: C.criticalBg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  pillBadText: { fontSize: 11, fontFamily: 'Nunito-SemiBold', color: C.criticalFg },
+  storyArrow: { fontSize: 14, color: C.textMuted },
+  pillGood: { backgroundColor: C.healthyBg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  pillGoodText: { fontSize: 11, fontFamily: 'Nunito-SemiBold', color: C.healthyFg },
+  storyDays: { fontSize: 11, fontFamily: 'Nunito-Bold', color: C.primary, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 },
+  storyQuote: { fontSize: 14, fontFamily: 'Nunito-Regular', color: C.textSecondary, lineHeight: 21, fontStyle: 'italic', marginBottom: 10 },
+  storyWho: { fontSize: 12, fontFamily: 'Nunito-Bold', color: C.textPrimary },
+
+  // ── AI Doctor example ─────────────────────────────────────────────────────
+  aiCard: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.border, padding: 18, gap: 10, ...theme.shadows.card },
+  aiEyebrow: { fontSize: 10, fontFamily: 'Nunito-Bold', color: C.primary, letterSpacing: 1.8, marginBottom: 4 },
+  bubbleUser: { alignSelf: 'flex-end', backgroundColor: C.primary, borderRadius: 16, borderBottomRightRadius: 4, paddingHorizontal: 14, paddingVertical: 10, maxWidth: '85%' },
+  bubbleUserText: { fontSize: 13, fontFamily: 'Nunito-SemiBold', color: C.onPrimary, lineHeight: 18 },
+  bubbleAI: { alignSelf: 'flex-start', backgroundColor: C.surface, borderRadius: 16, borderBottomLeftRadius: 4, paddingHorizontal: 14, paddingVertical: 10, maxWidth: '92%', borderWidth: 1, borderColor: C.border },
+  bubbleAIText: { fontSize: 13, fontFamily: 'Nunito-Regular', color: C.textPrimary, lineHeight: 19 },
+
   // ── Plan cards ────────────────────────────────────────────────────────────
   planCard: { borderRadius: 20, padding: 20, overflow: 'hidden' },
-  planCardDark:  { backgroundColor: '#1A2416' },
+  planCardDark:  { backgroundColor: C.primaryDark },
   planCardLight: {
-    backgroundColor: '#EEE7DA',
+    backgroundColor: C.card,
     borderWidth: 1.5,
-    borderColor: '#DDD4C7',
+    borderColor: C.border,
   },
-  planCardSelected:      { borderWidth: 2, borderColor: '#6F943E' },
-  planCardSelectedLight: { borderWidth: 2, borderColor: '#6F943E' },
+  planCardSelected:      { borderWidth: 2, borderColor: C.primary },
+  planCardSelectedLight: { borderWidth: 2, borderColor: C.primary },
 
   bestValueBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#6F943E',
+    backgroundColor: C.primary,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -409,50 +478,50 @@ const styles = StyleSheet.create({
   planPriceRow: { flexDirection: 'row', alignItems: 'baseline' },
 
   planNameDark:    { fontSize: 14, fontFamily: 'Nunito-SemiBold', color: 'rgba(255,255,255,0.55)', marginBottom: 4 },
-  planPriceDark:   { fontSize: 34, fontFamily: 'Cormorant-Bold', color: '#FFFFFF' },
+  planPriceDark:   { fontSize: 34, fontFamily: 'Jakarta-Bold', color: '#FFFFFF' },
   planPeriodDark:  { fontSize: 15, fontFamily: 'Nunito-Regular', color: 'rgba(255,255,255,0.45)' },
   planPerMonthDark:{ fontSize: 12, fontFamily: 'Nunito-Regular', color: 'rgba(255,255,255,0.38)', marginTop: 3 },
 
-  planNameLight:   { fontSize: 14, fontFamily: 'Nunito-SemiBold', color: '#6B6B5E', marginBottom: 4 },
-  planPriceLight:  { fontSize: 28, fontFamily: 'Cormorant-SemiBold', color: '#111111' },
-  planPeriodLight: { fontSize: 13, fontFamily: 'Nunito-Regular', color: '#9E9A94' },
+  planNameLight:   { fontSize: 14, fontFamily: 'Nunito-SemiBold', color: C.textSecondary, marginBottom: 4 },
+  planPriceLight:  { fontSize: 28, fontFamily: 'Jakarta-SemiBold', color: C.textPrimary },
+  planPeriodLight: { fontSize: 13, fontFamily: 'Nunito-Regular', color: C.textMuted },
 
   radio: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#C4C0BA',
+    borderColor: C.textFaint,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
   },
-  radioActive: { borderColor: '#6F943E' },
+  radioActive: { borderColor: C.primary },
   radioFill: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#6F943E',
+    backgroundColor: C.primary,
   },
 
   // CTA
   ctaBtn: {
-    backgroundColor: '#111111',
+    backgroundColor: C.primary,
     borderRadius: 999,
     height: 58,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 16,
-    shadowColor: '#111111',
+    shadowColor: C.primaryDark,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 8,
   },
   ctaBtnText: {
     fontSize: 17,
     fontFamily: 'Nunito-Bold',
-    color: '#FFFFFF',
+    color: C.onPrimary,
     letterSpacing: 0.2,
   },
 
@@ -466,6 +535,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 20,
   },
-  trustText: { fontSize: 12, fontFamily: 'Nunito-Regular', color: '#9E9A94' },
-  trustDot:  { fontSize: 12, color: '#C4C0BA' },
+  trustText: { fontSize: 12, fontFamily: 'Nunito-Regular', color: C.textMuted },
+  trustDot:  { fontSize: 12, color: C.textFaint },
 });

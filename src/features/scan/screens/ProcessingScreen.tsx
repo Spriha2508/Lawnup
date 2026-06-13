@@ -23,7 +23,8 @@ import { UpgradePrompt } from '../../subscription/components/UpgradePrompt';
 import type { ScanStackParamList } from '../../../navigation/types';
 import { theme } from '@constants/designSystem';
 
-const C = theme.color;
+// Processing is a dark scan scene (the 30% dark), not the light app theme.
+const C = theme.dark.color;
 const { width: SW, height: SH } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'Processing'>;
 type Route = RouteProp<ScanStackParamList, 'Processing'>;
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
   },
   retryTitle: {
     fontSize: 22,
-    fontFamily: 'Cormorant-SemiBold',
+    fontFamily: 'Jakarta-SemiBold',
     color: C.textPrimary,
     textAlign: 'center',
     lineHeight: 30,

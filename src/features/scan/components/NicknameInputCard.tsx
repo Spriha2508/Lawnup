@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   title: {
-    fontFamily: 'Cormorant-SemiBold',
+    fontFamily: 'Jakarta-SemiBold',
     fontSize: 26,
     color: C.textPrimary,
     lineHeight: 30,

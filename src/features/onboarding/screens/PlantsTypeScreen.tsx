@@ -9,15 +9,23 @@ type Nav = StackNavigationProp<OnboardingStackParamList, 'PlantsType'>;
 const CARD_W = (Dimensions.get('window').width - 56 - 12) / 2;
 
 const OPTIONS = [
-  { id: 'tropicals',  label: 'Tropicals',  desc: 'Monstera, pothos, ferns' },
-  { id: 'flowering',  label: 'Flowering',  desc: 'Mogra, genda, roses' },
-  { id: 'succulents', label: 'Succulents', desc: 'Aloe, jade, cacti' },
-  { id: 'herbs',      label: 'Herbs',      desc: 'Tulsi, mint, chillies' },
+  { id: 'indoor',     icon: '🪴', label: 'Indoor plants',   desc: 'Pothos, monstera, peace lily' },
+  { id: 'outdoor',    icon: '🌳', label: 'Outdoor plants',  desc: 'Hardy garden growers' },
+  { id: 'succulents', icon: '🌵', label: 'Succulents',      desc: 'Aloe, jade, cacti' },
+  { id: 'flowering',  icon: '🌸', label: 'Flowering',       desc: 'Mogra, roses, hibiscus' },
+  { id: 'herbs',      icon: '🌿', label: 'Herbs',           desc: 'Tulsi, mint, chillies' },
+  { id: 'veggies',    icon: '🍅', label: 'Vegetables',      desc: 'Tomato, spinach, beans' },
+  { id: 'rare',       icon: '✨', label: 'Rare plants',     desc: 'Collector specimens' },
+  { id: 'tropicals',  icon: '🌴', label: 'Tropical',        desc: 'Lush, humid-loving' },
+  { id: 'lowmaint',   icon: '🌱', label: 'Low maintenance', desc: 'Forgiving & easy' },
+  { id: 'airpure',    icon: '💨', label: 'Air purifying',   desc: 'Cleaner indoor air' },
 ];
 
 export const PlantsTypeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
+  const toggle = (id: string) =>
+    setSelected(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]));
 
   return (
     <OnboardingScaffold
@@ -26,18 +34,20 @@ export const PlantsTypeScreen: React.FC = () => {
       title={'What kind of plants\ndo you love?'}
       subtitle="We'll fill your guides with the greens you care about."
       ctaLabel="Continue"
-      ctaEnabled={!!selected}
+      ctaEnabled={selected.length > 0}
       onCta={() => navigation.navigate('Goal')}
+      scroll
     >
       <View style={styles.grid}>
         {OPTIONS.map((o, i) => (
           <SelectCard
             key={o.id}
             index={i}
+            icon={o.icon}
             label={o.label}
             descriptor={o.desc}
-            active={selected === o.id}
-            onPress={() => setSelected(o.id)}
+            active={selected.includes(o.id)}
+            onPress={() => toggle(o.id)}
             width={CARD_W}
             tall
           />

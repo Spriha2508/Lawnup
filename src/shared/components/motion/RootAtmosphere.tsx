@@ -116,9 +116,9 @@ export const RootAtmosphere: React.FC = () => {
     }));
   }, []);
 
-  // Deeper into the app, the world lifts: midnight void → moonlit glasshouse (never a cave).
+  // Deeper into the app, the warm ivory daylight gently brightens (never a cave).
   const baseStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(atmosphereDepth.value, [0, 1], [C.canvas, '#141A14']),
+    backgroundColor: interpolateColor(atmosphereDepth.value, [0, 1], [C.canvas, '#FCFAF4']),
   }));
 
   return (

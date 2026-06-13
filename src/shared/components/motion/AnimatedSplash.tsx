@@ -38,6 +38,9 @@ const POT_FILL = '#1C1612';     // dark glazed ceramic
 const WORD_COLOR = '#F3EFE9';
 const TAG_COLOR = '#8B8475';
 
+// Lush botanical foliage — sage & botanical greens (the plant comes alive).
+const GREENS = ['#4E7C4A', '#5E7F61', '#6FA06B', '#7FB069', '#3E6B3C', '#88B07E'];
+
 const TOTAL = 5200;
 const SKIP_AT = 2000;
 const WORD = 'LawnUp';
@@ -57,13 +60,141 @@ const TRUNK_D =
   `C ${cx - 10} ${baseY - 146} ${cx + 6} ${baseY - 166} ${cx - 6} ${baseY - 190}`;
 const TRUNK_LEN = 240;
 
-// Branches reaching from points along the trunk. len = approx path length for draw.
-const BRANCHES: { d: string; len: number }[] = [
-  { d: `M ${cx + 1} ${baseY - 92}  C ${cx - 30} ${baseY - 98}  ${cx - 58} ${baseY - 92}  ${cx - 86} ${baseY - 112}`, len: 110 },
-  { d: `M ${cx + 3} ${baseY - 120} C ${cx + 34} ${baseY - 122} ${cx + 64} ${baseY - 120} ${cx + 90} ${baseY - 140}`, len: 110 },
-  { d: `M ${cx - 3} ${baseY - 158} C ${cx - 28} ${baseY - 166} ${cx - 48} ${baseY - 172} ${cx - 66} ${baseY - 190}`, len: 90 },
-  { d: `M ${cx - 6} ${baseY - 190} C ${cx - 2} ${baseY - 202}  ${cx + 14} ${baseY - 206} ${cx + 30} ${baseY - 216}`, len: 60 },
+// Branches as numeric cubic Béziers, so we can both draw them AND scatter
+// foliage along their length. [p0, p1, p2, p3], len = approx path length.
+type Pt = [number, number];
+const BR: { p0: Pt; p1: Pt; p2: Pt; p3: Pt; len: number }[] = [
+  // main reaching branches
+  { p0: [cx + 1, baseY - 92],  p1: [cx - 30, baseY - 98],  p2: [cx - 58, baseY - 92],  p3: [cx - 86, baseY - 112], len: 110 },
+  { p0: [cx + 3, baseY - 120], p1: [cx + 34, baseY - 122], p2: [cx + 64, baseY - 120], p3: [cx + 90, baseY - 140], len: 110 },
+  { p0: [cx - 3, baseY - 158], p1: [cx - 28, baseY - 166], p2: [cx - 48, baseY - 172], p3: [cx - 66, baseY - 190], len: 90 },
+  { p0: [cx - 6, baseY - 190], p1: [cx - 2, baseY - 202],  p2: [cx + 14, baseY - 206], p3: [cx + 30, baseY - 216], len: 60 },
+  // extra stems for a fuller crown
+  { p0: [cx - 1, baseY - 72],  p1: [cx - 26, baseY - 76],  p2: [cx - 50, baseY - 70],  p3: [cx - 78, baseY - 86],  len: 96 },
+  { p0: [cx + 2, baseY - 104], p1: [cx + 26, baseY - 104], p2: [cx + 48, baseY - 110], p3: [cx + 74, baseY - 124], len: 100 },
+  { p0: [cx + 1, baseY - 150], p1: [cx + 24, baseY - 158], p2: [cx + 40, baseY - 172], p3: [cx + 58, baseY - 192], len: 94 },
+  { p0: [cx - 4, baseY - 176], p1: [cx - 26, baseY - 184], p2: [cx - 42, baseY - 196], p3: [cx - 58, baseY - 214], len: 88 },
+  // finer twigs woven through the crown for maximum fullness
+  { p0: [cx + 2, baseY - 84],  p1: [cx + 24, baseY - 82],  p2: [cx + 42, baseY - 74],  p3: [cx + 62, baseY - 82],  len: 84 },
+  { p0: [cx - 2, baseY - 132], p1: [cx + 18, baseY - 140], p2: [cx + 30, baseY - 150], p3: [cx + 42, baseY - 168], len: 72 },
+  { p0: [cx - 2, baseY - 110], p1: [cx - 22, baseY - 118], p2: [cx - 38, baseY - 128], p3: [cx - 54, baseY - 146], len: 78 },
+  { p0: [cx - 5, baseY - 168], p1: [cx + 8, baseY - 180],  p2: [cx + 18, baseY - 192], p3: [cx + 28, baseY - 210], len: 66 },
+  { p0: [cx + 3, baseY - 134], p1: [cx + 30, baseY - 132], p2: [cx + 54, baseY - 134], p3: [cx + 78, baseY - 152], len: 96 },
+  { p0: [cx - 4, baseY - 146], p1: [cx - 30, baseY - 150], p2: [cx - 52, baseY - 156], p3: [cx - 74, baseY - 172], len: 92 },
 ];
+const BRANCHES: { d: string; len: number }[] = BR.map((b) => ({
+  d: `M ${b.p0[0]} ${b.p0[1]} C ${b.p1[0]} ${b.p1[1]} ${b.p2[0]} ${b.p2[1]} ${b.p3[0]} ${b.p3[1]}`,
+  len: b.len,
+}));
+
+// Cubic point + tangent angle (deg) at parameter t.
+function cubicAt(b: typeof BR[number], t: number): { x: number; y: number; ang: number } {
+  const u = 1 - t;
+  const a = u * u * u, c2 = 3 * u * u * t, c3 = 3 * u * t * t, d = t * t * t;
+  const x = a * b.p0[0] + c2 * b.p1[0] + c3 * b.p2[0] + d * b.p3[0];
+  const y = a * b.p0[1] + c2 * b.p1[1] + c3 * b.p2[1] + d * b.p3[1];
+  // derivative
+  const da = 3 * u * u, db = 6 * u * t, dc = 3 * t * t;
+  const dx = da * (b.p1[0] - b.p0[0]) + db * (b.p2[0] - b.p1[0]) + dc * (b.p3[0] - b.p2[0]);
+  const dy = da * (b.p1[1] - b.p0[1]) + db * (b.p2[1] - b.p1[1]) + dc * (b.p3[1] - b.p2[1]);
+  return { x, y, ang: (Math.atan2(dy, dx) * 180) / Math.PI };
+}
+
+// A leaf shape with its rotation + position baked straight into the path coords,
+// so hundreds of leaves can be merged into ONE <Path> per colour (cheap to draw).
+const RAD = Math.PI / 180;
+function leafPathAt(x: number, y: number, L: number, rotDeg: number): string {
+  const w = L * 0.42;
+  const c = Math.cos(rotDeg * RAD), s = Math.sin(rotDeg * RAD);
+  const tx = (px: number, py: number) => `${(x + px * c - py * s).toFixed(1)} ${(y + px * s + py * c).toFixed(1)}`;
+  return `M ${tx(0, 0)} C ${tx(L * 0.5, -w)} ${tx(L, -w * 0.45)} ${tx(L, 0)} C ${tx(L, w * 0.45)} ${tx(L * 0.5, w)} ${tx(0, 0)} Z `;
+}
+// A filled circle as path data (two arcs) — lets many flowers merge per colour.
+function circlePath(x: number, y: number, r: number): string {
+  return `M ${(x - r).toFixed(1)} ${y.toFixed(1)} a ${r.toFixed(1)} ${r.toFixed(1)} 0 1 0 ${(2 * r).toFixed(1)} 0 a ${r.toFixed(1)} ${r.toFixed(1)} 0 1 0 ${(-2 * r).toFixed(1)} 0 `;
+}
+
+type Leaf = { x: number; y: number; len: number; rot: number; color: string };
+// Deterministic pseudo-random so the canopy is identical every launch.
+const rnd = (s: number) => { const v = Math.sin(s * 12.9898) * 43758.5453; return v - Math.floor(v); };
+
+// Build the foliage: leaves sprout along every branch (both sides), cluster at
+// the tips, and crown the treetop. Two waves so the canopy "illuminates" then thickens.
+function buildLeaves(): { base: Leaf[]; more: Leaf[] } {
+  const base: Leaf[] = [];
+  const more: Leaf[] = [];
+  let i = 0;
+  const push = (wave: Leaf[], x: number, y: number, len: number, rot: number) => {
+    wave.push({ x, y, len, rot, color: GREENS[i % GREENS.length] }); i++;
+  };
+  BR.forEach((b, bi) => {
+    const samples = [0.26, 0.38, 0.5, 0.62, 0.74, 0.86, 0.96, 1.0];
+    samples.forEach((t, si) => {
+      const { x, y, ang } = cubicAt(b, t);
+      const side = si % 2 === 0 ? 1 : -1;
+      const len = 9 + rnd(bi * 7 + si) * 7;
+      push(si % 2 === 0 ? base : more, x, y, len, ang + side * (52 + rnd(bi + si) * 26));
+      push(si % 2 === 0 ? more : base, x, y, len * 0.8, ang - side * (44 + rnd(si * 3 + bi) * 24));
+    });
+    const tip = b.p3;
+    for (let k = 0; k < 6; k++) {
+      const a = -90 + (k - 2.5) * 30 + rnd(bi * 9 + k) * 16;
+      push(k % 2 ? base : more, tip[0], tip[1], 10 + rnd(bi + k * 5) * 6, a);
+    }
+  });
+  const crownX = cx - 6, crownY = baseY - 198;
+  for (let k = 0; k < 26; k++) {
+    const a = -150 + k * 23 + rnd(k * 4) * 18;
+    const r = 6 + rnd(k) * 22;
+    push(k % 2 ? more : base, crownX + Math.cos((a * Math.PI) / 180) * r, crownY + Math.sin((a * Math.PI) / 180) * r * 0.7, 9 + rnd(k * 2) * 7, a);
+  }
+  return { base, more };
+}
+const { base: LEAVES_BASE, more: LEAVES_MORE } = buildLeaves();
+
+// ── Flowers: small pink & white blossoms, denser than the leaves ─────────────
+const PINKS = ['#F4A6C0', '#EFB1CB', '#F7C2D6', '#E98FB2'];
+const WHITES = ['#FFFFFF', '#FDF3F6', '#FBEFF3', '#FFF7FA'];
+
+type Flower = { x: number; y: number; r: number; petal: string; ctr: string };
+// Three waves so blossoms keep opening after the leaves fill in.
+function buildFlowers(): Flower[][] {
+  const waves: Flower[][] = [[], [], []];
+  let i = 0;
+  const push = (x: number, y: number, r: number) => {
+    const pink = i % 5 !== 0; // mostly pink, some white — both present
+    waves[i % 3].push({
+      x, y, r,
+      petal: pink ? PINKS[i % PINKS.length] : WHITES[i % WHITES.length],
+      ctr: pink ? '#F2D98C' : '#F6E7C8',
+    });
+    i++;
+  };
+  BR.forEach((b, bi) => {
+    const samples = [0.18, 0.27, 0.36, 0.45, 0.54, 0.63, 0.72, 0.81, 0.9, 1.0];
+    samples.forEach((t, si) => {
+      const { x, y } = cubicAt(b, t);
+      const sp = 10 + rnd(bi + si) * 9;
+      push(x + (rnd(bi * 3 + si) - 0.5) * sp, y + (rnd(si * 5 + bi) - 0.5) * sp, 2.6 + rnd(bi + si * 2) * 2.1);
+      push(x + (rnd(bi + si * 7) - 0.5) * sp, y + (rnd(si + bi * 2) - 0.5) * sp, 2.3 + rnd(si + bi) * 1.9);
+      push(x + (rnd(bi * 5 + si * 2) - 0.5) * sp * 1.3, y + (rnd(si * 9 + bi) - 0.5) * sp * 1.3, 2.2 + rnd(bi * 2 + si) * 1.7);
+    });
+    const tip = b.p3;
+    for (let k = 0; k < 14; k++) {
+      const a = (k / 14) * Math.PI * 2;
+      const rad = 4 + rnd(bi * 4 + k) * 15;
+      push(tip[0] + Math.cos(a) * rad, tip[1] + Math.sin(a) * rad * 0.85, 2.6 + rnd(k + bi) * 2.2);
+    }
+  });
+  const cxr = cx - 6, cyr = baseY - 198;
+  for (let k = 0; k < 54; k++) {
+    const a = (k / 18) * Math.PI * 2;
+    const rad = 8 + rnd(k * 3) * 40;
+    push(cxr + Math.cos(a) * rad, cyr + Math.sin(a) * rad * 0.7, 2.2 + rnd(k) * 2.4);
+  }
+  return waves;
+}
+const FLOWERS = buildFlowers();
 
 // Blossom pads at the branch tips + a mid-trunk pad.
 const PADS = [
@@ -102,6 +233,50 @@ const FALL_FROM = baseY - 210;     // petals begin around the crown
 const FALL_TO = POT_BOT + 40;      // and settle just past the pot
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+// ── A whole wave of foliage, merged to one <Path> per colour (perf) ──────────
+const LeafLayer: React.FC<{ leaves: Leaf[]; gate: SharedValue<number> }> = ({ leaves, gate }) => {
+  const style = useAnimatedStyle(() => ({
+    opacity: gate.value,
+    transform: [{ scale: 0.84 + gate.value * 0.16 }, { translateY: (1 - gate.value) * 10 }],
+  }));
+  const byColor = useMemo(() => {
+    const m: Record<string, string> = {};
+    leaves.forEach((lf) => { m[lf.color] = (m[lf.color] ?? '') + leafPathAt(lf.x, lf.y, lf.len, lf.rot); });
+    return m;
+  }, [leaves]);
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
+      <Svg style={StyleSheet.absoluteFill} width={W} height={H}>
+        {Object.entries(byColor).map(([color, d]) => <Path key={color} d={d} fill={color} />)}
+      </Svg>
+    </Animated.View>
+  );
+};
+
+// ── A whole wave of flowers, merged to one <Path> per colour (perf) ──────────
+const FlowerLayer: React.FC<{ flowers: Flower[]; gate: SharedValue<number> }> = ({ flowers, gate }) => {
+  const style = useAnimatedStyle(() => ({
+    opacity: gate.value,
+    transform: [{ scale: 0.7 + gate.value * 0.3 }],
+  }));
+  const { petals, centers } = useMemo(() => {
+    const p: Record<string, string> = {}, c: Record<string, string> = {};
+    flowers.forEach((f) => {
+      p[f.petal] = (p[f.petal] ?? '') + circlePath(f.x, f.y, f.r);
+      c[f.ctr] = (c[f.ctr] ?? '') + circlePath(f.x, f.y, f.r * 0.42);
+    });
+    return { petals: p, centers: c };
+  }, [flowers]);
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
+      <Svg style={StyleSheet.absoluteFill} width={W} height={H}>
+        {Object.entries(petals).map(([col, d]) => <Path key={`p${col}`} d={d} fill={col} />)}
+        {Object.entries(centers).map(([col, d]) => <Path key={`c${col}`} d={d} fill={col} />)}
+      </Svg>
+    </Animated.View>
+  );
+};
 
 // ── A cherry blossom that springs open at a branch tip ───────────────────────
 const Blossom: React.FC<{ b: Bloom; gate: SharedValue<number> }> = ({ b, gate }) => {
@@ -175,6 +350,11 @@ export const AnimatedSplash: React.FC<Props> = ({ onDone }) => {
   const pot = useSharedValue(0);        // pot settle
   const trunkDraw = useSharedValue(0);  // trunk stroke reveal
   const branchDraw = useSharedValue(0); // branches stroke reveal
+  const leafGate0 = useSharedValue(0);  // foliage wave 1 (illuminate)
+  const leafGate1 = useSharedValue(0);  // foliage wave 2 (more foliage)
+  const flowerGate0 = useSharedValue(0); // flowers wave 1
+  const flowerGate1 = useSharedValue(0); // flowers wave 2
+  const flowerGate2 = useSharedValue(0); // flowers wave 3
   const bloomGate = useSharedValue(0);  // blossoms visible
   const petalGate = useSharedValue(0);  // petals visible
   const word = useSharedValue(0);
@@ -191,6 +371,15 @@ export const AnimatedSplash: React.FC<Props> = ({ onDone }) => {
     // the bonsai draws itself: trunk first, then branches reach out
     trunkDraw.value = withDelay(300, withTiming(1, { duration: 1100, easing: M.ease.smooth }));
     branchDraw.value = withDelay(1200, withTiming(1, { duration: 1000, easing: M.ease.smooth }));
+
+    // foliage illuminates as the branches finish, then thickens
+    leafGate0.value = withDelay(1650, withTiming(1, { duration: 700, easing: M.ease.smooth }));
+    leafGate1.value = withDelay(2150, withTiming(1, { duration: 800, easing: M.ease.smooth }));
+
+    // then the plant bursts into bloom — pink & white flowers open in waves
+    flowerGate0.value = withDelay(2150, withSpring(1, M.spring.gentle));
+    flowerGate1.value = withDelay(2500, withSpring(1, M.spring.gentle));
+    flowerGate2.value = withDelay(2850, withSpring(1, M.spring.gentle));
 
     // canopy blooms, then petals begin to fall
     bloomGate.value = withDelay(2050, withTiming(1, { duration: 300 }));
@@ -259,6 +448,15 @@ export const AnimatedSplash: React.FC<Props> = ({ onDone }) => {
             ))}
           </Svg>
         </View>
+
+        {/* lush foliage — leaves illuminate, then thicken (two waves) */}
+        <LeafLayer leaves={LEAVES_BASE} gate={leafGate0} />
+        <LeafLayer leaves={LEAVES_MORE} gate={leafGate1} />
+
+        {/* the bloom — pink & white flowers, denser than the leaves (three waves) */}
+        <FlowerLayer flowers={FLOWERS[0]} gate={flowerGate0} />
+        <FlowerLayer flowers={FLOWERS[1]} gate={flowerGate1} />
+        <FlowerLayer flowers={FLOWERS[2]} gate={flowerGate2} />
 
         {/* cherry blossoms at the tips */}
         {BLOOMS.map((b, i) => <Blossom key={i} b={b} gate={bloomGate} />)}

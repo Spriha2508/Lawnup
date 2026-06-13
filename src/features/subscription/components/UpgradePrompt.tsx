@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontFamily: 'Jakarta-SemiBoldItalic',
     color: '#111111',
     textAlign: 'center',
     lineHeight: 29,

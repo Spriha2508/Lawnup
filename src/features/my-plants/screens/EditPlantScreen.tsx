@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     color: C.textPrimary,
   },
   headerTitle: {
-    fontFamily: 'Cormorant-SemiBold',
+    fontFamily: 'Jakarta-SemiBold',
     fontSize: 20,
     color: C.textPrimary,
   },

@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   commonName: {
-    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontFamily: 'Jakarta-SemiBoldItalic',
     fontSize: 46,
     color: '#FFFFFF',
     lineHeight: 50,

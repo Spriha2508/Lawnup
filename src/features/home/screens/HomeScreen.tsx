@@ -60,15 +60,23 @@ const EMERGENCIES = [
   { id: 'over',   label: 'Overwatering',   d: 'M12 3C12 3 5 11 5 15.5C5 19.09 8.13 22 12 22C15.87 22 19 19.09 19 15.5C19 11 12 3 12 3Z' },
 ];
 
+// Core value props surfaced on Home — what LawnUp does for you, at a glance.
+const VALUE_PROPS = [
+  { icon: '📷', label: 'Scan any plant' },
+  { icon: '🌿', label: 'Identify species' },
+  { icon: '🩺', label: 'Diagnose issues' },
+  { icon: '🧾', label: 'Get care plans' },
+];
+
 const AnimatedScrollView = Animated.ScrollView;
 
 // ── Time-aware sky — the homepage wakes up every time it opens ──────────────
 const skyColorForHour = (): string => {
   const h = new Date().getHours();
-  if (h >= 6 && h < 9) return 'rgba(212,168,83,0.18)';   // dawn gold
-  if (h >= 9 && h < 17) return 'rgba(74,222,128,0.14)';  // forest day
-  if (h >= 17 && h < 19) return 'rgba(212,168,83,0.12)'; // amber dusk
-  return 'rgba(30,20,80,0.20)';                          // indigo night
+  if (h >= 6 && h < 9) return 'rgba(224,169,63,0.16)';   // dawn gold
+  if (h >= 9 && h < 17) return 'rgba(94,127,97,0.14)';   // sage day
+  if (h >= 17 && h < 19) return 'rgba(206,126,154,0.14)';// blossom dusk
+  return 'rgba(70,96,73,0.14)';                          // deep-garden evening
 };
 
 const TimeSky: React.FC = () => {
@@ -151,7 +159,7 @@ export const HomeScreen: React.FC = () => {
   }));
   const compactBarStyle = useAnimatedStyle(() => ({
     borderBottomWidth: interpolate(scrollY.value, [60, 100], [0, StyleSheet.hairlineWidth], Extrapolation.CLAMP),
-    backgroundColor: `rgba(245,241,232,${interpolate(scrollY.value, [40, 90], [0, 0.92], Extrapolation.CLAMP)})`,
+    backgroundColor: `rgba(247,244,236,${interpolate(scrollY.value, [40, 90], [0, 0.94], Extrapolation.CLAMP)})`,
   }));
 
   return (
@@ -227,7 +235,7 @@ export const HomeScreen: React.FC = () => {
         </Animated.View>
 
         {/* Hero scan CTA */}
-        <Animated.View entering={FadeInDown.delay(160).duration(M.duration.expressive)} style={{ marginBottom: SECTION_GAP }}>
+        <Animated.View entering={FadeInDown.delay(160).duration(M.duration.expressive)} style={{ marginBottom: S.lg }}>
           <PressableScale style={styles.scanCard} onPress={() => navigation.navigate('Scan')} to={0.97}>
             <Animated.View style={[styles.scanBlob, blobStyle]} />
             <Text style={styles.scanLabel}>AI PLANT SCAN</Text>
@@ -236,6 +244,18 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.scanBtn}><Text style={styles.scanBtnText}>Open Camera  →</Text></View>
           </PressableScale>
         </Animated.View>
+
+        {/* Core value props — what LawnUp does, made prominent */}
+        <View style={styles.valueGrid}>
+          {VALUE_PROPS.map((v, i) => (
+            <Animated.View key={v.label} entering={FadeInDown.delay(190 + i * 45).duration(M.duration.standard)} style={{ width: (W - H_PAD * 2 - 10) / 2 }}>
+              <PressableScale style={styles.valueItem} onPress={() => navigation.navigate('Scan')} to={0.97}>
+                <View style={styles.valueIcon}><Text style={styles.valueEmoji}>{v.icon}</Text></View>
+                <Text style={styles.valueLabel}>{v.label}</Text>
+              </PressableScale>
+            </Animated.View>
+          ))}
+        </View>
 
         {/* Plant Health Snapshot */}
         {plants.length > 0 && (
@@ -399,13 +419,13 @@ const styles = StyleSheet.create({
   firstName: { fontFamily: F.serifMediumItalic, fontSize: 48, lineHeight: 52, letterSpacing: -0.6, color: C.textPrimary },
   skyWeather: { ...T.caption, color: C.textMuted, marginTop: S.sm, letterSpacing: 0.3 },
 
-  premiumBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1A2416', borderRadius: R.lg, paddingHorizontal: S.lg, paddingVertical: S.md, marginBottom: S.lg, overflow: 'hidden' },
-  premiumEyebrow: { ...T.statLabel, color: C.primary, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 3 },
-  premiumText: { ...T.label, fontFamily: F.sansMedium, fontSize: 13, color: 'rgba(255,255,255,0.85)' },
+  premiumBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.waterBg, borderRadius: R.lg, paddingHorizontal: S.lg, paddingVertical: S.md, marginBottom: S.lg, overflow: 'hidden', borderWidth: 1, borderColor: C.waterFg },
+  premiumEyebrow: { ...T.statLabel, color: C.waterFg, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 3 },
+  premiumText: { ...T.label, fontFamily: F.sansMedium, fontSize: 13, color: C.textSecondary },
   premiumRight: { flexDirection: 'row', alignItems: 'center', gap: S.md },
-  premiumArrow: { fontSize: 16, color: C.primarySoft },
+  premiumArrow: { fontSize: 16, color: C.waterFg },
   premiumClose: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-  premiumCloseText: { fontSize: 12, color: 'rgba(255,255,255,0.35)' },
+  premiumCloseText: { fontSize: 12, color: C.textMuted },
 
   cardEyebrow: { ...T.statLabel, color: C.textMuted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: S.sm },
 
@@ -426,14 +446,21 @@ const styles = StyleSheet.create({
   narrativeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.primary, marginTop: 6 },
   narrativeText: { ...T.bodyMd, fontFamily: F.sansMedium, color: C.textPrimary, lineHeight: 21, flex: 1 },
 
-  // Scan CTA
-  scanCard: { backgroundColor: '#1A2416', borderRadius: R.sheet, paddingHorizontal: 26, paddingTop: 28, paddingBottom: 28, overflow: 'hidden', ...theme.shadows.lg },
-  scanBlob: { position: 'absolute', width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(111,148,62,0.08)', top: -100, right: -80 },
-  scanLabel: { ...T.statLabel, color: C.primary, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: S.md },
-  scanTitle: { fontFamily: F.serifMediumItalic, fontSize: 40, lineHeight: 44, letterSpacing: -0.5, color: '#FFFFFF', marginBottom: S.md },
-  scanBody: { ...T.bodyMd, color: 'rgba(255,255,255,0.42)', lineHeight: 21, marginBottom: 28 },
-  scanBtn: { backgroundColor: C.primary, borderRadius: R.pill, paddingVertical: 15, paddingHorizontal: 26, alignSelf: 'flex-start' },
-  scanBtnText: { ...T.button, fontFamily: F.sansBold, color: '#FFFFFF' },
+  // Scan CTA — deep botanical green hero (the one bold block on a light home)
+  scanCard: { backgroundColor: C.primaryDark, borderRadius: R.sheet, paddingHorizontal: 26, paddingTop: 28, paddingBottom: 28, overflow: 'hidden', ...theme.shadows.lg },
+  scanBlob: { position: 'absolute', width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(255,255,255,0.07)', top: -100, right: -80 },
+  scanLabel: { ...T.statLabel, color: 'rgba(255,255,255,0.7)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: S.md },
+  scanTitle: { fontFamily: F.serifMedium, fontSize: 34, lineHeight: 40, letterSpacing: -0.5, color: '#FFFFFF', marginBottom: S.md },
+  scanBody: { ...T.bodyMd, color: 'rgba(255,255,255,0.78)', lineHeight: 21, marginBottom: 28 },
+  scanBtn: { backgroundColor: C.card, borderRadius: R.pill, paddingVertical: 15, paddingHorizontal: 26, alignSelf: 'flex-start' },
+  scanBtnText: { ...T.button, fontFamily: F.sansBold, color: C.primaryDark },
+
+  // Value props grid
+  valueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: SECTION_GAP },
+  valueItem: { flexDirection: 'row', alignItems: 'center', gap: S.md, backgroundColor: C.card, borderRadius: R.lg, paddingVertical: S.md, paddingHorizontal: S.md, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
+  valueIcon: { width: 30, height: 30, borderRadius: 9, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center' },
+  valueEmoji: { fontSize: 15 },
+  valueLabel: { ...T.bodyMd, fontFamily: F.sansMedium, fontSize: 13, color: C.textPrimary, flex: 1 },
 
   // Sections
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: S.lg },
@@ -450,10 +477,10 @@ const styles = StyleSheet.create({
   stripWrap: { marginLeft: -H_PAD, marginRight: -H_PAD },
   plantScroll: { paddingHorizontal: H_PAD, gap: 12 },
   plantCard: { width: PLANT_CARD_W, backgroundColor: C.card, borderRadius: R.xl, overflow: 'hidden', ...theme.shadows.card },
-  plantImageWrap: { width: '100%', height: PLANT_CARD_W * 0.9, backgroundColor: '#DDD4C7', position: 'relative' },
-  plantPlaceholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#E8E0D0' },
-  plantPlaceholderInitial: { fontFamily: F.serifMediumItalic, fontSize: 32, color: 'rgba(0,0,0,0.22)' },
-  ringWrap: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 22, padding: 2 },
+  plantImageWrap: { width: '100%', height: PLANT_CARD_W * 0.9, backgroundColor: C.surface, position: 'relative' },
+  plantPlaceholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: C.primaryWash },
+  plantPlaceholderInitial: { fontFamily: F.serifMedium, fontSize: 32, color: C.primary },
+  ringWrap: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255,255,255,0.88)', borderRadius: 22, padding: 2 },
   ringScore: { fontFamily: F.sansHeavy, fontSize: 12 },
   plantInfo: { paddingHorizontal: 11, paddingTop: 9, paddingBottom: 11 },
   plantName: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary, marginBottom: 4 },
@@ -469,7 +496,7 @@ const styles = StyleSheet.create({
   careCheck: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
 
   // Seasonal
-  seasonCard: { backgroundColor: C.primaryWash, borderRadius: R.xl, padding: S.xl, borderWidth: 1, borderColor: 'rgba(111,148,62,0.18)' },
+  seasonCard: { backgroundColor: C.primaryWash, borderRadius: R.xl, padding: S.xl, borderWidth: 1, borderColor: C.primarySoft },
   seasonTitle: { fontFamily: F.serifMedium, fontSize: 24, lineHeight: 28, color: C.textPrimary, marginBottom: S.sm },
   seasonBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 21 },
 

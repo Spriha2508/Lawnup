@@ -9,15 +9,17 @@ type Nav = StackNavigationProp<OnboardingStackParamList, 'SkillLevel'>;
 const CARD_W = (Dimensions.get('window').width - 56 - 12) / 2;
 
 const OPTIONS = [
-  { id: 'beginner',     label: 'Beginner',      desc: 'Just getting my hands dirty' },
-  { id: 'intermediate', label: 'Intermediate',  desc: "I've kept a few alive" },
-  { id: 'expert',       label: 'Expert',        desc: 'My home is a jungle' },
-  { id: 'reluctant',    label: 'Reluctant',     desc: 'Plants happened to me' },
+  { id: 'beginner',     icon: '🌱', label: 'Beginner',      desc: 'Just getting my hands dirty' },
+  { id: 'intermediate', icon: '🌿', label: 'Intermediate',  desc: "I've kept a few alive" },
+  { id: 'expert',       icon: '🌳', label: 'Expert',        desc: 'My home is a jungle' },
+  { id: 'reluctant',    icon: '😅', label: 'Reluctant',     desc: 'Plants happened to me' },
 ];
 
 export const SkillLevelScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
+  const toggle = (id: string) =>
+    setSelected(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]));
 
   return (
     <OnboardingScaffold
@@ -26,18 +28,20 @@ export const SkillLevelScreen: React.FC = () => {
       title={'How would you\ndescribe yourself?'}
       subtitle="No judgement — we'll meet you exactly where you are."
       ctaLabel="Continue"
-      ctaEnabled={!!selected}
+      ctaEnabled={selected.length > 0}
       onCta={() => navigation.navigate('PlantsType')}
+      scroll
     >
       <View style={styles.grid}>
         {OPTIONS.map((o, i) => (
           <SelectCard
             key={o.id}
             index={i}
+            icon={o.icon}
             label={o.label}
             descriptor={o.desc}
-            active={selected === o.id}
-            onPress={() => setSelected(o.id)}
+            active={selected.includes(o.id)}
+            onPress={() => toggle(o.id)}
             width={CARD_W}
             tall
           />

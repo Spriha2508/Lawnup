@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroInitial: {
-    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontFamily: 'Jakarta-SemiBoldItalic',
     fontSize: 96,
     color: 'rgba(255,255,255,0.12)',
   },
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
   healthDot: { width: 6, height: 6, borderRadius: 3 },
   healthPillText: { fontFamily: 'Nunito-SemiBold', fontSize: 12 },
   heroNickname: {
-    fontFamily: 'Cormorant-SemiBoldItalic',
+    fontFamily: 'Jakarta-SemiBoldItalic',
     fontSize: 42, color: '#FFFFFF', lineHeight: 46,
   },
   heroSpecies: {
@@ -676,7 +676,7 @@ const styles = StyleSheet.create({
     color: C.textMuted, letterSpacing: 2, textTransform: 'uppercase',
   },
   sectionTitle: {
-    fontFamily: 'Cormorant-SemiBold', fontSize: 24, color: C.textPrimary, lineHeight: 28,
+    fontFamily: 'Jakarta-SemiBold', fontSize: 24, color: C.textPrimary, lineHeight: 28,
   },
 
   // Today's Conditions
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
   },
   conditionsTemp: {
-    fontFamily: 'Cormorant-SemiBold', fontSize: 32, color: C.textPrimary,
+    fontFamily: 'Jakarta-SemiBold', fontSize: 32, color: C.textPrimary,
   },
   conditionsDesc: {
     fontFamily: 'Nunito-Regular', fontSize: 13, color: C.textSecondary,
@@ -799,7 +799,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6,
   },
   aiCardTitle: {
-    fontFamily: 'Cormorant-SemiBold', fontSize: 20, color: C.textPrimary, lineHeight: 24,
+    fontFamily: 'Jakarta-SemiBold', fontSize: 20, color: C.textPrimary, lineHeight: 24,
   },
   aiCardArrow: {
     color: C.textMuted, fontSize: 20, fontFamily: 'Nunito-Regular',

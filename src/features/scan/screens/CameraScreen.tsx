@@ -9,6 +9,7 @@ import {
   StatusBar,
   Platform,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,7 +28,9 @@ import { logger } from '../../../shared/utils/logger';
 import { theme } from '@constants/designSystem';
 import type { ScanStackParamList } from '../../../navigation/types';
 
-const { color: C, spacing: S, typography: T, radii: R, fonts: F } = theme;
+// Camera is a dark scan scene (the 30% dark), not the light app theme.
+const { spacing: S, typography: T, radii: R, fonts: F } = theme;
+const C = theme.dark.color;
 const { width: SW, height: SH } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'Camera'>;
 type FlashMode = 'off' | 'on' | 'auto';
@@ -51,6 +54,16 @@ export const CameraScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { isGranted, isDenied, request } = useCameraPermission();
+
+  // Allow-camera CTA: request the OS permission. If the system can no longer
+  // show the prompt (user previously chose "Don't allow"), the request resolves
+  // without a dialog — so deep-link to app settings instead of doing nothing.
+  const handleAllowCamera = useCallback(async () => {
+    const { granted, canAskAgain } = await request();
+    if (!granted && !canAskAgain) {
+      Linking.openSettings().catch(() => {});
+    }
+  }, [request]);
   const { setCapturedImageUri } = useScanStore();
   const isUsageHydrated = useSubscriptionStore(s => s.isUsageHydrated);
   // Weekly gate (free: 3/week; premium bypasses). Functions are stable store refs;
@@ -314,7 +327,7 @@ export const CameraScreen: React.FC = () => {
           <Text style={styles.permSubtitle}>
             To identify plants and diagnose disease, LawnUp needs access to your camera.
           </Text>
-          <TouchableOpacity style={styles.permBtn} onPress={request} activeOpacity={0.88}>
+          <TouchableOpacity style={styles.permBtn} onPress={handleAllowCamera} activeOpacity={0.88}>
             <Text style={styles.permBtnText}>Allow Camera Access</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleClose} style={styles.permCancel}>

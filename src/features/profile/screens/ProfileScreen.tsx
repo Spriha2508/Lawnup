@@ -18,7 +18,7 @@ const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = t
 // ─── Icons ───────────────────────────────────────────────────────────────────
 const I = { stroke: C.textMuted, w: 1.6 };
 const StarIcon: React.FC<{ color: string }> = ({ color }) => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5L12 2Z" stroke={color} strokeWidth={1.6} strokeLinejoin="round" fill={color === C.primary ? 'rgba(111,148,62,0.12)' : 'none'} /></Svg>
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5L12 2Z" stroke={color} strokeWidth={1.6} strokeLinejoin="round" fill={color === C.primary ? C.primaryWash : 'none'} /></Svg>
 );
 const EditIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M4 20h4L19 9l-4-4L4 16v4z" stroke={I.stroke} strokeWidth={I.w} strokeLinejoin="round" /><Path d="M14 6l4 4" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" /></Svg>);
 const BellIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" strokeLinejoin="round" /></Svg>);
@@ -36,6 +36,12 @@ const getMemberSince = (createdAt: any): string => {
   const d = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
   return String(d.getFullYear());
 };
+const LEVELS = [
+  { name: 'Seedling', at: 0 },
+  { name: 'Sprout', at: 2 },
+  { name: 'Gardener', at: 6 },
+  { name: 'Botanist', at: 12 },
+];
 const gardenLevel = (n: number): string => (n >= 12 ? 'Botanist' : n >= 6 ? 'Gardener' : n >= 2 ? 'Sprout' : 'Seedling');
 
 type ProfileNav = StackNavigationProp<ProfileStackParamList, 'Profile'>;
@@ -53,11 +59,24 @@ export const ProfileScreen: React.FC = () => {
   const remaining = scansRemainingThisWeek();
   const level = gardenLevel(plants.length);
 
+  // Growth toward the next garden level — a living progression.
+  const curIdx = LEVELS.reduce((acc, l, i) => (plants.length >= l.at ? i : acc), 0);
+  const isMaxLevel = curIdx === LEVELS.length - 1;
+  const curAt = LEVELS[curIdx].at;
+  const nextAt = isMaxLevel ? curAt : LEVELS[curIdx + 1].at;
+  const nextName = isMaxLevel ? '' : LEVELS[curIdx + 1].name;
+  const toNext = isMaxLevel ? 0 : nextAt - plants.length;
+  const growthPct = isMaxLevel ? 100 : Math.max(6, Math.round(((plants.length - curAt) / (nextAt - curAt)) * 100));
+
   const achievements = [
     { id: 'first_plant', title: 'First plant added', sub: plants.length > 0 ? 'Earned' : 'Add a plant to earn', earned: plants.length > 0 },
     { id: 'first_scan', title: 'First AI scan', sub: scansUsed > 0 ? 'Earned' : 'Scan a plant to earn', earned: scansUsed > 0 },
     { id: 'green_thumb', title: 'Green thumb', sub: thriving >= 3 ? 'Earned' : `${thriving}/3 healthy plants`, earned: thriving >= 3 },
+    { id: 'collector', title: 'Plant collector', sub: plants.length >= 5 ? 'Earned' : `${plants.length}/5 plants`, earned: plants.length >= 5 },
+    { id: 'scan_pro', title: 'Scan explorer', sub: scansUsed >= 10 ? 'Earned' : `${scansUsed}/10 scans`, earned: scansUsed >= 10 },
+    { id: 'botanist', title: 'Master botanist', sub: plants.length >= 12 ? 'Earned' : `${plants.length}/12 plants`, earned: plants.length >= 12 },
   ];
+  const earnedCount = achievements.filter(a => a.earned).length;
 
   return (
     <View style={styles.root}>
@@ -88,6 +107,19 @@ export const ProfileScreen: React.FC = () => {
             <StatBlock value={scansUsed} label="AI SCANS" />
           </Animated.View>
 
+          {/* Growth progress — toward the next garden level */}
+          <Animated.View entering={FadeInDown.delay(110).duration(M.duration.expressive)} style={styles.growthCard}>
+            <View style={styles.growthHead}>
+              <Text style={styles.growthLevel}>{level}</Text>
+              <Text style={styles.growthNext}>
+                {isMaxLevel ? 'Top level reached 🌳' : `${toNext} more to ${nextName}`}
+              </Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${growthPct}%` }]} />
+            </View>
+          </Animated.View>
+
           {/* Premium */}
           {!isPremium && (
             <Animated.View entering={FadeInDown.delay(140).duration(M.duration.expressive)} style={styles.premiumBanner}>
@@ -106,7 +138,7 @@ export const ProfileScreen: React.FC = () => {
 
           {/* Achievements */}
           <Animated.View entering={FadeInDown.delay(200).duration(M.duration.expressive)}>
-            <Text style={styles.sectionLabel}>ACHIEVEMENTS</Text>
+            <Text style={styles.sectionLabel}>ACHIEVEMENTS · {earnedCount}/{achievements.length}</Text>
             <View style={styles.listCard}>
               {achievements.map((a, i) => (
                 <View key={a.id} style={[styles.listRow, i < achievements.length - 1 && styles.listRowBorder]}>
@@ -176,17 +208,25 @@ const styles = StyleSheet.create({
   screenLabel: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2, marginBottom: S['2xl'] },
 
   identity: { alignItems: 'center', marginBottom: S['2xl'] },
-  avatarRing: { width: 92, height: 92, borderRadius: 46, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', marginBottom: S.lg, borderWidth: 3, borderColor: 'rgba(111,148,62,0.22)' },
+  avatarRing: { width: 92, height: 92, borderRadius: 46, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', marginBottom: S.lg, borderWidth: 3, borderColor: C.primarySoft },
   avatarText: { fontFamily: F.sansHeavy, fontSize: 30, color: C.onPrimary },
   userName: { fontFamily: F.serifMediumItalic, fontSize: 32, color: C.textPrimary, marginBottom: 4, textAlign: 'center' },
   userSince: { ...T.bodyMd, color: C.textMuted, marginBottom: S.lg },
   badgeRow: { flexDirection: 'row', gap: S.sm },
   badge: { paddingHorizontal: S.md, paddingVertical: 5, borderRadius: R.pill, borderWidth: 1.5 },
-  badgeGreen: { borderColor: C.primary, backgroundColor: 'rgba(111,148,62,0.07)' },
-  badgeAmber: { borderColor: C.secondary, backgroundColor: 'rgba(194,104,60,0.08)' },
+  badgeGreen: { borderColor: C.primary, backgroundColor: C.primaryWash },
+  badgeAmber: { borderColor: C.secondary, backgroundColor: 'rgba(194,104,60,0.10)' },
   badgeText: { ...T.statLabel, fontSize: 10, fontFamily: F.sansBold, letterSpacing: 0.8 },
 
-  statsRow: { flexDirection: 'row', backgroundColor: C.card, borderRadius: R.xl, paddingVertical: S.lg, marginBottom: S['3xl'], borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
+  statsRow: { flexDirection: 'row', backgroundColor: C.card, borderRadius: R.xl, paddingVertical: S.lg, marginBottom: S.lg, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
+
+  // Growth progress
+  growthCard: { backgroundColor: C.card, borderRadius: R.xl, paddingHorizontal: S.lg, paddingVertical: S.lg, marginBottom: S['3xl'], borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
+  growthHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: S.md },
+  growthLevel: { fontFamily: F.serifMedium, fontSize: 18, color: C.textPrimary },
+  growthNext: { ...T.caption, color: C.textMuted },
+  progressTrack: { height: 8, borderRadius: 4, backgroundColor: C.input, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 4, backgroundColor: C.primary },
   statBlock: { flex: 1, alignItems: 'center' },
   statValue: { fontFamily: F.sansHeavy, fontSize: 26, color: C.textPrimary, marginBottom: 4 },
   statLabel: { ...T.statLabel, color: C.textMuted, letterSpacing: 1.2, textTransform: 'uppercase' },
@@ -204,12 +244,12 @@ const styles = StyleSheet.create({
   soonPill: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: R.pill, backgroundColor: C.input },
   soonText: { ...T.statLabel, fontSize: 9, color: C.textMuted, letterSpacing: 1 },
 
-  premiumBanner: { backgroundColor: '#1A2416', borderRadius: R.xl, padding: S.xl, flexDirection: 'row', alignItems: 'center', marginBottom: S['3xl'], ...theme.shadows.lg },
-  premiumLabel: { ...T.statLabel, color: C.primary, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 },
+  premiumBanner: { backgroundColor: C.primaryDark, borderRadius: R.xl, padding: S.xl, flexDirection: 'row', alignItems: 'center', marginBottom: S['3xl'], ...theme.shadows.lg },
+  premiumLabel: { ...T.statLabel, color: C.primarySoft, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 },
   premiumTitle: { fontFamily: F.serifMedium, fontSize: 22, color: '#FFFFFF', lineHeight: 26 },
-  premiumScansLeft: { ...T.caption, color: 'rgba(255,255,255,0.5)', marginTop: 6 },
-  premiumBtn: { backgroundColor: C.primary, borderRadius: R.pill, paddingHorizontal: S.lg, paddingVertical: 11, marginLeft: S.lg },
-  premiumBtnText: { ...T.label, fontFamily: F.sansBold, color: '#FFFFFF' },
+  premiumScansLeft: { ...T.caption, color: 'rgba(255,255,255,0.65)', marginTop: 6 },
+  premiumBtn: { backgroundColor: C.card, borderRadius: R.pill, paddingHorizontal: S.lg, paddingVertical: 11, marginLeft: S.lg },
+  premiumBtnText: { ...T.label, fontFamily: F.sansBold, color: C.primaryDark },
 
   signOutBtn: { paddingVertical: S.lg, alignItems: 'center', borderRadius: R.pill, borderWidth: 1.5, borderColor: 'rgba(229,72,77,0.4)', marginBottom: S.lg },
   signOutText: { ...T.bodyStrong, fontFamily: F.sansMedium, color: C.criticalFg },
