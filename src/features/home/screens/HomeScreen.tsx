@@ -63,12 +63,12 @@ const EMERGENCIES = [
   { id: 'over',   label: 'Overwatering',   d: 'M12 3C12 3 5 11 5 15.5C5 19.09 8.13 22 12 22C15.87 22 19 19.09 19 15.5C19 11 12 3 12 3Z' },
 ];
 
-// Core value props surfaced on Home — what LawnUp does for you, at a glance.
+// What a scan gives you — outcome-led (the benefit), not a feature list.
 const VALUE_PROPS = [
-  { icon: '📷', label: 'Scan any plant' },
-  { icon: '🌿', label: 'Identify species' },
-  { icon: '🩺', label: 'Diagnose issues' },
-  { icon: '🧾', label: 'Get care plans' },
+  { icon: '🌿', label: 'Know what it is' },
+  { icon: '🩺', label: 'Spot problems early' },
+  { icon: '🧾', label: 'A care plan that fits' },
+  { icon: '💧', label: 'Know when to water' },
 ];
 
 const AnimatedScrollView = Animated.ScrollView;

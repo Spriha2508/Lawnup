@@ -342,6 +342,7 @@ export const CameraScreen: React.FC = () => {
           <Text style={styles.permSubtitle}>
             To identify plants and diagnose disease, LawnUp needs access to your camera.
           </Text>
+          <Text style={styles.permPrivacy}>🔒  Your photo is used only to identify the plant — never posted or shared.</Text>
           <TouchableOpacity style={styles.permBtn} onPress={handleAllowCamera} activeOpacity={0.88}>
             <Text style={styles.permBtnText}>Allow Camera Access</Text>
           </TouchableOpacity>
@@ -606,6 +607,14 @@ const styles = StyleSheet.create({
     ...T.body,
     color: C.textMuted,
     textAlign: 'center',
+  },
+  permPrivacy: {
+    ...T.caption,
+    color: 'rgba(255,255,255,0.55)',
+    textAlign: 'center',
+    marginTop: 14,
+    paddingHorizontal: 8,
+    lineHeight: 18,
   },
   permBtn: {
     marginTop: S.xs,
