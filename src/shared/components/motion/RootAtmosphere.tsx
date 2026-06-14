@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useMemo } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   makeMutable, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withDelay, interpolate, interpolateColor, Easing,
 } from 'react-native-reanimated';

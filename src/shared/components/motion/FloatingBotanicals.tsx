@@ -9,7 +9,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Path, Ellipse, G } from 'react-native-svg';
+import Svg, { Path, Ellipse } from 'react-native-svg';
 
 const { width: W, height: H } = Dimensions.get('window');
 

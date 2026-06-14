@@ -101,7 +101,7 @@ async function runDiagnostics(
     });
     return true;
   }, 5000, 'Font.loadAsync');
-  fontResult.ok ? pass('font') : fail('font', fontResult.error);
+  if (fontResult.ok) pass('font'); else fail('font', fontResult.error);
 
   // ── 7. SplashScreen ───────────────────────────────────────────────────────
   run('splash');
@@ -140,9 +140,8 @@ async function runDiagnostics(
       );
     });
   }, 8000, 'onAuthStateChanged');
-  authResult.ok
-    ? pass('auth', authResult.value as string)
-    : fail('auth', authResult.error);
+  if (authResult.ok) pass('auth', authResult.value as string);
+  else fail('auth', authResult.error);
 
   // ── 11. NativeWind / Tailwind class parse ─────────────────────────────────
   run('nativewind');

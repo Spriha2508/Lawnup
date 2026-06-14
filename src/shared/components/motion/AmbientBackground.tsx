@@ -23,12 +23,12 @@ import { theme } from '@constants/designSystem';
 const { width: W, height: H } = Dimensions.get('window');
 const P = theme.palette;
 
-type Orb = {
+type OrbSpec = {
   color: string; size: number; x: number; y: number;
   dx: number; dy: number; grow: number; opacity: number; duration: number; delay: number;
 };
 
-const ORBS: Orb[] = [
+const ORBS: OrbSpec[] = [
   // Luminous halo, high centre — "light from above"
   { color: P.mint[300],       size: W * 1.5,  x: -W * 0.25, y: -H * 0.22, dx: 14, dy: 18,  grow: 0.06, opacity: 0.38, duration: 24000, delay: 0 },
   { color: P.green[400],      size: W * 1.15, x: -W * 0.34, y:  H * 0.02, dx: 24, dy: 30,  grow: 0.09, opacity: 0.42, duration: 17000, delay: 600 },
@@ -37,7 +37,7 @@ const ORBS: Orb[] = [
   { color: P.green[300],      size: W * 0.78, x:  W * 0.6,  y:  H * 0.72, dx: -16, dy: 18, grow: 0.09, opacity: 0.26, duration: 19000, delay: 1800 },
 ];
 
-const Orb: React.FC<{ orb: Orb; id: number; animated: boolean }> = ({ orb, id, animated }) => {
+const Orb: React.FC<{ orb: OrbSpec; id: number; animated: boolean }> = ({ orb, id, animated }) => {
   const t = useSharedValue(animated ? 0 : 0.5);
   useEffect(() => {
     if (!animated) return;

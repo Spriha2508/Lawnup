@@ -11,8 +11,7 @@
  * from many different stacks, and 'Paywall' is resolved by tree-bubbling rather
  * than by any single stack's param list.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- accepts any stack's
-// navigation prop; 'Paywall' resolves by tree-bubbling, not a single param list.
+ 
 export function openPaywall(navigation: any): void {
   navigation.navigate('Paywall');
 }

@@ -53,7 +53,7 @@ try {
     experimentalForceLongPolling: true,
     experimentalAutoDetectLongPolling: false,
   });
-} catch (e: any) {
+} catch {
   // Already initialized on hot reload
   db = getFirestore(app);
 }

@@ -101,8 +101,9 @@ If `updateDoc` **rejects** (permission error, etc.), the function throws → `se
 ### L2 — Declared-but-unimplemented routes — ✅ FIXED (2026-06-14)
 **Resolution:** Removed the dead `ChatHistory` (from `ChatStackParamList`) and `SubscriptionSuccess` (from `ProfileStackParamList`) type declarations — neither had a screen or any navigator/caller. Commit below.
 
-### L3 — 148 ESLint warnings (code hygiene)
-Reanimated "ref access / impure during render" warnings (e.g. `PlantCard.tsx`), unused imports, `require()`-style imports, a duplicate-import warning. Non-blocking; worth a cleanup pass. 4 are auto-fixable via `eslint --fix`.
+### L3 — ESLint warnings (code hygiene) — ⚙️ REDUCED 148 → 131 (2026-06-14)
+**Done:** Ran `eslint --fix` (array-type, duplicate-import merges) and manually cleared the unambiguous ones — unused imports (`GoogleAuthProvider`, `signInWithCredential`, `ScrollView`, `Rect`, `G`, `View`), an unused `tick` binding (`const [, setTick]`), an unused catch binding (`catch {}`), a `type Orb`→`OrbSpec` redeclare clash, and two ternary-as-statement expressions → `if/else`. tsc clean, 0 errors, web bundle compiles.
+**Intentionally left (131 remaining):** **92 `react-hooks/refs`** + **4 `react-hooks/immutability`** + **4 `set-state-in-effect`** + **2 `exhaustive-deps`** are Reanimated UI-thread patterns and intentional effects — "fixing" them blindly risks breaking animations/behavior; **27 `no-require-imports`** are legitimate RN asset/lazy `require()`s (fonts, images, `skiaSafe` conditional load) that *must* stay `require()`. Plus 1 unused `route` in ScanResult (removing cascades into `useRoute`/`Route`/`RouteProp` for one warning — not worth the risk) and 1 axios named-export advisory. These warrant a focused, per-component Reanimated review rather than a blanket sweep.
 
 ### L4 — `checkUsageLimit` dead network call every login
 Covered functionally under H2 — in client-side mode this always fails and logs a warning on each sign-in. Cosmetic/log-noise until the backend is enabled.

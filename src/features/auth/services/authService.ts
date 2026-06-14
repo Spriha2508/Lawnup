@@ -2,8 +2,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  GoogleAuthProvider,
-  signInWithCredential,
   updateProfile,
   User as FirebaseUser,
 } from '@firebase/auth';

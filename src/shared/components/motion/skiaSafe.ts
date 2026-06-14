@@ -12,7 +12,7 @@
  */
 let available = false;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
   const mod = require('@shopify/react-native-skia');
   available = !!(mod && mod.Skia && mod.Canvas);
 } catch {

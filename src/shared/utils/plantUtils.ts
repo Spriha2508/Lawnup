@@ -1,7 +1,6 @@
 import type { UserPlantDoc } from '../../types/firestore.types';
-import type { HealthStatus } from '../../constants/plants';
+import type { HealthStatus , ReminderType } from '../../constants/plants';
 import { REMINDER_MESSAGES } from '../../constants/plants';
-import type { ReminderType } from '../../constants/plants';
 
 function safeToDate(raw: any): Date {
   if (raw && typeof raw.toDate === 'function') return raw.toDate();

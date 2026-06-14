@@ -27,7 +27,7 @@ const STORIES = [
 ];
 
 // Feature comparison rows
-const FEATURE_ROWS: Array<{ feature: FeatureName; freeValue: string; premiumValue: string }> = [
+const FEATURE_ROWS: { feature: FeatureName; freeValue: string; premiumValue: string }[] = [
   { feature: 'unlimitedScans',   freeValue: `${FREE_WEEKLY_SCAN_LIMIT} / week`, premiumValue: '80–100 / month' },
   { feature: 'aiDoctor',         freeValue: '20 / day',                         premiumValue: 'Unlimited' },
   { feature: 'diseaseDetection', freeValue: '—',                               premiumValue: 'Included' },

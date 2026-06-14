@@ -20,7 +20,7 @@ try {
 
 function useCurrentRoute(): string {
   try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
+     
     return _useNavigationState((state) => {
       if (!state) return '—';
       const getLeaf = (s: typeof state): string => {
@@ -99,7 +99,7 @@ export const DevOverlay: React.FC = () => {
 
 const DevOverlayInner: React.FC = () => {
   const [visible, setVisible] = useState(false);
-  const [tick, setTick] = useState(0);
+  const [, setTick] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Refresh the panel every second when open
