@@ -26,6 +26,17 @@ const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
   ahmedabad: { lat: 23.0225, lon: 72.5714 },
   jaipur: { lat: 26.9124, lon: 75.7873 },
   lucknow: { lat: 26.8467, lon: 80.9462 },
+  // Remaining INDIAN_CITIES (onboarding picker) — full AQI coverage
+  chandigarh: { lat: 30.7333, lon: 76.7794 },
+  bhopal: { lat: 23.2599, lon: 77.4126 },
+  indore: { lat: 22.7196, lon: 75.8577 },
+  kochi: { lat: 9.9312, lon: 76.2673 },
+  nagpur: { lat: 21.1458, lon: 79.0882 },
+  patna: { lat: 25.5941, lon: 85.1376 },
+  vadodara: { lat: 22.3072, lon: 73.1812 },
+  surat: { lat: 21.1702, lon: 72.8311 },
+  coimbatore: { lat: 11.0168, lon: 76.9558 },
+  visakhapatnam: { lat: 17.6868, lon: 83.2185 },
 };
 
 export interface AirQualityData {
