@@ -439,7 +439,7 @@ export const AnimatedSplash: React.FC<Props> = ({ onDone }) => {
             </Svg>
           </View>
           <Animated.Text style={styles.identName}>Ficus benjamina</Animated.Text>
-          <Animated.Text style={styles.identPct}>98%</Animated.Text>
+          <Animated.Text style={styles.identPct}>IDENTIFIED</Animated.Text>
         </Animated.View>
 
         {/* WORDMARK resolving on the daylight */}

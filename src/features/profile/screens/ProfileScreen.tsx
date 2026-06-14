@@ -108,6 +108,17 @@ export const ProfileScreen: React.FC = () => {
             <StatBlock value={scansUsed} label="AI SCANS" />
           </Animated.View>
 
+          {/* First-run: a warm invitation, not an empty scorecard */}
+          {plants.length === 0 && (
+            <Animated.View entering={FadeInDown.delay(90).duration(M.duration.expressive)} style={styles.welcomeCard}>
+              <Text style={styles.welcomeTitle}>Your garden starts here</Text>
+              <Text style={styles.welcomeBody}>Scan your first plant to begin your collection — your stats and achievements grow from there.</Text>
+              <PressableScale style={styles.welcomeBtn} onPress={() => navigation.getParent<any>()?.navigate('Scan')} to={0.97}>
+                <Text style={styles.welcomeBtnText}>Scan your first plant  →</Text>
+              </PressableScale>
+            </Animated.View>
+          )}
+
           {/* Growth progress — toward the next garden level */}
           <Animated.View entering={FadeInDown.delay(110).duration(M.duration.expressive)} style={styles.growthCard}>
             <View style={styles.growthHead}>
@@ -224,6 +235,12 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', backgroundColor: C.card, borderRadius: R.xl, paddingVertical: S.lg, marginBottom: S.lg, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
 
   // Growth progress
+  welcomeCard: { backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, marginBottom: S['3xl'], borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
+  welcomeTitle: { fontFamily: F.serifMedium, fontSize: 20, color: C.textPrimary, marginBottom: S.xs },
+  welcomeBody: { ...T.bodyMd, color: C.textSecondary, marginBottom: S.lg },
+  welcomeBtn: { backgroundColor: C.primary, borderRadius: R.pill, paddingVertical: 14, alignItems: 'center' },
+  welcomeBtnText: { ...T.button, fontFamily: F.sansBold, color: C.onPrimary, letterSpacing: 0.2 },
+
   growthCard: { backgroundColor: C.card, borderRadius: R.xl, paddingHorizontal: S.lg, paddingVertical: S.lg, marginBottom: S['3xl'], borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
   growthHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: S.md },
   growthLevel: { fontFamily: F.serifMedium, fontSize: 18, color: C.textPrimary },

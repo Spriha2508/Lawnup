@@ -49,6 +49,7 @@ export const ScanLandingScreen: React.FC = () => {
   const scanLimitDisplay = limit === -1 ? '∞' : String(limit);
   const scanPercent = limit === -1 ? 0 : used / limit;
   const limitReached = !canScanThisWeek();
+  const remainingScans = limit === -1 ? -1 : Math.max(0, limit - used);
 
   return (
     <View style={styles.root}>
@@ -74,11 +75,21 @@ export const ScanLandingScreen: React.FC = () => {
       <Animated.View entering={FadeInUp.delay(150).duration(M.duration.expressive)} style={styles.sheet}>
         {limit !== -1 && (
           <View style={styles.quotaRow}>
-            <Text style={styles.quotaLabel}>{used} of {scanLimitDisplay} scans used this {periodWord}</Text>
+            <Text style={styles.quotaLabel}>
+              {limitReached
+                ? `${used} of ${scanLimitDisplay} scans used this ${periodWord}`
+                : `${remainingScans} ${isPremiumActive() ? '' : 'free '}scan${remainingScans === 1 ? '' : 's'} left this ${periodWord}`}
+            </Text>
             <View style={styles.quotaTrack}>
               <View style={[styles.quotaFill, { width: `${Math.min(100, scanPercent * 100)}%` as any, backgroundColor: limitReached ? C.criticalFg : C.primary }]} />
             </View>
-            {limitReached && <Text style={styles.quotaWarning}>{isPremiumActive() ? 'Monthly' : 'Weekly'} limit reached</Text>}
+            {limitReached && (
+              <Text style={styles.quotaWarning}>
+                {isPremiumActive()
+                  ? 'Monthly limit reached — resets next month.'
+                  : 'That’s your free scans for this week — they refresh Monday.'}
+              </Text>
+            )}
           </View>
         )}
 
