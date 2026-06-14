@@ -47,12 +47,53 @@ const RESULT: Record<Level, { label: string; tone: string; body: string; good: s
   },
 };
 
+type Place = 'window' | 'near' | 'interior';
+type Exposure = 'south' | 'eastwest' | 'north' | 'none';
+const PLACES: { id: Place; label: string }[] = [
+  { id: 'window', label: 'At a window' },
+  { id: 'near', label: 'Within ~1 m' },
+  { id: 'interior', label: 'Room interior' },
+];
+const EXPOSURES: { id: Exposure; label: string }[] = [
+  { id: 'south', label: 'South-facing' },
+  { id: 'eastwest', label: 'East / West' },
+  { id: 'north', label: 'North-facing' },
+  { id: 'none', label: 'No direct sun' },
+];
+
+const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+
+// Spot brightness 0–100 from the three real inputs.
+function spotLight(level: Level, place: Place, exposure: Exposure): number {
+  let v = level === 'bright' ? 80 : level === 'medium' ? 55 : 30;
+  v += place === 'window' ? 10 : place === 'interior' ? -15 : 0;
+  v += exposure === 'south' ? 10 : exposure === 'eastwest' ? 5 : exposure === 'north' ? -5 : -10;
+  return clamp(v, 5, 100);
+}
+// Plant's preferred brightness band, parsed from its knowledge `light` text.
+function preferredRange(lightText: string): [number, number] {
+  const t = lightText.toLowerCase();
+  if (/direct|full sun/.test(t)) return [70, 100];
+  if (/bright/.test(t)) return [50, 80];
+  if (/low/.test(t)) return [15, 45];
+  return [35, 65];
+}
+// 0–100 suitability of this spot for the plant's preferred range.
+function suitabilityScore(spot: number, [min, max]: [number, number]): number {
+  const mid = (min + max) / 2, half = Math.max(1, (max - min) / 2);
+  if (spot >= min && spot <= max) return clamp(Math.round(100 - (Math.abs(spot - mid) / half) * 12), 88, 100);
+  const dist = spot < min ? min - spot : spot - max;
+  return clamp(Math.round(85 - dist * 2), 10, 100);
+}
+
 export const LightAssessmentScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { plants } = usePlantsStore();
 
   const [level, setLevel] = useState<Level | null>(null);
+  const [place, setPlace] = useState<Place>('near');
+  const [exposure, setExposure] = useState<Exposure>('eastwest');
   const [selectedId, setSelectedId] = useState<string | null>(route.params?.plantId ?? plants[0]?.plantId ?? null);
 
   const selectedPlant = plants.find((p) => p.plantId === selectedId) ?? null;
@@ -67,6 +108,13 @@ export const LightAssessmentScreen: React.FC = () => {
       lowLight: resolved.plant.tags.map((t) => t.toLowerCase()).includes('low-light'),
     };
   }, [species, selectedPlant]);
+
+  const assessment = useMemo(() => {
+    if (!level) return null;
+    const spot = spotLight(level, place, exposure);
+    const score = plantInfo ? suitabilityScore(spot, preferredRange(plantInfo.light)) : null;
+    return { spot, score };
+  }, [level, place, exposure, plantInfo]);
 
   const verdict = useMemo(() => {
     if (!level || !plantInfo) return null;
@@ -83,6 +131,13 @@ export const LightAssessmentScreen: React.FC = () => {
     }
     return { ok: true, text: `Great light for ${n}.` };
   }, [level, plantInfo]);
+
+  const sc = assessment?.score ?? null;
+  const scoreColor = sc == null ? C.primary : sc >= 75 ? C.healthyFg : sc >= 45 ? C.waterFg : C.criticalFg;
+  const scoreText = sc == null ? ''
+    : sc >= 75 ? 'Great match — this plant should be happy here.'
+    : sc >= 45 ? 'Workable — keep an eye on it and move it if it stretches or scorches.'
+    : 'Poor match — a brighter or dimmer spot (or a more tolerant plant) would do better.';
 
   return (
     <View style={styles.screen}>
@@ -138,11 +193,42 @@ export const LightAssessmentScreen: React.FC = () => {
             );
           })}
 
+          {/* Location + exposure — refine the score */}
+          <Text style={[styles.sectionLabel, { marginTop: S.lg }]}>WHERE IS THE SPOT?</Text>
+          <View style={styles.pillRow}>
+            {PLACES.map((p) => (
+              <TouchableOpacity key={p.id} style={[styles.pill, place === p.id && styles.pillActive]} onPress={() => setPlace(p.id)} activeOpacity={0.85}>
+                <Text style={[styles.pillText, place === p.id && styles.pillTextActive]}>{p.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={[styles.sectionLabel, { marginTop: S.lg }]}>DIRECT SUN / DIRECTION</Text>
+          <View style={styles.pillRow}>
+            {EXPOSURES.map((e) => (
+              <TouchableOpacity key={e.id} style={[styles.pill, exposure === e.id && styles.pillActive]} onPress={() => setExposure(e.id)} activeOpacity={0.85}>
+                <Text style={[styles.pillText, exposure === e.id && styles.pillTextActive]}>{e.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           {/* Result */}
           {level && (
             <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.resultCard}>
               <View style={[styles.resultBadge, { backgroundColor: RESULT[level].tone }]} />
               <Text style={styles.resultLabel}>{RESULT[level].label}</Text>
+
+              {assessment && (
+                <View style={styles.scoreRow}>
+                  <View style={[styles.scoreBadge, { borderColor: scoreColor }]}>
+                    <Text style={[styles.scoreNum, { color: scoreColor }]}>{assessment.score ?? assessment.spot}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.scoreLabel}>{assessment.score != null ? `Suitability for ${plantInfo?.name}` : 'Light availability'}</Text>
+                    <Text style={styles.scoreSub}>{assessment.score != null ? scoreText : 'How much usable light this spot offers (0–100).'}</Text>
+                  </View>
+                </View>
+              )}
+
               <Text style={styles.resultBody}>{RESULT[level].body}</Text>
               <Text style={styles.resultGood}>{RESULT[level].good}</Text>
               {RESULT[level].caution && <Text style={styles.resultCaution}>⚠  {RESULT[level].caution}</Text>}
@@ -208,7 +294,18 @@ const styles = StyleSheet.create({
   radioActive: { borderColor: '#FFFFFF' },
   radioFill: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#FFFFFF' },
 
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: S.sm },
+  pill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: R.pill, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.card },
+  pillActive: { backgroundColor: C.primary, borderColor: C.primary },
+  pillText: { ...T.bodyMd, fontFamily: F.sansMedium, fontSize: 13, color: C.textPrimary },
+  pillTextActive: { color: C.onPrimary },
+
   resultCard: { backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, borderWidth: 1, borderColor: C.border, marginTop: S.lg, ...theme.shadows.card },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: S.lg, marginVertical: S.md },
+  scoreBadge: { width: 60, height: 60, borderRadius: 30, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  scoreNum: { fontFamily: F.sansHeavy, fontSize: 22 },
+  scoreLabel: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary, marginBottom: 2 },
+  scoreSub: { ...T.caption, color: C.textSecondary, lineHeight: 18 },
   resultBadge: { width: 40, height: 5, borderRadius: 3, marginBottom: S.lg },
   resultLabel: { fontFamily: F.serifMedium, fontSize: 24, color: C.textPrimary, marginBottom: S.sm },
   resultBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 21, marginBottom: S.md },
