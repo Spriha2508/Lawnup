@@ -73,7 +73,8 @@ If `updateDoc` **rejects** (permission error, etc.), the function throws → `se
 **Impact:** A free user (20/day) burns quota on failed requests with no successful answer. (Contrast: the scan flow correctly increments only on success — `useScanFlow.ts:162`.)
 **Fix:** Move `incrementMessage()` to after a successful reply, or refund on failure.
 
-### M2 — No Settings screen
+### M2 — No Settings screen — ✅ FIXED (2026-06-14)
+**Resolution:** Added `SettingsScreen` (`features/profile/screens/SettingsScreen.tsx`), registered in `ProfileNavigator`, reachable from Profile → Account → **Settings** (replaced the dead "Appearance (dark mode)" placeholder row; dark-mode now sits inside Settings as an honest "SOON"). Functional contents: **Notifications** (a watering-reminders toggle that reflects real OS permission, re-checked on focus, requests on enable, routes to system Settings when blocked/disable), **Appearance** (dark-mode "SOON" — light-only is locked this pass), and **Account** — **Sign out** + **Delete account**. Delete is the store-review-critical gap: added `authStore.deleteAccount()` (deletes the Firestore profile doc then the Firebase Auth user, with a typed `RECENT_LOGIN_REQUIRED` path that prompts re-auth), behind a destructive confirm dialog. **Known limitation (client-side mode):** the plants subcollection isn't recursively deleted — needs a Cloud Function; tracked for backend hardening. Verified: tsc clean, web bundle compiles. Commit below.
 **Where:** (none — no `*setting*` file exists)
 **Issue:** There is no Settings journey. Profile exposes Edit profile / Reminders / Scan history / Help, and "Appearance (dark mode)" is a "SOON" placeholder (`ProfileScreen.tsx:162`). Missing: notification preferences, account deletion, theme toggle, privacy/data controls.
 **Impact:** Common app-store / user expectations (notification control, account deletion) are absent. Account deletion in particular is often a store-review requirement.

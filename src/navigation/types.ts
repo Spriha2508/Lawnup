@@ -53,6 +53,7 @@ export type RemindersStackParamList = {
 export type ProfileStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
+  Settings: undefined;
   ScanHistory: undefined;
   HelpSupport: undefined;
   Reminders: undefined;

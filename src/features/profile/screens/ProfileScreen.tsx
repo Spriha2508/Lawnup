@@ -23,7 +23,7 @@ const StarIcon: React.FC<{ color: string }> = ({ color }) => (
 );
 const EditIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M4 20h4L19 9l-4-4L4 16v4z" stroke={I.stroke} strokeWidth={I.w} strokeLinejoin="round" /><Path d="M14 6l4 4" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" /></Svg>);
 const BellIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" strokeLinejoin="round" /></Svg>);
-const ThemeIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" stroke={I.stroke} strokeWidth={I.w} strokeLinejoin="round" /></Svg>);
+const SettingsIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Circle cx="12" cy="12" r="3" stroke={I.stroke} strokeWidth={I.w} /><Path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" strokeLinejoin="round" /></Svg>);
 const HistoryIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Circle cx="12" cy="12" r="9" stroke={I.stroke} strokeWidth={I.w} /><Path d="M12 7v5l3 3" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" /></Svg>);
 const HelpIcon = () => (<Svg width={20} height={20} viewBox="0 0 24 24" fill="none"><Circle cx="12" cy="12" r="9" stroke={I.stroke} strokeWidth={I.w} /><Path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7M12 17v.1" stroke={I.stroke} strokeWidth={I.w} strokeLinecap="round" /></Svg>);
 
@@ -160,8 +160,8 @@ export const ProfileScreen: React.FC = () => {
             <View style={styles.listCard}>
               <NavRow icon={<EditIcon />} label="Edit profile" isLast={false} onPress={() => navigation.navigate('EditProfile')} />
               <NavRow icon={<BellIcon />} label="Reminders" isLast={false} onPress={() => navigation.navigate('Reminders')} />
-              <SoonRow icon={<ThemeIcon />} label="Appearance (dark mode)" isLast={false} />
-              <NavRow icon={<HistoryIcon />} label="Scan history" isLast onPress={() => navigation.navigate('ScanHistory')} />
+              <NavRow icon={<HistoryIcon />} label="Scan history" isLast={false} onPress={() => navigation.navigate('ScanHistory')} />
+              <NavRow icon={<SettingsIcon />} label="Settings" isLast onPress={() => navigation.navigate('Settings')} />
             </View>
           </Animated.View>
 
@@ -192,14 +192,6 @@ const StatBlock: React.FC<{ value: number; label: string; tone?: string }> = ({ 
   <View style={styles.statBlock}>
     <Text style={[styles.statValue, tone && { color: tone }]}>{value}</Text>
     <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
-
-const SoonRow: React.FC<{ icon: React.ReactNode; label: string; isLast: boolean }> = ({ icon, label, isLast }) => (
-  <View style={[styles.listRow, !isLast && styles.listRowBorder]}>
-    <View style={styles.iconWrap}>{icon}</View>
-    <Text style={[styles.listTitle, { flex: 1, color: C.textSecondary }]}>{label}</Text>
-    <View style={styles.soonPill}><Text style={styles.soonText}>SOON</Text></View>
   </View>
 );
 
