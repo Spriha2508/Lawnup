@@ -2,6 +2,8 @@
 // Indexed by normalized common name. Used by plantIdentification to build
 // honest, plant-specific care actions instead of generic fallbacks.
 
+import { knowledge, currentSeason } from '../../services/knowledge';
+
 export interface PlantCareProfile {
   water: string;
   light: string;
@@ -268,6 +270,16 @@ export function buildSpeciesActions(
     if (profile.humidity) actions.push(profile.humidity);
     if (profile.tips.length > 0) actions.push(profile.tips[0]);
     if (profile.tips.length > 1) actions.push(profile.tips[1]);
+    return actions.slice(0, 4);
+  }
+
+  // Knowledge layer (112 structured Indian plants) — season-aware, plant-specific
+  // care before falling back to anything generic.
+  const k = knowledge.getPlant(commonName);
+  if (k) {
+    const season = currentSeason();
+    const actions = [k.watering[season], k.light, k.humidity];
+    if (k.seasonalCare?.[season]) actions.push(k.seasonalCare[season]);
     return actions.slice(0, 4);
   }
 

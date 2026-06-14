@@ -33,6 +33,11 @@ export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
   const lowConfidence = confidence < 0.50;
   const col = confColor(confidence);
 
+  // Option A: lead with the Indian common name when we have one, else English.
+  const hasIndian = !!indianAlternate && indianAlternate !== commonName;
+  const primaryName = hasIndian ? indianAlternate! : commonName;
+  const showEnglishRow = hasIndian; // only when the Indian name is the primary
+
   return (
     <View style={[styles.hero, { height: HERO_HEIGHT }]}>
       {imageUri ? (
@@ -79,19 +84,23 @@ export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
           <Text style={styles.confidencePrefix}>This may be</Text>
         )}
 
-        {/* Primary plant name */}
+        {/* Primary plant name — Indian common name when known, else English */}
         {!lowConfidence && (
-          <Text style={styles.commonName} numberOfLines={2}>{commonName}</Text>
+          <Text style={styles.commonName} numberOfLines={2}>{primaryName}</Text>
         )}
 
-        {/* Indian vernacular name */}
-        {indianAlternate && indianAlternate !== commonName && !lowConfidence && (
-          <Text style={styles.indianAlternate}>Also known as {indianAlternate}</Text>
+        {/* English common name — shown as a labelled secondary when the Indian name leads */}
+        {showEnglishRow && !lowConfidence && (
+          <Text style={styles.nameRow} numberOfLines={1}>
+            <Text style={styles.nameLabel}>ENGLISH  </Text>{commonName}
+          </Text>
         )}
 
-        {/* Scientific name + confidence % in one line */}
+        {/* Scientific name (labelled) + confidence % in one line */}
         <View style={styles.metaRow}>
-          <Text style={styles.scientificName} numberOfLines={1}>{scientificName}</Text>
+          <Text style={styles.scientificName} numberOfLines={1}>
+            <Text style={styles.nameLabel}>SCIENTIFIC  </Text>{scientificName}
+          </Text>
           <View style={[
             styles.confPill,
             { backgroundColor: col + '28', borderColor: col + '55' },
@@ -192,12 +201,18 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     marginBottom: 4,
   },
-  indianAlternate: {
-    fontFamily: 'Nunito-Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.48)',
-    fontStyle: 'italic',
+  nameRow: {
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.82)',
     marginBottom: 2,
+  },
+  nameLabel: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: 'rgba(255,255,255,0.45)',
+    fontStyle: 'normal',
   },
   metaRow: {
     flexDirection: 'row',
