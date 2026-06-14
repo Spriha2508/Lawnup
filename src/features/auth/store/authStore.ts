@@ -75,6 +75,10 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      // No breaking shape changes yet — pass through; the auth listener
+      // re-hydrates the authoritative user doc on launch regardless.
+      migrate: (persisted: any) => persisted,
       partialize: (state) => ({
         user: state.user
           ? {

@@ -34,7 +34,7 @@ export const ScanLandingScreen: React.FC = () => {
     if (!canScanThisWeek()) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.9, allowsEditing: true, aspect: [1, 1] });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9, allowsEditing: true, aspect: [1, 1] });
     if (!result.canceled && result.assets[0]) {
       const uri = result.assets[0].uri;
       setCapturedImageUri(uri);

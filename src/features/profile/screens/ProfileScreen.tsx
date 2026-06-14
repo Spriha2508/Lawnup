@@ -45,7 +45,7 @@ const LEVELS = [
 ];
 const gardenLevel = (n: number): string => (n >= 12 ? 'Botanist' : n >= 6 ? 'Gardener' : n >= 2 ? 'Sprout' : 'Seedling');
 
-type ProfileNav = StackNavigationProp<ProfileStackParamList, 'Profile'>;
+type ProfileNav = StackNavigationProp<ProfileStackParamList, 'ProfileHome'>;
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileNav>();

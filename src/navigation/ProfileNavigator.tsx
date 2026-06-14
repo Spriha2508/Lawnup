@@ -14,7 +14,7 @@ const Stack = createStackNavigator<ProfileStackParamList>();
 
 export const ProfileNavigator: React.FC = () => (
   <Stack.Navigator screenOptions={{ headerShown: false, ...fadeTransition }}>
-    <Stack.Screen name="Profile" component={ProfileScreen} />
+    <Stack.Screen name="ProfileHome" component={ProfileScreen} />
     <Stack.Screen name="EditProfile" component={EditProfileScreen} />
     <Stack.Screen name="Settings" component={SettingsScreen} />
     <Stack.Screen name="ScanHistory" component={ScanHistoryScreen} />

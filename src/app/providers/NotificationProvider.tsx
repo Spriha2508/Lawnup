@@ -19,11 +19,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const cleanup = setupNotificationListeners(
       (notification) => {
-        console.log('[FCM] Foreground:', notification.request.content.body);
+        if (__DEV__) console.log('[FCM] Foreground:', notification.request.content.body);
       },
       (response) => {
         const data = response.notification.request.content.data as Record<string, string>;
-        console.log('[FCM] Tapped:', data);
+        if (__DEV__) console.log('[FCM] Tapped:', data);
       },
     );
 

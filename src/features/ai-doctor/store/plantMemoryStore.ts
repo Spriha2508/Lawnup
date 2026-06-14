@@ -114,6 +114,8 @@ export const usePlantMemoryStore = create<PlantMemoryState>()(
       name: 'plant-memory-storage',
       storage: createJSONStorage(() => AsyncStorage),
       version: 1,
+      // Pass-through; per-plant memory keys merge with the current shape.
+      migrate: (persisted: any) => persisted,
     },
   ),
 );

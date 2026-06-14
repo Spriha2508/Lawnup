@@ -203,6 +203,24 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       // v3 (2026-06-13): PRD model — premium tier + monthly scan cap + daily
       // message quota. Old persisted counters are ignored; they start fresh.
       version: 3,
+      // Backward-compat: pre-v3 quota counters used a different model, so on
+      // upgrade we keep the user's plan but reset the period counters (the
+      // server / weekly reset re-establishes truth). v3+ passes through.
+      migrate: (persisted: any, version: number) => {
+        if (!persisted) return persisted;
+        if (version < 3) {
+          return {
+            ...persisted,
+            scansThisWeek: 0,
+            lastScanWeekKey: '',
+            scansThisMonth: 0,
+            lastScanMonthKey: '',
+            messagesToday: 0,
+            lastMessageDayKey: '',
+          };
+        }
+        return persisted;
+      },
       partialize: (state) => ({
         plan: state.plan,
         premiumTier: state.premiumTier,

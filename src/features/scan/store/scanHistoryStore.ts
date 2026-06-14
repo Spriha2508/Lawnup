@@ -30,6 +30,12 @@ export const useScanHistoryStore = create<ScanHistoryState>()(
         })),
       clear: () => set({ entries: [] }),
     }),
-    { name: 'scan-history', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'scan-history',
+      storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      // Pass-through; entries array merges with the current shape.
+      migrate: (persisted: any) => persisted,
+    },
   ),
 );

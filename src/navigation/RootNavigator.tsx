@@ -54,12 +54,11 @@ export const RootNavigator = memo(function RootNavigator() {
   const plantsUnsubRef = useRef<(() => void) | null>(null);
 
   // ── Boot diagnostic: confirm the Plant.id key reached the runtime ───────────
-  // Logs length + prefix only (never the full key). If length is 0 here, the
-  // device is running a stale bundle or .env wasn't picked up — reload the app.
+  // Logs PRESENCE only — never the key, its prefix, or its length. Dev-only.
   useEffect(() => {
     const key = (Constants.expoConfig?.extra?.plantIdKey as string | undefined) ?? '';
     if (key.length > 0) {
-      console.log(`[ApiKeys] plantIdKey resolved — length: ${key.length}, prefix: ${key.slice(0, 6)}`);
+      if (__DEV__) console.log('[ApiKeys] plantIdKey resolved ✓');
     } else {
       console.warn('[ApiKeys] plantIdKey EMPTY at runtime — client scanning will fail. Reload the app after `expo start --clear`.');
     }
@@ -107,17 +106,11 @@ export const RootNavigator = memo(function RootNavigator() {
           // the Function tells us the truth. Cameras gate renders behind
           // isUsageHydrated so users see a spinner, never a false "limit reached".
           useSubscriptionStore.getState().resetUsage();
-          console.log('[UsageHydration] resetUsage — uid:', firebaseUser.uid, '— awaiting server sync');
+          if (__DEV__) console.log('[UsageHydration] resetUsage — awaiting server sync');
 
           checkUsageLimit()
             .then((usage) => {
-              console.log('[UsageHydration] resolved —', {
-                uid: firebaseUser.uid,
-                scansUsed: usage.scansUsed,
-                scanLimit: usage.scanLimit,
-                aiChatsUsed: usage.aiChatsUsed,
-                plan: usage.plan,
-              });
+              if (__DEV__) console.log('[UsageHydration] resolved —', { scanLimit: usage.scanLimit, plan: usage.plan });
               useSubscriptionStore.getState().setUsage(usage.scansUsed, usage.aiChatsUsed);
               useSubscriptionStore.getState().setLimits(usage.scanLimit, usage.aiChatLimit);
               useSubscriptionStore.getState().setUsageHydrated(true);

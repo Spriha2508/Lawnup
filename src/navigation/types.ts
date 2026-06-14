@@ -40,7 +40,7 @@ export type PlantsStackParamList = {
 
 // AI Doctor Stack
 export type ChatStackParamList = {
-  Chat: { plantId?: string };
+  ChatHome: { plantId?: string };
 };
 
 // Reminders Stack
@@ -51,7 +51,7 @@ export type RemindersStackParamList = {
 
 // Profile Stack
 export type ProfileStackParamList = {
-  Profile: undefined;
+  ProfileHome: undefined;
   EditProfile: undefined;
   Settings: undefined;
   ScanHistory: undefined;

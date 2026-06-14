@@ -41,7 +41,7 @@ export const useImagePicker = (): UseImagePickerResult => {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.8,
     });
     await handleResult(result);

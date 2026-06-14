@@ -41,15 +41,6 @@ async function callPlantId(base64s: string[], externalSignal?: AbortSignal): Pro
 
   const payload = { images: base64s, health: 'all' };
 
-  if (__DEV__) {
-    console.log('[PlantId] endpoint:', PLANT_ID_URL);
-    console.log('[PlantId] method:', 'POST');
-    console.log('[PlantId] auth header name:', 'Api-Key');
-    console.log('[PlantId] auth key present:', apiKey.length > 0);
-    console.log('[PlantId] content-type:', 'application/json');
-    console.log('[PlantId] body shape: { images:', base64s.length, 'item(s), health: "all" }');
-  }
-
   const internalController = new AbortController();
   let timedOut = false;
   const timeoutId = setTimeout(() => { timedOut = true; internalController.abort(); }, REQUEST_TIMEOUT_MS);
@@ -79,10 +70,6 @@ async function callPlantId(base64s: string[], externalSignal?: AbortSignal): Pro
   }
 
   const rawText = await response.text();
-  if (__DEV__) {
-    console.log('[PlantId] status:', response.status);
-    console.log('[PlantId] raw response:', rawText.slice(0, 400));
-  }
   if (!response.ok) {
     throw new Error(`Plant.id HTTP ${response.status}: ${rawText.slice(0, 300)}`);
   }
