@@ -201,7 +201,9 @@ export const HomeScreen: React.FC = () => {
 
   const weatherInsight = useMemo(() => getWeatherInsight(weather, city || undefined), [weather, city]);
   const careRecommendation = useMemo(() => {
-    if (aqi && aqiAdvice && (aqiAdvice.band === 'poor' || aqiAdvice.band === 'very-poor' || aqiAdvice.band === 'severe')) {
+    // Surface AQI care guidance from "moderate" up (101+) — most relevant in
+    // Indian cities; cleaner air falls through to the weather insight.
+    if (aqi && aqiAdvice && aqiAdvice.band !== 'good' && aqiAdvice.band !== 'satisfactory') {
       return aqiAdvice.rules[0];
     }
     return weatherInsight?.body ?? 'Conditions look calm today — keep up your usual care.';
