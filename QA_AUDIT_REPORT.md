@@ -58,7 +58,9 @@ If `updateDoc` **rejects** (permission error, etc.), the function throws → `se
 
 ## 🟡 Medium
 
-### M1 — Chat charges a daily message credit even when the AI reply fails
+### M1 — Chat charges a daily message credit even when the AI reply fails — ✅ FIXED (2026-06-14)
+**Resolution:** Moved `sub.incrementMessage()` out of the pre-call path and into the `try` block, immediately after the successful assistant reply is appended. Failed/aborted/timed-out replies no longer consume quota. The `canSendMessageToday()` gate still runs before sending, and the `isTyping` guard prevents concurrent double-spend. Commit below.
+
 **Where:** `src/features/ai-doctor/screens/ChatScreen.tsx:95-125`
 **Issue:** `sub.incrementMessage()` (L99) runs **before** `await askBanyan(...)` (L108). If the reply throws (network/timeout/HTTP error), the catch block shows an error but the credit is already consumed.
 **Impact:** A free user (20/day) burns quota on failed requests with no successful answer. (Contrast: the scan flow correctly increments only on success — `useScanFlow.ts:162`.)

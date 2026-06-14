@@ -96,7 +96,6 @@ export const ChatScreen: React.FC = () => {
       navigation.navigate('Profile', { screen: 'Paywall' });
       return;
     }
-    sub.incrementMessage();
 
     appendMessage(makeMsg('user', query));
     setInput('');
@@ -116,6 +115,9 @@ export const ChatScreen: React.FC = () => {
         signal: controller.signal,
       });
       appendMessage(makeMsg('assistant', reply, enrichedPlant?.nickname));
+      // Charge the daily message quota only on a successful reply — never burn
+      // a free user's credit on a network/timeout/API failure.
+      sub.incrementMessage();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong — please try again';
       appendMessage(makeMsg('assistant', `Sorry, I couldn't respond just now. ${msg}`));
