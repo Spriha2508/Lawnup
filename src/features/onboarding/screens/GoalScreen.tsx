@@ -29,14 +29,21 @@ export const GoalScreen: React.FC = () => {
   const toggle = (id: string) =>
     setSelected(prev => (prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]));
 
-  const handleFinish = async () => {
+  const handleFinish = () => {
     if (!user || isLoading) return;
     setIsLoading(true);
     setGoals(selected);
-    await updateDoc(doc(db, `users/${user.uid}`), { onboardingComplete: true });
-    setUser({ ...user, onboardingComplete: true });
     track('onboarding_completed', { goals: selected, city: user.city });
-    setIsLoading(false);
+
+    // Enter the app on the local state immediately — never block first-run on the
+    // server round-trip. The write is queued by Firestore (offline-persistent) and
+    // retried on reconnect, so a flaky/absent connection can't trap the user on
+    // this screen. A hard failure is logged but must not strand the user here.
+    updateDoc(doc(db, `users/${user.uid}`), { onboardingComplete: true }).catch((e: any) => {
+      console.warn('[Onboarding] onboardingComplete write failed (will retry on sync):', e?.message);
+    });
+
+    setUser({ ...user, onboardingComplete: true });
   };
 
   const canSubmit = selected.length > 0 && !isLoading;
