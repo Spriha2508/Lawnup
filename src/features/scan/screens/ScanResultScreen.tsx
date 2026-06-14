@@ -37,6 +37,7 @@ import type { WeatherData } from '../../../services/weather/weatherService';
 import type { ScanStackParamList } from '../../../navigation/types';
 import type { UserPlantDoc } from '../../../types/firestore.types';
 import { theme } from '@constants/designSystem';
+import { openPaywall } from '@navigation/openPaywall';
 
 const C = theme.color;
 
@@ -295,7 +296,7 @@ export const ScanResultScreen: React.FC = () => {
           {!isPremium && remaining !== -1 && remaining <= 1 && (
             <Pressable
               style={styles.scanCountBanner}
-              onPress={() => navigation.getParent<any>()?.navigate('Profile', { screen: 'Paywall' })}
+              onPress={() => openPaywall(navigation)}
             >
               <Text style={styles.scanCountText}>
                 {remaining === 0
@@ -339,7 +340,7 @@ export const ScanResultScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.aiDoctorCard}
                 onPress={() =>
-                  navigation.getParent<any>()?.navigate('Profile', { screen: 'Paywall' })
+                  openPaywall(navigation)
                 }
                 activeOpacity={0.82}
               >
@@ -537,7 +538,7 @@ export const ScanResultScreen: React.FC = () => {
         context="after_save"
         onUpgrade={() => {
           setUpgradeVisible(false);
-          navigation.getParent<any>()?.navigate('Profile', { screen: 'Paywall' });
+          openPaywall(navigation);
         }}
         onDismiss={() => {
           setUpgradeVisible(false);

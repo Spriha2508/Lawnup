@@ -27,6 +27,7 @@ import { analyzeImageQuality } from '../../../shared/utils/imageQuality';
 import type { ImageQualityResult } from '../../../shared/utils/imageQuality';
 import { logger } from '../../../shared/utils/logger';
 import { theme } from '@constants/designSystem';
+import { openPaywall } from '@navigation/openPaywall';
 import type { ScanStackParamList } from '../../../navigation/types';
 
 // Camera is a dark scan scene (the 30% dark), not the light app theme.
@@ -560,7 +561,7 @@ export const CameraScreen: React.FC = () => {
           </Text>
           <TouchableOpacity
             style={styles.overlayBtn}
-            onPress={() => (navigation as any).getParent()?.getParent()?.navigate('Profile', { screen: 'Paywall' })}
+            onPress={() => openPaywall(navigation)}
             activeOpacity={0.88}
           >
             <Text style={styles.overlayBtnText}>View upgrade options</Text>

@@ -79,7 +79,8 @@ If `updateDoc` **rejects** (permission error, etc.), the function throws → `se
 **Impact:** Common app-store / user expectations (notification control, account deletion) are absent. Account deletion in particular is often a store-review requirement.
 **Fix:** Add a Settings screen with at least notification toggle and account deletion before public launch.
 
-### M3 — Quota-exhausted chat jumps across tabs to the Paywall
+### M3 — Quota-exhausted chat jumps across tabs to the Paywall — ✅ FIXED (2026-06-14)
+**Resolution:** Root-caused as app-wide, not chat-only — **every** Paywall entry point (Home, ScanLanding, Processing, ScanResult×3, Camera, PlantDetail, Chat, Profile) did `navigate('Profile', {screen:'Paywall'})` because Paywall lived only in the Profile stack. Hoisted `Paywall` to a **root-level modal** (`RootNavigator`, `presentation:'modal'`), removed it from `ProfileNavigator`, and routed all 9 call sites through a new `openPaywall(navigation)` helper (`navigation/openPaywall.ts`) — `navigate('Paywall')` now bubbles up the tree and presents as an overlay over the current tab, no tab switch. Also removes the fragile `getParent()`/`getParent().getParent()` chains. Verified: tsc clean, web bundle compiles. Commit below.
 **Where:** `src/features/ai-doctor/screens/ChatScreen.tsx:96`
 **Issue:** When the daily message limit is hit, the app does `navigation.navigate('Profile', { screen: 'Paywall' })` — jumping from the Chat tab into the Profile tab's stack. Functional, but disorienting (the user "loses" the Chat tab context).
 **Fix:** Present the Paywall as a modal over the current tab, or show an inline upgrade prompt in Chat.
@@ -93,11 +94,11 @@ If `updateDoc` **rejects** (permission error, etc.), the function throws → `se
 
 ## 🟢 Low
 
-### L1 — 14 ESLint errors in unused dead-code files
-`src/shared/components/motion/AnimatedSplash.skia.tsx` (13) and `LeafBurst.skia.tsx` (1) — "Cannot call impure function during render" / inline-function rules. These `.skia` alternates are **not imported** anywhere (the app uses `AnimatedSplash.tsx`), so no runtime impact. Delete the dead files or fix to clear the error count.
+### L1 — 14 ESLint errors in unused dead-code files — ✅ FIXED (2026-06-14)
+**Resolution:** `AnimatedSplash.skia.tsx` (13 errors) was genuinely unreferenced → **deleted**. `LeafBurst.skia.tsx` (1 error) is NOT dead — `LeafBurst.tsx:19` conditionally `require()`s it on the Skia path — so instead of deleting, fixed the lint error in place (`useMemo(makeSeeds, [])` → `useMemo(() => makeSeeds(), [])`, behavior-identical). **Project ESLint errors: 14 → 0.** Commit below.
 
-### L2 — Declared-but-unimplemented routes
-`ChatHistory` and `SubscriptionSuccess` are declared in `navigation/types.ts` but have no screen and aren't registered. **Verified nothing navigates to them**, so harmless today — but they'll crash if a future caller uses them. Either implement or remove from types.
+### L2 — Declared-but-unimplemented routes — ✅ FIXED (2026-06-14)
+**Resolution:** Removed the dead `ChatHistory` (from `ChatStackParamList`) and `SubscriptionSuccess` (from `ProfileStackParamList`) type declarations — neither had a screen or any navigator/caller. Commit below.
 
 ### L3 — 148 ESLint warnings (code hygiene)
 Reanimated "ref access / impure during render" warnings (e.g. `PlantCard.tsx`), unused imports, `require()`-style imports, a duplicate-import warning. Non-blocking; worth a cleanup pass. 4 are auto-fixable via `eslint --fix`.

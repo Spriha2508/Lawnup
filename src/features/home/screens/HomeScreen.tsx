@@ -24,6 +24,7 @@ import { getWeatherInsight, getSeasonalTip } from '../utils/homeInsights';
 import { HealthRing } from '@shared/components/motion/HealthRing';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
+import { openPaywall } from '@navigation/openPaywall';
 import type { WeatherData } from '../../../services/weather/weatherService';
 import type { UserPlantDoc } from '../../../types/firestore.types';
 
@@ -209,7 +210,7 @@ export const HomeScreen: React.FC = () => {
         {/* Premium banner */}
         {!isPremium && !bannerDismissed && (
           <Animated.View entering={FadeInDown.duration(M.duration.standard)} style={styles.premiumBanner}>
-            <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => navigation.navigate('Profile', { screen: 'Paywall' })} activeOpacity={0.82} />
+            <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => openPaywall(navigation)} activeOpacity={0.82} />
             <View style={{ flex: 1 }}>
               <Text style={styles.premiumEyebrow}>LAWNUP PRO</Text>
               <Text style={styles.premiumText}>Unlimited scans · AI Doctor · No limits</Text>

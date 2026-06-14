@@ -96,7 +96,7 @@ interface Props {
 
 export const LeafBurst: React.FC<Props> = ({ playKey, origin, onDone }) => {
   const progress = useSharedValue(0);
-  const seeds = useMemo(makeSeeds, []);
+  const seeds = useMemo(() => makeSeeds(), []);
   const ox = origin?.x ?? W / 2;
   const oy = origin?.y ?? H / 2;
 

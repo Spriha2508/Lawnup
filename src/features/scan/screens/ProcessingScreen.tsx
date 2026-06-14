@@ -22,6 +22,7 @@ import { logger } from '../../../shared/utils/logger';
 import { UpgradePrompt } from '../../subscription/components/UpgradePrompt';
 import type { ScanStackParamList } from '../../../navigation/types';
 import { theme } from '@constants/designSystem';
+import { openPaywall } from '@navigation/openPaywall';
 
 // Processing is a dark scan scene (the 30% dark), not the light app theme.
 const C = theme.dark.color;
@@ -294,7 +295,7 @@ export const ProcessingScreen: React.FC = () => {
         context="scan_limit"
         onUpgrade={() => {
           cancelScan();
-          navigation.getParent<any>()?.navigate('Profile', { screen: 'Paywall' });
+          openPaywall(navigation);
         }}
         onDismiss={() => {
           cancelScan();

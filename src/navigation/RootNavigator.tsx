@@ -15,6 +15,7 @@ import { config } from '../constants/config';
 import { AuthNavigator } from './AuthNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { MainTabNavigator } from './MainTabNavigator';
+import { PaywallScreen } from '../features/subscription/screens/PaywallScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -172,7 +173,15 @@ export const RootNavigator = memo(function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={ROOT_STACK_OPTIONS}>
       {user?.onboardingComplete ? (
-        <Stack.Screen name="Main"       component={MainTabNavigator}    />
+        <>
+          <Stack.Screen name="Main" component={MainTabNavigator} />
+          {/* Root-level modal: any tab opens it as an overlay, no tab switch (QA M3). */}
+          <Stack.Screen
+            name="Paywall"
+            component={PaywallScreen}
+            options={{ presentation: 'modal', gestureEnabled: true, animationEnabled: true }}
+          />
+        </>
       ) : (
         <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
       )}

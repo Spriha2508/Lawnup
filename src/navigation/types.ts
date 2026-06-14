@@ -41,7 +41,6 @@ export type PlantsStackParamList = {
 // AI Doctor Stack
 export type ChatStackParamList = {
   Chat: { plantId?: string };
-  ChatHistory: undefined;
 };
 
 // Reminders Stack
@@ -58,8 +57,6 @@ export type ProfileStackParamList = {
   HelpSupport: undefined;
   Reminders: undefined;
   AddReminder: { plantId?: string };
-  Paywall: undefined;
-  SubscriptionSuccess: { plan: string; expiresAt: string };
 };
 
 // Main Tab Navigator (5 tabs — Home · Plants · Scan · Chat · Profile)
@@ -76,4 +73,6 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Main: NavigatorScreenParams<MainTabParamList>;
+  // Root-level modal so any tab can present it as an overlay (QA M3).
+  Paywall: undefined;
 };

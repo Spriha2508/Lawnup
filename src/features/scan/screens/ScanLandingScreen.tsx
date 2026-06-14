@@ -9,6 +9,7 @@ import { useSubscriptionStore } from '../../subscription/store/subscriptionStore
 import { useScanStore } from '../store/scanStore';
 import { ScanFrame } from '../components/ScanFrame';
 import { PressableScale } from '@shared/components/motion/PressableScale';
+import { openPaywall } from '@navigation/openPaywall';
 import { logger } from '../../../shared/utils/logger';
 import { theme } from '@constants/designSystem';
 import type { ScanStackParamList } from '../../../navigation/types';
@@ -90,7 +91,7 @@ export const ScanLandingScreen: React.FC = () => {
         </PressableScale>
 
         {limitReached && (
-          <PressableScale style={styles.upgradeBtn} onPress={() => navigation.getParent<any>()?.navigate('Profile', { screen: 'Paywall' })} to={0.95}>
+          <PressableScale style={styles.upgradeBtn} onPress={() => openPaywall(navigation)} to={0.95}>
             <Text style={styles.upgradeBtnText}>Upgrade for unlimited scans</Text>
           </PressableScale>
         )}

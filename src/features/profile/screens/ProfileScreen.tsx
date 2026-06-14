@@ -9,6 +9,7 @@ import { useAuthStore } from '../../auth/store/authStore';
 import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
 import { usePlantsStore } from '../../my-plants/store/plantsStore';
 import { PressableScale } from '@shared/components/motion/PressableScale';
+import { openPaywall } from '@navigation/openPaywall';
 import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
 import { theme } from '@constants/designSystem';
 import type { ProfileStackParamList } from '../../../navigation/types';
@@ -130,7 +131,7 @@ export const ProfileScreen: React.FC = () => {
                   <Text style={styles.premiumScansLeft}>{remaining === 0 ? 'No free scans left this week' : `${remaining} free scan left this week`}</Text>
                 )}
               </View>
-              <PressableScale style={styles.premiumBtn} onPress={() => navigation.navigate('Paywall')} to={0.95}>
+              <PressableScale style={styles.premiumBtn} onPress={() => openPaywall(navigation)} to={0.95}>
                 <Text style={styles.premiumBtnText}>Upgrade</Text>
               </PressableScale>
             </Animated.View>

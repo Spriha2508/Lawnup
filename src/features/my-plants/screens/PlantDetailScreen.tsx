@@ -35,6 +35,7 @@ import {
 import type { WeatherData } from '../../../services/weather/weatherService';
 import type { PlantsStackParamList } from '../../../navigation/types';
 import { theme } from '@constants/designSystem';
+import { openPaywall } from '@navigation/openPaywall';
 
 const C = theme.color;
 
@@ -490,7 +491,7 @@ export const PlantDetailScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.aiCard}
             onPress={() =>
-              navigation.getParent<any>()?.navigate('Profile', { screen: 'Paywall' })
+              openPaywall(navigation)
             }
             activeOpacity={0.82}
           >

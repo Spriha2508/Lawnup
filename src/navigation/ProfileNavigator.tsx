@@ -4,7 +4,6 @@ import { ProfileScreen } from '../features/profile/screens/ProfileScreen';
 import { EditProfileScreen } from '../features/profile/screens/EditProfileScreen';
 import { ScanHistoryScreen } from '../features/profile/screens/ScanHistoryScreen';
 import { HelpSupportScreen } from '../features/profile/screens/HelpSupportScreen';
-import { PaywallScreen } from '../features/subscription/screens/PaywallScreen';
 import { RemindersScreen } from '../features/reminders/screens/RemindersScreen';
 import { AddReminderScreen } from '../features/reminders/screens/AddReminderScreen';
 import { fadeTransition } from './transitions';
@@ -20,10 +19,5 @@ export const ProfileNavigator: React.FC = () => (
     <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
     <Stack.Screen name="Reminders" component={RemindersScreen} />
     <Stack.Screen name="AddReminder" component={AddReminderScreen} />
-    <Stack.Screen
-      name="Paywall"
-      component={PaywallScreen}
-      options={{ presentation: 'modal', gestureEnabled: true }}
-    />
   </Stack.Navigator>
 );

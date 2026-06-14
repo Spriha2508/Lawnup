@@ -9,6 +9,7 @@ import { Timestamp } from 'firebase/firestore';
 import Svg, { Path, Circle } from 'react-native-svg';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { theme } from '@constants/designSystem';
+import { openPaywall } from '@navigation/openPaywall';
 import { useChatStore } from '../store/chatStore';
 import { usePlantMemoryStore } from '../store/plantMemoryStore';
 import { askBanyan } from '../services/banyanService';
@@ -93,7 +94,7 @@ export const ChatScreen: React.FC = () => {
     // Quota gate (free: 20/day · premium: unlimited)
     const sub = useSubscriptionStore.getState();
     if (!sub.canSendMessageToday()) {
-      navigation.navigate('Profile', { screen: 'Paywall' });
+      openPaywall(navigation);
       return;
     }
 
