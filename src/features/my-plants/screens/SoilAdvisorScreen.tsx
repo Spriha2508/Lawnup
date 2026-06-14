@@ -7,7 +7,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RouteProp } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { usePlantsStore } from '../store/plantsStore';
-import { retrievePlantKnowledge } from '../../../services/knowledge';
+import { retrievePlantKnowledge, currentSeason } from '../../../services/knowledge';
 import { askDrBanyan } from '@navigation/askDrBanyan';
 import { theme } from '@constants/designSystem';
 import type { PlantsStackParamList } from '../../../navigation/types';
@@ -36,6 +36,43 @@ const MIX_STEPS = [
 
 const REPOT_TIP = 'Repot every 1–2 years, or when roots circle the pot or poke out the drainage holes. Go just one size up — too large a pot holds excess water and risks root rot.';
 
+type WateredId = 'today' | 'few' | 'week' | 'longer' | 'unsure';
+const WATERED_OPTS: { id: WateredId; label: string }[] = [
+  { id: 'today', label: 'Today' },
+  { id: 'few', label: '2–3 days ago' },
+  { id: 'week', label: 'About a week' },
+  { id: 'longer', label: 'Longer ago' },
+  { id: 'unsure', label: 'Not sure' },
+];
+
+// ── Rule-based recommendation engine (no image AI) ───────────────────────────
+// Outputs are derived from real inputs: plant watering need + indoor/outdoor +
+// last-watered + the season + the mix's own drainage composition.
+function soilCondition(w: WateredId, fastDrying: boolean): string {
+  switch (w) {
+    case 'today': return 'Freshly watered — the soil is moist right now. Let the top layer dry out before you water again.';
+    case 'few': return fastDrying
+      ? 'Drying out — the top is likely dry already; check the soil a few cm down before watering.'
+      : 'Lightly moist — probably still damp below the surface, so hold off a little longer.';
+    case 'week': return 'Likely dry — most plants will want water now. Confirm with a quick finger test first.';
+    case 'longer': return 'Probably very dry — water soon, soaking gently until it drains, so the mix re-wets evenly.';
+    default: return 'Unknown — push a finger (or a wooden skewer) 2–3 cm in; water only if it comes out dry.';
+  }
+}
+function moistureGuidance(days: number, indoor: boolean): string {
+  const base = `Aim to water roughly every ${days} day${days === 1 ? '' : 's'}.`;
+  const env = indoor
+    ? ' Indoors the soil holds moisture longer, so err on the dry side — overwatering is the bigger risk.'
+    : ' Outdoors (and in heat) it dries faster, so check more often.';
+  return `${base}${env} Always feel the top 2–3 cm and water only when it’s dry.`;
+}
+function drainageGuidance(drainagePct: number): string {
+  if (drainagePct >= 30) {
+    return 'This mix drains fast — ideal for roots that hate sitting wet. Use a pot with drainage holes and always empty the saucer.';
+  }
+  return 'Use a pot with drainage holes and never leave the saucer full. If water pools on the surface, mix in a handful of perlite or coarse sand to open it up.';
+}
+
 export const SoilAdvisorScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -55,6 +92,26 @@ export const SoilAdvisorScreen: React.FC = () => {
   }, [species]);
 
   const label = selectedPlant?.nickname || planted || species || 'your plant';
+
+  // ── Inputs for the recommendation engine ──────────────────────────────────
+  const [indoor, setIndoor] = useState(true);
+  const [watered, setWatered] = useState<WateredId>('few');
+
+  const advice = useMemo(() => {
+    const season = currentSeason();
+    const fastDrying = !indoor || season === 'summer';
+    const days = selectedPlant?.wateringFrequencyDays && selectedPlant.wateringFrequencyDays > 0
+      ? selectedPlant.wateringFrequencyDays
+      : 7;
+    const drainagePct = mix.components
+      .filter(c => /perlite|sand|bark|grit|pumice/i.test(c.material))
+      .reduce((sum, c) => sum + c.percent, 0);
+    return {
+      condition: soilCondition(watered, fastDrying),
+      moisture: moistureGuidance(days, indoor),
+      drainage: drainageGuidance(drainagePct),
+    };
+  }, [indoor, watered, selectedPlant, mix]);
 
   return (
     <View style={styles.screen}>
@@ -86,7 +143,40 @@ export const SoilAdvisorScreen: React.FC = () => {
             </ScrollView>
           )}
 
-          {/* Recipe */}
+          {/* Inputs: indoor/outdoor + last watered */}
+          <View style={styles.segment}>
+            {([true, false] as const).map((isIndoor) => (
+              <TouchableOpacity
+                key={String(isIndoor)}
+                style={[styles.segBtn, indoor === isIndoor && styles.segBtnActive]}
+                onPress={() => setIndoor(isIndoor)}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.segText, indoor === isIndoor && styles.segTextActive]}>{isIndoor ? 'Indoor' : 'Outdoor'}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.inputLabel}>LAST WATERED</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            {WATERED_OPTS.map((o) => {
+              const active = watered === o.id;
+              return (
+                <TouchableOpacity key={o.id} style={[styles.chip, active && styles.chipActive]} onPress={() => setWatered(o.id)} activeOpacity={0.8}>
+                  <Text style={[styles.chipText, active && { color: C.onPrimary }]}>{o.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {/* Outputs: soil condition · moisture · drainage */}
+          <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.adviceCard}>
+            <AdviceRow icon="🪴" label="Soil condition" text={advice.condition} />
+            <AdviceRow icon="💧" label="Moisture" text={advice.moisture} />
+            <AdviceRow icon="🌱" label="Drainage" text={advice.drainage} last />
+          </Animated.View>
+
+          {/* Ideal Soil Mix */}
           <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.card}>
             <Text style={styles.cardEyebrow}>{inKB ? 'IDEAL MIX' : 'RECOMMENDED MIX'}</Text>
             <Text style={styles.cardTitle}>{mix.name}</Text>
@@ -162,8 +252,33 @@ export const SoilAdvisorScreen: React.FC = () => {
   );
 };
 
+const AdviceRow: React.FC<{ icon: string; label: string; text: string; last?: boolean }> = ({ icon, label, text, last }) => (
+  <View style={[styles.adviceRow, !last && styles.adviceRowBorder]}>
+    <View style={styles.adviceIcon}><Text style={{ fontSize: 16 }}>{icon}</Text></View>
+    <View style={{ flex: 1 }}>
+      <Text style={styles.adviceLabel}>{label}</Text>
+      <Text style={styles.adviceText}>{text}</Text>
+    </View>
+  </View>
+);
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
+
+  segment: { flexDirection: 'row', backgroundColor: C.surface, borderRadius: R.pill, padding: 4, marginBottom: S.xl, borderWidth: 1, borderColor: C.border },
+  segBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: R.pill },
+  segBtnActive: { backgroundColor: C.primary },
+  segText: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textSecondary },
+  segTextActive: { color: C.onPrimary },
+  inputLabel: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2, marginBottom: S.md },
+
+  adviceCard: { backgroundColor: C.card, borderRadius: R.xl, paddingHorizontal: S.lg, borderWidth: 1, borderColor: C.border, marginBottom: S['2xl'], ...theme.shadows.card },
+  adviceRow: { flexDirection: 'row', alignItems: 'flex-start', gap: S.md, paddingVertical: S.lg },
+  adviceRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.border },
+  adviceIcon: { width: 34, height: 34, borderRadius: 11, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  adviceLabel: { ...T.statLabel, color: C.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 3 },
+  adviceText: { ...T.bodyMd, color: C.textSecondary, lineHeight: 21 },
+
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 12,
