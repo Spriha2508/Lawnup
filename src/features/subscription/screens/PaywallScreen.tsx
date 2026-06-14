@@ -19,11 +19,12 @@ import { theme } from '@constants/designSystem';
 const C = theme.color;
 const { width: W } = Dimensions.get('window');
 
-// Real-feeling recovery stories — emotional proof, not just a feature list.
+// Illustrative recovery examples — what Premium helps with (no fabricated
+// testimonials; each names the feature that does the work, honestly).
 const STORIES = [
-  { emoji: '🌿', from: 'Yellowing leaves', to: 'Lush & thriving', days: '3 weeks', quote: 'LawnUp caught the overwatering early — my Money Plant bounced right back.', who: 'Ananya · Mumbai' },
-  { emoji: '🌱', from: 'Brown, crispy tips', to: 'Fresh new growth', days: '2 weeks', quote: 'The AI Doctor knew exactly what my Areca Palm needed.', who: 'Rohan · Bengaluru' },
-  { emoji: '🌸', from: 'No blooms in months', to: 'Flowering again', days: '5 weeks', quote: 'Smart reminders + care tips brought my Hibiscus back to life.', who: 'Meera · Pune' },
+  { emoji: '🌿', from: 'Yellowing leaves', to: 'Lush & thriving', days: '~3 weeks', how: 'AI Doctor flags overwatering early' },
+  { emoji: '🌱', from: 'Brown, crispy tips', to: 'Fresh new growth', days: '~2 weeks', how: 'A care plan tuned to its light & soil' },
+  { emoji: '🌸', from: 'No blooms in months', to: 'Flowering again', days: '~5 weeks', how: 'Smart reminders + seasonal tips' },
 ];
 
 // Feature comparison rows
@@ -114,7 +115,7 @@ export const PaywallScreen: React.FC = () => {
           </Pressable>
 
           <Text style={styles.heroEyebrow}>LAWNUP PREMIUM</Text>
-          <Text style={styles.heroTitle}>Grow beyond{'\n'}the basics.</Text>
+          <Text style={styles.heroTitle}>Never lose a{'\n'}plant to a guess.</Text>
           <Text style={styles.heroSubtitle}>
             Unlimited AI scans, smart reminders, and expert plant care — tailored for Indian gardens.
           </Text>
@@ -151,7 +152,11 @@ export const PaywallScreen: React.FC = () => {
                   <View style={styles.colPremium}>
                     <View style={styles.premiumValRow}>
                       <CheckMark />
-                      <Text style={styles.premiumVal}>{row.premiumValue}</Text>
+                      <Text style={styles.premiumVal}>
+                        {row.feature === 'unlimitedScans'
+                          ? (selectedPlan === 'annual' ? '100 / month' : '80 / month')
+                          : row.premiumValue}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -163,10 +168,10 @@ export const PaywallScreen: React.FC = () => {
 
         {/* ── Emotional proof: real transformations ──────────────────────── */}
         <View style={styles.emotionalSection}>
-          <Text style={styles.sectionLabel}>REAL RESULTS</Text>
+          <Text style={styles.sectionLabel}>WHAT PREMIUM HELPS WITH</Text>
           <Text style={styles.emotionalTitle}>From struggling{'\n'}to thriving.</Text>
           <Text style={styles.emotionalBody}>
-            Thousands of Indian gardeners use LawnUp Premium to bring their plants back to life.
+            Premium gives you the tools to catch problems early and bring plants back — here’s what that looks like.
           </Text>
         </View>
 
@@ -188,8 +193,7 @@ export const PaywallScreen: React.FC = () => {
                 <View style={styles.pillGood}><Text style={styles.pillGoodText}>{s.to}</Text></View>
               </View>
               <Text style={styles.storyDays}>Recovered in {s.days}</Text>
-              <Text style={styles.storyQuote}>“{s.quote}”</Text>
-              <Text style={styles.storyWho}>{s.who}</Text>
+              <Text style={styles.storyQuote}>{s.how}</Text>
             </View>
           ))}
         </ScrollView>

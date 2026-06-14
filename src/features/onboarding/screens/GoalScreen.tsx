@@ -54,7 +54,7 @@ export const GoalScreen: React.FC = () => {
       eyebrow="STEP 4 OF 4"
       title={"What's your\nmain goal?"}
       subtitle="Pick all that speak to you — we'll shape your home screen around them."
-      ctaLabel={isLoading ? 'Setting up your garden…' : 'Enter Lawnup'}
+      ctaLabel={isLoading ? 'Setting up your garden…' : 'Enter LawnUp'}
       ctaEnabled={canSubmit}
       onCta={handleFinish}
       secondaryLabel={isLoading ? undefined : 'Skip for now'}

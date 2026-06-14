@@ -26,7 +26,7 @@ export const SkillLevelScreen: React.FC = () => {
       step={{ current: 2, total: 4 }}
       eyebrow="STEP 2 OF 4"
       title={'How would you\ndescribe yourself?'}
-      subtitle="No judgement — we'll meet you exactly where you are."
+      subtitle="So your care tips land right — never too basic, never over your head."
       ctaLabel="Continue"
       ctaEnabled={selected.length > 0}
       onCta={() => navigation.navigate('PlantsType')}
