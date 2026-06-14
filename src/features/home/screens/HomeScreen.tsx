@@ -123,6 +123,10 @@ export const HomeScreen: React.FC = () => {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const isPremium = isPremiumActive();
 
+  // First-run: with no plants yet, Home collapses to ONE clear action (scan your
+  // first plant) so a new user is never overwhelmed by empty/generic modules.
+  const isNewUser = plants.length === 0;
+
   useEffect(() => {
     if (city) {
       getCurrentWeather(city).then(setWeather).catch(() => {});
@@ -207,8 +211,8 @@ export const HomeScreen: React.FC = () => {
           )}
         </Animated.View>
 
-        {/* Premium banner */}
-        {!isPremium && !bannerDismissed && (
+        {/* Premium banner — never on first run; let value land before the upsell */}
+        {!isPremium && !bannerDismissed && !isNewUser && (
           <Animated.View entering={FadeInDown.duration(M.duration.standard)} style={styles.premiumBanner}>
             <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => openPaywall(navigation)} activeOpacity={0.82} />
             <View style={{ flex: 1 }}>
@@ -225,7 +229,7 @@ export const HomeScreen: React.FC = () => {
         )}
 
         {/* Weather · Garden Sync */}
-        {weatherInsight && (
+        {!isNewUser && weatherInsight && (
           <Animated.View entering={FadeInDown.delay(60).duration(M.duration.expressive)} style={styles.weatherCard}>
             <View style={{ flex: 1 }}>
               <Text style={styles.cardEyebrow}>{weatherInsight.eyebrow}</Text>
@@ -243,7 +247,7 @@ export const HomeScreen: React.FC = () => {
         )}
 
         {/* Air quality · plant guidance (India-first) */}
-        {aqi && aqiAdvice && (
+        {!isNewUser && aqi && aqiAdvice && (
           <Animated.View entering={FadeInDown.delay(90).duration(M.duration.expressive)} style={styles.aqiCard}>
             <View style={{ flex: 1 }}>
               <Text style={styles.cardEyebrow}>AIR QUALITY{city ? ` · ${city}` : ''}</Text>
@@ -258,33 +262,46 @@ export const HomeScreen: React.FC = () => {
         )}
 
         {/* Today narrative (compact) */}
-        <Animated.View entering={FadeInDown.delay(110).duration(M.duration.expressive)} style={styles.narrativeRow}>
-          <View style={styles.narrativeDot} />
-          <Text style={styles.narrativeText}>{todayNarrative}</Text>
-        </Animated.View>
+        {!isNewUser && (
+          <Animated.View entering={FadeInDown.delay(110).duration(M.duration.expressive)} style={styles.narrativeRow}>
+            <View style={styles.narrativeDot} />
+            <Text style={styles.narrativeText}>{todayNarrative}</Text>
+          </Animated.View>
+        )}
 
         {/* Hero scan CTA */}
         <Animated.View entering={FadeInDown.delay(160).duration(M.duration.expressive)} style={{ marginBottom: S.lg }}>
           <PressableScale style={styles.scanCard} onPress={() => navigation.navigate('Scan')} to={0.97}>
             <Animated.View style={[styles.scanBlob, blobStyle]} />
-            <Text style={styles.scanLabel}>AI PLANT SCAN</Text>
-            <Text style={styles.scanTitle}>Identify any plant{'\n'}in seconds</Text>
-            <Text style={styles.scanBody}>Species ID, health check, and a personalised care guide — instantly.</Text>
-            <View style={styles.scanBtn}><Text style={styles.scanBtnText}>Open Camera  →</Text></View>
+            <Text style={styles.scanLabel}>{isNewUser ? 'START HERE' : 'AI PLANT SCAN'}</Text>
+            <Text style={styles.scanTitle}>
+              {isNewUser ? <>Scan your{'\n'}first plant</> : <>Identify any plant{'\n'}in seconds</>}
+            </Text>
+            <Text style={styles.scanBody}>
+              {isNewUser
+                ? 'Point your camera at any plant — we’ll name it, check its health, and build a care plan just for it.'
+                : 'Species ID, health check, and a personalised care guide — instantly.'}
+            </Text>
+            <View style={styles.scanBtn}><Text style={styles.scanBtnText}>{isNewUser ? 'Scan a plant  →' : 'Open Camera  →'}</Text></View>
           </PressableScale>
         </Animated.View>
 
-        {/* Core value props — what LawnUp does, made prominent */}
-        <View style={styles.valueGrid}>
-          {VALUE_PROPS.map((v, i) => (
-            <Animated.View key={v.label} entering={FadeInDown.delay(190 + i * 45).duration(M.duration.standard)} style={{ width: (W - H_PAD * 2 - 10) / 2 }}>
-              <PressableScale style={styles.valueItem} onPress={() => navigation.navigate('Scan')} to={0.97}>
-                <View style={styles.valueIcon}><Text style={styles.valueEmoji}>{v.icon}</Text></View>
-                <Text style={styles.valueLabel}>{v.label}</Text>
-              </PressableScale>
-            </Animated.View>
-          ))}
-        </View>
+        {/* What you'll get — shown on first run to explain the app, one tap from a scan */}
+        {isNewUser && (
+          <>
+            <Text style={styles.valueHeading}>What one scan gives you</Text>
+            <View style={styles.valueGrid}>
+              {VALUE_PROPS.map((v, i) => (
+                <Animated.View key={v.label} entering={FadeInDown.delay(190 + i * 45).duration(M.duration.standard)} style={{ width: (W - H_PAD * 2 - 10) / 2 }}>
+                  <PressableScale style={styles.valueItem} onPress={() => navigation.navigate('Scan')} to={0.97}>
+                    <View style={styles.valueIcon}><Text style={styles.valueEmoji}>{v.icon}</Text></View>
+                    <Text style={styles.valueLabel}>{v.label}</Text>
+                  </PressableScale>
+                </Animated.View>
+              ))}
+            </View>
+          </>
+        )}
 
         {/* Plant Health Snapshot */}
         {plants.length > 0 && (
@@ -328,32 +345,36 @@ export const HomeScreen: React.FC = () => {
         )}
 
         {/* Seasonal tip */}
-        <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={[styles.seasonCard, { marginBottom: SECTION_GAP }]}>
-          <Text style={styles.cardEyebrow}>{seasonalTip.eyebrow}</Text>
-          <Text style={styles.seasonTitle}>{seasonalTip.title}</Text>
-          <Text style={styles.seasonBody}>{seasonalTip.body}</Text>
-        </Animated.View>
+        {!isNewUser && (
+          <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={[styles.seasonCard, { marginBottom: SECTION_GAP }]}>
+            <Text style={styles.cardEyebrow}>{seasonalTip.eyebrow}</Text>
+            <Text style={styles.seasonTitle}>{seasonalTip.title}</Text>
+            <Text style={styles.seasonBody}>{seasonalTip.body}</Text>
+          </Animated.View>
+        )}
 
         {/* Plant emergency quick actions */}
-        <View style={{ marginBottom: S.xl }}>
-          <SectionHeader label="QUICK DIAGNOSE" />
-          <View style={styles.emergencyGrid}>
-            {EMERGENCIES.map((e, i) => (
-              <Animated.View key={e.id} entering={FadeInDown.delay(i * 50).duration(M.duration.standard)} style={{ width: (W - H_PAD * 2 - 12) / 2 }}>
-                <PressableScale style={styles.emCard} onPress={() => navigation.navigate('Scan')} to={0.97}>
-                  <View style={styles.emIcon}>
-                    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none"><Path d={e.d} fill={C.primary} opacity={0.85} /></Svg>
-                  </View>
-                  <Text style={styles.emLabel}>{e.label}</Text>
-                </PressableScale>
-              </Animated.View>
-            ))}
+        {!isNewUser && (
+          <View style={{ marginBottom: S.xl }}>
+            <SectionHeader label="QUICK DIAGNOSE" />
+            <View style={styles.emergencyGrid}>
+              {EMERGENCIES.map((e, i) => (
+                <Animated.View key={e.id} entering={FadeInDown.delay(i * 50).duration(M.duration.standard)} style={{ width: (W - H_PAD * 2 - 12) / 2 }}>
+                  <PressableScale style={styles.emCard} onPress={() => navigation.navigate('Scan')} to={0.97}>
+                    <View style={styles.emIcon}>
+                      <Svg width={16} height={16} viewBox="0 0 24 24" fill="none"><Path d={e.d} fill={C.primary} opacity={0.85} /></Svg>
+                    </View>
+                    <Text style={styles.emLabel}>{e.label}</Text>
+                  </PressableScale>
+                </Animated.View>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
-        {plants.length === 0 && (
-          <Animated.View entering={FadeInDown.delay(200)} style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>Your future indoor jungle starts here — scan any plant to begin.</Text>
+        {isNewUser && (
+          <Animated.View entering={FadeInDown.delay(320)} style={styles.emptyWrap}>
+            <Text style={styles.emptyText}>Free to start · Save as many plants as you like · No card needed</Text>
           </Animated.View>
         )}
       </AnimatedScrollView>
@@ -497,6 +518,7 @@ const styles = StyleSheet.create({
   scanBtnText: { ...T.button, fontFamily: F.sansBold, color: C.primaryDark },
 
   // Value props grid
+  valueHeading: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2, marginBottom: S.md },
   valueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: SECTION_GAP },
   valueItem: { flexDirection: 'row', alignItems: 'center', gap: S.md, backgroundColor: C.card, borderRadius: R.lg, paddingVertical: S.md, paddingHorizontal: S.md, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
   valueIcon: { width: 30, height: 30, borderRadius: 9, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center' },

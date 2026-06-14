@@ -170,7 +170,7 @@ export const ChatScreen: React.FC = () => {
       <View style={{ flex: 1 }}>
         <Text style={styles.headerTitle}>Dr. Banyan</Text>
         <Text style={styles.headerSub}>
-          {enrichedPlant?.nickname ? `Caring for ${enrichedPlant.nickname}` : 'Your plant care companion'}
+          {enrichedPlant?.nickname ? `Caring for ${enrichedPlant.nickname}` : 'AI plant doctor'}
         </Text>
       </View>
       {!isPremium && (
@@ -184,12 +184,14 @@ export const ChatScreen: React.FC = () => {
   const empty = (
     <Animated.View entering={FadeIn.duration(M.duration.expressive)} style={styles.empty}>
       <View style={styles.emptyBadge}><DoctorMark size={34} /></View>
-      <Text style={styles.emptyTitle}>Ask Dr. Banyan</Text>
+      <Text style={styles.emptyEyebrow}>AI PLANT DOCTOR</Text>
+      <Text style={styles.emptyTitle}>Meet Dr. Banyan</Text>
       <Text style={styles.emptyBody}>
         {enrichedPlant?.nickname
-          ? `I know ${enrichedPlant.nickname}. Ask me anything about its care.`
-          : 'Plant care, watering, soil, light, propagation, diagnosis — ask away.'}
+          ? `I know ${enrichedPlant.nickname} — ask me anything about its watering, light, soil, or any trouble you’re seeing.`
+          : 'I’m your AI plant doctor, grounded in care data for 100+ Indian plants. Ask about watering, light, soil, pests — or that mystery yellow leaf.'}
       </Text>
+      <Text style={styles.chipsHint}>Tap a question to begin</Text>
       <View style={styles.chips}>
         {SUGGESTIONS.map(s => (
           <Pressable key={s} style={styles.chip} onPress={() => send(s)}>
@@ -283,9 +285,11 @@ const styles = StyleSheet.create({
   typingText: { ...T.caption, color: C.textSecondary },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: S['2xl'] },
-  emptyBadge: { width: 76, height: 76, borderRadius: 26, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center', marginBottom: S.xl },
+  emptyBadge: { width: 76, height: 76, borderRadius: 26, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center', marginBottom: S.lg },
+  emptyEyebrow: { ...T.eyebrow, color: C.primary, letterSpacing: 2.5, marginBottom: S.xs },
   emptyTitle: { fontFamily: F.serifMedium, fontSize: 26, color: C.textPrimary, marginBottom: S.sm },
   emptyBody: { ...T.body, color: C.textSecondary, textAlign: 'center', marginBottom: S.xl },
+  chipsHint: { ...T.caption, color: C.textMuted, alignSelf: 'flex-start', marginBottom: S.sm },
   chips: { gap: S.sm, width: '100%' },
   chip: { backgroundColor: C.card, borderRadius: R.md, paddingHorizontal: S.lg, paddingVertical: S.md, borderWidth: 1, borderColor: C.border },
   chipText: { ...T.bodyMd, color: C.textPrimary },
