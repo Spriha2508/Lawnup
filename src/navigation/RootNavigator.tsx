@@ -11,6 +11,7 @@ import { subscribeToUserPlants } from '../features/my-plants/services/plantServi
 import { identifyUser } from '../services/analytics/posthog';
 import { checkUsageLimit } from '../services/firebase/functions';
 import { useSubscriptionStore } from '../features/subscription/store/subscriptionStore';
+import { config } from '../constants/config';
 import { AuthNavigator } from './AuthNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { MainTabNavigator } from './MainTabNavigator';
@@ -100,30 +101,39 @@ export const RootNavigator = memo(function RootNavigator() {
         // Sync subscription plan so limits reflect the user's plan
         useSubscriptionStore.getState().setPlan(userDoc.subscription);
 
-        // Clear any stale AsyncStorage counts before the server tells us the truth.
-        // Cameras gate renders behind isUsageHydrated so users see a spinner, never
-        // a false "limit reached", while this resolves.
-        useSubscriptionStore.getState().resetUsage();
-        console.log('[UsageHydration] resetUsage — uid:', firebaseUser.uid, '— awaiting server sync');
+        if (config.BACKEND_ENABLED) {
+          // Server is authoritative — clear any stale AsyncStorage counts before
+          // the Function tells us the truth. Cameras gate renders behind
+          // isUsageHydrated so users see a spinner, never a false "limit reached".
+          useSubscriptionStore.getState().resetUsage();
+          console.log('[UsageHydration] resetUsage — uid:', firebaseUser.uid, '— awaiting server sync');
 
-        checkUsageLimit()
-          .then((usage) => {
-            console.log('[UsageHydration] resolved —', {
-              uid: firebaseUser.uid,
-              scansUsed: usage.scansUsed,
-              scanLimit: usage.scanLimit,
-              aiChatsUsed: usage.aiChatsUsed,
-              plan: usage.plan,
+          checkUsageLimit()
+            .then((usage) => {
+              console.log('[UsageHydration] resolved —', {
+                uid: firebaseUser.uid,
+                scansUsed: usage.scansUsed,
+                scanLimit: usage.scanLimit,
+                aiChatsUsed: usage.aiChatsUsed,
+                plan: usage.plan,
+              });
+              useSubscriptionStore.getState().setUsage(usage.scansUsed, usage.aiChatsUsed);
+              useSubscriptionStore.getState().setLimits(usage.scanLimit, usage.aiChatLimit);
+              useSubscriptionStore.getState().setUsageHydrated(true);
+            })
+            .catch((err) => {
+              console.warn('[UsageHydration] checkUsageLimit failed — failing open:', err?.message);
+              // Fail open: let the user scan; server will re-validate on next call
+              useSubscriptionStore.getState().setUsageHydrated(true);
             });
-            useSubscriptionStore.getState().setUsage(usage.scansUsed, usage.aiChatsUsed);
-            useSubscriptionStore.getState().setLimits(usage.scanLimit, usage.aiChatLimit);
-            useSubscriptionStore.getState().setUsageHydrated(true);
-          })
-          .catch((err) => {
-            console.warn('[UsageHydration] checkUsageLimit failed — failing open:', err?.message);
-            // Fail open: let the user scan; server will re-validate on next call
-            useSubscriptionStore.getState().setUsageHydrated(true);
-          });
+        } else {
+          // Client-side internal-testing mode: no usage Function deployed.
+          // Enforcement is the LOCAL period counters (canScanThisWeek /
+          // canSendMessageToday), which persist across sessions — so we keep
+          // them intact (no resetUsage) and just mark hydration done so gated
+          // screens render immediately, with NO doomed network round-trip.
+          useSubscriptionStore.getState().setUsageHydrated(true);
+        }
 
         identifyUser(userDoc.uid, {
           name:         userDoc.name,

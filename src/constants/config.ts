@@ -5,6 +5,15 @@ export const config = {
   ENABLE_SUBSCRIPTIONS: true,
   ENABLE_POSTHOG: true,
 
+  // Backend (Firebase Functions) — OFF during client-side internal-testing.
+  // When false, the app makes NO server-Function calls for usage limits;
+  // enforcement is the LOCAL period counters in subscriptionStore
+  // (canScanThisWeek / canSendMessageToday). Flip to true (set
+  // EXPO_PUBLIC_BACKEND_ENABLED=true) only once the Functions — checkUsageLimit
+  // et al. — are deployed. NOTE: local-only quotas are resettable by clearing
+  // app storage; tamper-proof enforcement requires the backend. See QA H2.
+  BACKEND_ENABLED: process.env.EXPO_PUBLIC_BACKEND_ENABLED === 'true',
+
   // Scan quotas live in src/features/subscription/constants/plans.ts
   // (FREE_WEEKLY_SCAN_LIMIT) — single source of truth, mirrored server-side.
 

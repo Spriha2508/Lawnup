@@ -48,7 +48,14 @@ If `updateDoc` **rejects** (permission error, etc.), the function throws → `se
 **Impact:** The entire monetization journey is non-functional in a release build. (Known/intended for internal-testing — RevenueCat/Cashfree deferred — but must be tracked before any paid launch.)
 **Fix:** Integrate the payment provider and build/ wire `SubscriptionSuccess`, or disable/relabel the CTA in non-dev builds so it doesn't look broken.
 
-### H2 — Scan/message limits are enforced client-side only (bypassable)
+### H2 — Scan/message limits are enforced client-side only (bypassable) — ⚙️ PARTIALLY ADDRESSED (2026-06-14)
+**Done now (in-bounds for client-side mode):** Added a `config.BACKEND_ENABLED` flag (env `EXPO_PUBLIC_BACKEND_ENABLED`, default **false**). `RootNavigator` now **skips the `checkUsageLimit()` call entirely** when the backend is disabled — no more doomed per-login network round-trip or fail-open warning (also resolves L4). The local-only enforcement is now the explicit, intentional path (counters are preserved across sessions, hydration marked done immediately so gated screens render). When the backend ships, set the flag to `true` and the original server-authoritative hydration runs unchanged.
+**Still open (requires the deferred backend — NOT done, would violate the locked client-side decision / needs approval):** local quotas remain resettable by clearing app storage / reinstalling. Tamper-proof enforcement needs the `checkUsageLimit` Function deployed + server-side write rules. Tracked for the backend-hardening phase.
+
+---
+
+**Original finding:**
+
 **Where:** `src/navigation/RootNavigator.tsx:109-126`, `subscriptionStore.ts`
 **Issue:** `checkUsageLimit()` calls a Cloud Function that isn't deployed in the current client-side mode, so it fails on every sign-in and the code **fails open** (`setUsageHydrated(true)`). All real enforcement is the local AsyncStorage counters in `subscriptionStore`. Those reset if the user clears app storage / reinstalls.
 **Impact:** Free scan and message quotas can be reset by clearing local data; server limits aren't enforced. Also adds a failing network round-trip + warning log on every login.
