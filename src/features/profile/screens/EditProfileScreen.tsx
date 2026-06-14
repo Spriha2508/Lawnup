@@ -49,7 +49,7 @@ export const EditProfileScreen: React.FC = () => {
     <View style={styles.screen}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Go back" hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
             <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
               <Path d="M15 5L8 12L15 19" stroke={C.textSecondary} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
             </Svg>

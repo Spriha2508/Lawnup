@@ -81,8 +81,8 @@ const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !=
 const ts = (): string => new Date().toLocaleTimeString('en-IN', { hour12: false });
 
 function print(ns: Namespace, level: LogLevel, message: string, data?: unknown): void {
-  if (!isDev && level === 'debug') return;
-  if (!isDev && level === 'info')  return;
+  // Production: warnings + errors only. debug/info/event are dev-only console noise.
+  if (!isDev && (level === 'debug' || level === 'info' || level === 'event')) return;
 
   const nsColor  = NS_COLOR[ns];
   const lvlColor = LEVEL_COLOR[level];

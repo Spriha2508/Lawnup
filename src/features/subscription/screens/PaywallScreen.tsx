@@ -267,8 +267,9 @@ export const PaywallScreen: React.FC = () => {
           </Animated.View>
 
           {/* CTA */}
-          <Pressable style={styles.ctaBtn} onPress={handleUpgrade}>
-            <Text style={styles.ctaBtnText}>Start Premium  →</Text>
+          {/* Payments aren't wired yet — don't show a tappable CTA that does nothing in release. */}
+          <Pressable style={[styles.ctaBtn, !__DEV__ && styles.ctaBtnDisabled]} onPress={handleUpgrade} disabled={!__DEV__}>
+            <Text style={styles.ctaBtnText}>{__DEV__ ? 'Start Premium  →' : 'Premium — coming soon'}</Text>
           </Pressable>
         </View>
 
@@ -521,6 +522,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 8,
+  },
+  ctaBtnDisabled: {
+    backgroundColor: C.textFaint,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   ctaBtnText: {
     fontSize: 17,

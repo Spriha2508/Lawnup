@@ -243,7 +243,8 @@ export const HomeScreen: React.FC = () => {
       {/* Sticky compact header */}
       <Animated.View style={[styles.compactBar, { paddingTop: insets.top + 4, borderBottomColor: C.border }, compactBarStyle]}>
         <Animated.Text style={[styles.compactName, compactNameStyle]} numberOfLines={1}>{firstName}</Animated.Text>
-        <PressableScale style={styles.avatarBtn} onPress={() => navigation.navigate('Profile')} to={0.9}>
+        <PressableScale style={styles.avatarBtn} onPress={() => navigation.navigate('Profile')} to={0.9}
+          accessibilityRole="button" accessibilityLabel="Open profile">
           <Text style={styles.avatarInitial}>{avatarChar}</Text>
         </PressableScale>
       </Animated.View>
@@ -428,7 +429,8 @@ export const HomeScreen: React.FC = () => {
 
       {/* FAB */}
       <Animated.View entering={FadeInUp.delay(400).duration(M.duration.expressive).springify().damping(14)} style={styles.fabWrap} pointerEvents="box-none">
-        <PressableScale style={styles.fab} onPress={() => goScan('fab')} to={0.9}>
+        <PressableScale style={styles.fab} onPress={() => goScan('fab')} to={0.9}
+          accessibilityRole="button" accessibilityLabel="Scan a plant">
           <Svg width={26} height={26} viewBox="0 0 24 24" fill="none"><Path d="M12 5V19M5 12H19" stroke={C.onInkBtn} strokeWidth={2.2} strokeLinecap="round" /></Svg>
         </PressableScale>
       </Animated.View>
