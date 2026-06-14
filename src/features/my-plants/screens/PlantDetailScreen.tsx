@@ -36,6 +36,7 @@ import type { WeatherData } from '../../../services/weather/weatherService';
 import type { PlantsStackParamList } from '../../../navigation/types';
 import { theme } from '@constants/designSystem';
 import { openPaywall } from '@navigation/openPaywall';
+import { askDrBanyan } from '@navigation/askDrBanyan';
 
 const C = theme.color;
 
@@ -491,12 +492,21 @@ export const PlantDetailScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.aiCard}
             onPress={() =>
-              openPaywall(navigation)
+              askDrBanyan(navigation, {
+                plant: {
+                  plantId: plant.plantId,
+                  nickname: plant.nickname,
+                  speciesName: plant.speciesName,
+                  scientificName: plant.scientificName,
+                  healthStatus: plant.healthStatus,
+                  wateringFrequencyDays: plant.wateringFrequencyDays,
+                },
+              })
             }
             activeOpacity={0.82}
           >
             <View>
-              <Text style={styles.aiCardLabel}>ASK AI DOCTOR</Text>
+              <Text style={styles.aiCardLabel}>ASK DR. BANYAN</Text>
               <Text style={styles.aiCardTitle}>
                 Get advice personalised{'\n'}for {plant.nickname}
               </Text>

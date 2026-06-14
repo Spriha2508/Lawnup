@@ -8,6 +8,7 @@ import type { RouteProp } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { usePlantsStore } from '../store/plantsStore';
 import { retrievePlantKnowledge } from '../../../services/knowledge';
+import { askDrBanyan } from '@navigation/askDrBanyan';
 import { theme } from '@constants/designSystem';
 import type { PlantsStackParamList } from '../../../navigation/types';
 
@@ -154,6 +155,18 @@ export const LightAssessmentScreen: React.FC = () => {
                   <Text style={styles.verdictPref}>{plantInfo.name} prefers: {plantInfo.light}</Text>
                 </View>
               )}
+
+              <TouchableOpacity
+                style={styles.askBanyan}
+                activeOpacity={0.85}
+                onPress={() => askDrBanyan(navigation, {
+                  plant: selectedPlant ? { plantId: selectedPlant.plantId, nickname: selectedPlant.nickname, speciesName: selectedPlant.speciesName } : null,
+                  prompt: `My spot gets ${RESULT[level].label.toLowerCase()}.${plantInfo ? ` Is that right for my ${plantInfo.name}, and` : ' Which plants suit it, and'} how should I care for it?`,
+                })}
+              >
+                <Text style={styles.askBanyanLabel}>ASK DR. BANYAN</Text>
+                <Text style={styles.askBanyanText}>Get light & placement advice  →</Text>
+              </TouchableOpacity>
             </Animated.View>
           )}
 
@@ -205,4 +218,7 @@ const styles = StyleSheet.create({
   verdict: { borderRadius: R.lg, borderWidth: 1, padding: S.lg, marginTop: S.lg, gap: 4 },
   verdictText: { ...T.bodyMd, fontFamily: F.sansBold, lineHeight: 20 },
   verdictPref: { ...T.caption, color: C.textSecondary },
+  askBanyan: { marginTop: S.lg, backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, borderWidth: 1, borderColor: C.primary },
+  askBanyanLabel: { ...T.statLabel, color: C.primary, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 },
+  askBanyanText: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary },
 });

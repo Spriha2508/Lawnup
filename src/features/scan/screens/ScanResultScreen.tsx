@@ -37,6 +37,7 @@ import type { ScanStackParamList } from '../../../navigation/types';
 import type { UserPlantDoc } from '../../../types/firestore.types';
 import { theme } from '@constants/designSystem';
 import { openPaywall } from '@navigation/openPaywall';
+import { askDrBanyan } from '@navigation/askDrBanyan';
 
 const C = theme.color;
 
@@ -339,12 +340,19 @@ export const ScanResultScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.aiDoctorCard}
                 onPress={() =>
-                  openPaywall(navigation)
+                  askDrBanyan(navigation, {
+                    diagnosis: {
+                      commonName: scanResult.commonName,
+                      isHealthy: scanResult.isHealthy,
+                      diseases: scanResult.diseases?.map(d => ({ name: d.name })),
+                    },
+                    prompt: `I just scanned a ${scanResult.commonName}. ${scanResult.isHealthy ? 'How do I keep it healthy?' : "What's wrong and how do I fix it?"}`,
+                  })
                 }
                 activeOpacity={0.82}
               >
                 <View style={styles.aiDoctorLeft}>
-                  <Text style={styles.aiDoctorLabel}>ASK AI DOCTOR</Text>
+                  <Text style={styles.aiDoctorLabel}>ASK DR. BANYAN</Text>
                   <Text style={styles.aiDoctorTitle}>
                     Get personalised care advice for {scanResult.commonName}
                   </Text>

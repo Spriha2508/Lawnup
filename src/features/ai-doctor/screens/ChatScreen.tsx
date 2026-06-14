@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator, ListRenderItem,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Timestamp } from 'firebase/firestore';
 import Svg, { Path, Circle } from 'react-native-svg';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
@@ -128,22 +128,25 @@ export const ChatScreen: React.FC = () => {
     }
   }, [isTyping, enrichedPlant, user, city, appendMessage, setTyping, navigation]);
 
-  // On entry: record any carried-in diagnosis to memory + auto-send the opening prompt.
-  useEffect(() => {
-    const diagnosis = consumePendingDiagnosis();
-    const prompt = consumePendingPrompt();
-    if (enrichedPlant?.plantId) {
-      recordCarePattern(enrichedPlant.plantId, enrichedPlant.nickname ?? '', enrichedPlant.wateringFrequencyDays);
-      if (diagnosis) {
-        recordDiagnosis(enrichedPlant.plantId, enrichedPlant.nickname ?? '', {
-          name: diagnosis.commonName, healthy: diagnosis.isHealthy,
-          issues: diagnosis.diseases?.map(d => d.name),
-        });
+  // On focus (not just mount — the Chat tab persists): consume any carried-in
+  // context from a continuity entry (Plant Detail / Scan Result / Soil / Light),
+  // record it to memory, and auto-send the opening prompt.
+  useFocusEffect(
+    useCallback(() => {
+      const diagnosis = consumePendingDiagnosis();
+      const prompt = consumePendingPrompt();
+      if (enrichedPlant?.plantId) {
+        recordCarePattern(enrichedPlant.plantId, enrichedPlant.nickname ?? '', enrichedPlant.wateringFrequencyDays);
+        if (diagnosis) {
+          recordDiagnosis(enrichedPlant.plantId, enrichedPlant.nickname ?? '', {
+            name: diagnosis.commonName, healthy: diagnosis.isHealthy,
+            issues: diagnosis.diseases?.map(d => d.name),
+          });
+        }
       }
-    }
-    if (prompt) send(prompt, diagnosis);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      if (prompt) send(prompt, diagnosis);
+    }, [enrichedPlant, send]), // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   useEffect(() => {
     if (messages.length) listRef.current?.scrollToEnd({ animated: true });

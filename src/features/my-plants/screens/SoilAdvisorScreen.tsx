@@ -8,6 +8,7 @@ import type { RouteProp } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { usePlantsStore } from '../store/plantsStore';
 import { retrievePlantKnowledge } from '../../../services/knowledge';
+import { askDrBanyan } from '@navigation/askDrBanyan';
 import { theme } from '@constants/designSystem';
 import type { PlantsStackParamList } from '../../../navigation/types';
 
@@ -140,6 +141,20 @@ export const SoilAdvisorScreen: React.FC = () => {
             </Text>
           )}
 
+          <TouchableOpacity
+            style={styles.askBanyan}
+            activeOpacity={0.85}
+            onPress={() => askDrBanyan(navigation, {
+              plant: selectedPlant
+                ? { plantId: selectedPlant.plantId, nickname: selectedPlant.nickname, speciesName: selectedPlant.speciesName }
+                : (species ? { speciesName: species } : null),
+              prompt: `What soil mix and repotting advice do you recommend${species ? ` for my ${species}` : ''}?`,
+            })}
+          >
+            <Text style={styles.askBanyanLabel}>ASK DR. BANYAN</Text>
+            <Text style={styles.askBanyanText}>Get a soil & repotting plan  →</Text>
+          </TouchableOpacity>
+
           <View style={{ height: 40 }} />
         </ScrollView>
       </SafeAreaView>
@@ -190,4 +205,7 @@ const styles = StyleSheet.create({
   repotText: { ...T.bodyMd, color: C.textSecondary, lineHeight: 22 },
 
   fallbackNote: { ...T.caption, color: C.textMuted, marginTop: S.lg, lineHeight: 18, paddingHorizontal: 4 },
+  askBanyan: { marginTop: S['2xl'], backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, borderWidth: 1, borderColor: C.primary, ...theme.shadows.sm },
+  askBanyanLabel: { ...T.statLabel, color: C.primary, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 },
+  askBanyanText: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary },
 });
