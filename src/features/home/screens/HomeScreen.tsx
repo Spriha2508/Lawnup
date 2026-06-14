@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import {
   View, Text, Pressable, TouchableOpacity, StyleSheet, Dimensions,
 } from 'react-native';
@@ -15,12 +15,13 @@ import { useAuthStore } from '../../auth/store/authStore';
 import { usePlantsStore } from '../../my-plants/store/plantsStore';
 import { useOnboardingStore } from '../../onboarding/store/onboardingStore';
 import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
+import { useScanHistoryStore } from '../../scan/store/scanHistoryStore';
 import { isDueForWater, computeHealthScore, getIKImageUrl } from '../../../shared/utils/plantUtils';
 import { getCurrentWeather } from '../../../services/weather/weatherService';
 import { getAirQuality, type AirQualityData } from '../../../services/weather/aqiService';
-import { aqiRules, type AqiBand } from '../../../services/knowledge';
-import { getTodayNarrative } from '../../../services/reminders/reminderService';
-import { getWeatherInsight, getSeasonalTip } from '../utils/homeInsights';
+import { aqiRules, currentSeason, type AqiBand } from '../../../services/knowledge';
+import { getWeatherInsight } from '../utils/homeInsights';
+import { track } from '../../../services/analytics/posthog';
 import { HealthRing } from '@shared/components/motion/HealthRing';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
@@ -32,7 +33,7 @@ const { width: W, height: SCREEN_H } = Dimensions.get('window');
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 const H_PAD = S.xl;
 const PLANT_CARD_W = Math.floor(W * 0.42);
-const SECTION_GAP = S['4xl'];
+const SECTION_GAP = S['3xl'];
 
 const getGreeting = (): string => {
   const h = new Date().getHours();
@@ -50,25 +51,34 @@ const getDateLabel = (): string => {
 
 const millis = (ts: any): number => ts?.toMillis?.() ?? (ts?.seconds ? ts.seconds * 1000 : 0);
 
-// ─── small icons ─────────────────────────────────────────────────────────────
-const DropIcon: React.FC<{ color: string }> = ({ color }) => (
-  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-    <Path d="M12 3C12 3 5 11 5 15.5C5 19.0899 8.13401 22 12 22C15.866 22 19 19.0899 19 15.5C19 11 12 3 12 3Z" fill={color} />
-  </Svg>
-);
-const EMERGENCIES = [
-  { id: 'yellow', label: 'Yellow leaves', d: 'M12 2C12 2 5 9 5 14C5 17.866 8.134 21 12 21C15.866 21 19 17.866 19 14C19 9 12 2 12 2Z' },
-  { id: 'brown',  label: 'Brown tips',    d: 'M12 2C12 2 5 9 5 14C5 17.866 8.134 21 12 21C15.866 21 19 17.866 19 14C19 9 12 2 12 2Z' },
-  { id: 'fungus', label: 'Fungus / spots', d: 'M12 2C12 2 5 9 5 14C5 17.866 8.134 21 12 21C15.866 21 19 17.866 19 14C19 9 12 2 12 2Z' },
-  { id: 'over',   label: 'Overwatering',   d: 'M12 3C12 3 5 11 5 15.5C5 19.09 8.13 22 12 22C15.87 22 19 19.09 19 15.5C19 11 12 3 12 3Z' },
-];
-
-// What a scan gives you — outcome-led (the benefit), not a feature list.
+// What a scan gives you — outcome-led (the benefit), not a feature list (first-run only).
 const VALUE_PROPS = [
   { icon: '🌿', label: 'Know what it is' },
   { icon: '🩺', label: 'Spot problems early' },
   { icon: '🧾', label: 'A care plan that fits' },
   { icon: '💧', label: 'Know when to water' },
+];
+
+// Learn & Grow — curated, self-contained tips (inline-expandable; no dead buttons).
+const LEARN_CARDS = [
+  {
+    id: 'summer',
+    icon: '☀️',
+    title: 'Summer plant care',
+    body: 'Water early morning or evening so it isn’t lost to midday heat. Move sensitive plants out of harsh afternoon sun, and mist humidity-lovers. Hold off on repotting until the season cools.',
+  },
+  {
+    id: 'watering',
+    icon: '💧',
+    title: 'Common watering mistakes',
+    body: 'Overwatering kills more plants than underwatering. Check the top 2–3 cm of soil before every watering, always use a pot with drainage holes, and empty the saucer so roots never sit in water.',
+  },
+  {
+    id: 'balcony',
+    icon: '🪴',
+    title: 'Balcony gardening tips',
+    body: 'Group plants by light need, use lighter pots that won’t over-heat, and shield them from strong wind. In peak summer, a shade net softens direct sun while still letting plants thrive.',
+  },
 ];
 
 const AnimatedScrollView = Animated.ScrollView;
@@ -82,15 +92,14 @@ const bandColor = (band: AqiBand): string =>
 const skyColorForHour = (): string => {
   const h = new Date().getHours();
   if (h >= 6 && h < 9) return 'rgba(224,169,63,0.16)';   // dawn gold
-  if (h >= 9 && h < 17) return 'rgba(94,127,97,0.14)';   // sage day
+  if (h >= 9 && h < 17) return 'rgba(231,224,210,0.5)';  // warm daylight haze
   if (h >= 17 && h < 19) return 'rgba(206,126,154,0.14)';// blossom dusk
-  return 'rgba(70,96,73,0.14)';                          // deep-garden evening
+  return 'rgba(120,110,92,0.16)';                        // warm dusk
 };
 
 const TimeSky: React.FC = () => {
   const v = useSharedValue(0);
   useEffect(() => {
-    // Signature moment: the sky brightens over 1.5s on mount (200ms delay).
     v.value = withDelay(200, withTiming(1, { duration: 1500, easing: M.ease.smooth }));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const style = useAnimatedStyle(() => ({ opacity: v.value }));
@@ -117,15 +126,21 @@ export const HomeScreen: React.FC = () => {
   const { plants } = usePlantsStore();
   const { city } = useOnboardingStore();
   const isPremiumActive = useSubscriptionStore(s => s.isPremiumActive);
+  const scansCompleted = useScanHistoryStore(s => s.entries.length);
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [aqi, setAqi] = useState<AirQualityData | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [learnOpen, setLearnOpen] = useState<string | null>(null);
   const isPremium = isPremiumActive();
 
-  // First-run: with no plants yet, Home collapses to ONE clear action (scan your
-  // first plant) so a new user is never overwhelmed by empty/generic modules.
+  // First-run: with no plants yet, Home stays focused on one action.
   const isNewUser = plants.length === 0;
+
+  useEffect(() => {
+    track('home_viewed', { plants: plants.length, isNewUser });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (city) {
@@ -135,13 +150,14 @@ export const HomeScreen: React.FC = () => {
   }, [city]);
 
   const aqiAdvice = useMemo(() => aqiRules(aqi?.aqi), [aqi]);
+  const season = useMemo(() => currentSeason(), []);
 
   // Hero "breathing" — nothing on screen is ever fully static.
   const breathe = useSharedValue(0);
   useEffect(() => {
     breathe.value = withRepeat(withTiming(1, { duration: M.loop.breath, easing: Easing.inOut(Easing.sin) }), -1, true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const blobStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + breathe.value * 0.08 }], opacity: 0.55 + breathe.value * 0.45 }));
+  const blobStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + breathe.value * 0.06 }], opacity: 0.5 + breathe.value * 0.4 }));
 
   const firstName = user?.name?.split(' ')[0] ?? 'Gardener';
   const avatarChar = user?.name ? user.name[0].toUpperCase() : 'G';
@@ -151,18 +167,45 @@ export const HomeScreen: React.FC = () => {
     () => [...plants].sort((a, b) => millis(b.createdAt) - millis(a.createdAt)).slice(0, 6),
     [plants],
   );
-  const snapshot = useMemo(() => {
-    let thriving = 0, watch = 0;
+
+  // Garden Overview + 4-tier health summary (all real, from computeHealthScore).
+  const garden = useMemo(() => {
+    let healthy = 0, needsAttention = 0, atRisk = 0, critical = 0, sum = 0;
     for (const p of plants) {
       const s = computeHealthScore(p);
-      if (s >= 75) thriving++;
-      else if (s < 45) watch++;
+      sum += s;
+      if (s >= 75) healthy++;
+      else if (s >= 55) needsAttention++;
+      else if (s >= 35) atRisk++;
+      else critical++;
     }
-    return { needWater: duePlants.length, thriving, watch };
-  }, [plants, duePlants]);
-  const todayNarrative = useMemo(() => getTodayNarrative(plants, weather, city || undefined), [plants, weather, city]);
+    const score = plants.length ? Math.round(sum / plants.length) : 0;
+    const attention = plants.length - healthy; // anything not "Healthy" needs a look
+    return { healthy, needsAttention, atRisk, critical, score, attention };
+  }, [plants]);
+
+  // Today's care — real watering tasks + honest seasonal fertilizer / sunlight suggestions.
+  const careTasks = useMemo(() => {
+    const tasks: { id: string; kind: 'water' | 'fertilizer' | 'sunlight'; title: string; meta: string; plantId?: string }[] = [];
+    duePlants.slice(0, 3).forEach(p =>
+      tasks.push({ id: `w-${p.plantId}`, kind: 'water', title: `Water ${p.nickname}`, meta: 'Due today', plantId: p.plantId }),
+    );
+    if (plants.length > 0 && (season === 'summer' || season === 'monsoon')) {
+      tasks.push({ id: 'fertilizer', kind: 'fertilizer', title: 'Feed your plants', meta: 'Growing season — a light, balanced feed this month helps' });
+    }
+    if (plants.length > 0) {
+      tasks.push({ id: 'sunlight', kind: 'sunlight', title: 'Turn plants toward the light', meta: 'A quarter-turn keeps growth even and full' });
+    }
+    return tasks;
+  }, [duePlants, plants.length, season]);
+
   const weatherInsight = useMemo(() => getWeatherInsight(weather, city || undefined), [weather, city]);
-  const seasonalTip = useMemo(() => getSeasonalTip(), []);
+  const careRecommendation = useMemo(() => {
+    if (aqi && aqiAdvice && (aqiAdvice.band === 'poor' || aqiAdvice.band === 'very-poor' || aqiAdvice.band === 'severe')) {
+      return aqiAdvice.rules[0];
+    }
+    return weatherInsight?.body ?? 'Conditions look calm today — keep up your usual care.';
+  }, [aqi, aqiAdvice, weatherInsight]);
 
   // Parallax header
   const scrollY = useSharedValue(0);
@@ -180,9 +223,19 @@ export const HomeScreen: React.FC = () => {
     backgroundColor: `rgba(247,244,236,${interpolate(scrollY.value, [40, 90], [0, 0.94], Extrapolation.CLAMP)})`,
   }));
 
+  // ── navigation helpers (analytics-wrapped) ──────────────────────────────────
+  const goScan = useCallback((src: string) => { track('home_quick_action', { action: 'scan', src }); navigation.navigate('Scan'); }, [navigation]);
+  const goAddPlant = useCallback((src: string) => { track('home_quick_action', { action: 'add_plant', src }); navigation.navigate('Plants', { screen: 'AddPlant' }); }, [navigation]);
+  const goDoctor = useCallback((src: string) => { track('home_quick_action', { action: 'dr_banyan', src }); navigation.navigate('Chat'); }, [navigation]);
+  const goTasks = useCallback((src: string) => { track('home_section_cta', { section: 'tasks', src }); navigation.navigate('Plants', { screen: 'Tasks' }); }, [navigation]);
+  const goPlant = useCallback((plantId: string) => navigation.navigate('Plants', { screen: 'PlantDetail', params: { plantId } }), [navigation]);
+  const goPaywall = useCallback(() => { track('home_premium_tap'); openPaywall(navigation); }, [navigation]);
+  const toggleLearn = useCallback((id: string) => {
+    setLearnOpen(prev => { const next = prev === id ? null : id; if (next) track('home_learn_open', { topic: next }); return next; });
+  }, []);
+
   return (
     <View style={styles.root}>
-      {/* Atmosphere is the persistent root world — Home is transparent over it. */}
       <TimeSky />
 
       {/* Sticky compact header */}
@@ -199,189 +252,181 @@ export const HomeScreen: React.FC = () => {
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 56 }]}
       >
-        {/* Big header */}
+        {/* ── 1 · Garden Overview Hero ──────────────────────────────────────── */}
         <Animated.View style={[styles.bigHeader, bigHeaderStyle]}>
           <Text style={styles.dateLabel}>{getDateLabel()}</Text>
           <Text style={styles.greeting}>{getGreeting()}</Text>
           <Text style={styles.firstName}>{firstName}</Text>
-          {weather && (
-            <Text style={styles.skyWeather}>
-              {weather.tempC}° · {weather.humidity}% humidity{city ? ` · ${city}` : ''}
-            </Text>
-          )}
         </Animated.View>
 
-        {/* Premium banner — never on first run; let value land before the upsell */}
-        {!isPremium && !bannerDismissed && !isNewUser && (
-          <Animated.View entering={FadeInDown.duration(M.duration.standard)} style={styles.premiumBanner}>
-            <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => openPaywall(navigation)} activeOpacity={0.82} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.premiumEyebrow}>LAWNUP PRO</Text>
-              <Text style={styles.premiumText}>Unlimited scans · AI Doctor · No limits</Text>
-            </View>
-            <View style={styles.premiumRight}>
-              <Text style={styles.premiumArrow}>→</Text>
-              <TouchableOpacity style={styles.premiumClose} onPress={() => setBannerDismissed(true)} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                <Text style={styles.premiumCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        )}
-
-        {/* Weather · Garden Sync */}
-        {!isNewUser && weatherInsight && (
-          <Animated.View entering={FadeInDown.delay(60).duration(M.duration.expressive)} style={styles.weatherCard}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardEyebrow}>{weatherInsight.eyebrow}</Text>
-              <Text style={styles.weatherTitle}>{weatherInsight.title}</Text>
-              <Text style={styles.weatherBody}>{weatherInsight.body}</Text>
-            </View>
-            {weather && (
-              <View style={styles.weatherTempCol}>
-                <Text style={styles.weatherTemp}>{weather.tempC}°</Text>
-                <Text style={styles.weatherHum}>{weather.humidity}%</Text>
-                <Text style={styles.weatherHumLabel}>humidity</Text>
-              </View>
-            )}
-          </Animated.View>
-        )}
-
-        {/* Air quality · plant guidance (India-first) */}
-        {!isNewUser && aqi && aqiAdvice && (
-          <Animated.View entering={FadeInDown.delay(90).duration(M.duration.expressive)} style={styles.aqiCard}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardEyebrow}>AIR QUALITY{city ? ` · ${city}` : ''}</Text>
-              <Text style={styles.aqiBand}>{aqiAdvice.label}</Text>
-              <Text style={styles.aqiBody}>{aqiAdvice.rules[0]}</Text>
-            </View>
-            <View style={styles.aqiBadge}>
-              <Text style={[styles.aqiNum, { color: bandColor(aqiAdvice.band) }]}>{aqi.aqi}</Text>
-              <Text style={styles.aqiNumLabel}>AQI</Text>
-            </View>
-          </Animated.View>
-        )}
-
-        {/* Today narrative (compact) */}
         {!isNewUser && (
-          <Animated.View entering={FadeInDown.delay(110).duration(M.duration.expressive)} style={styles.narrativeRow}>
-            <View style={styles.narrativeDot} />
-            <Text style={styles.narrativeText}>{todayNarrative}</Text>
+          <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.overviewCard}>
+            <View style={styles.overviewRingWrap}>
+              <HealthRing progress={garden.score / 100} size={64} stroke={6} color={C.primary}>
+                <Text style={styles.overviewScore}>{garden.score}</Text>
+              </HealthRing>
+              <Text style={styles.overviewRingLabel}>GARDEN{'\n'}HEALTH</Text>
+            </View>
+            <View style={styles.overviewStats}>
+              <View style={styles.overviewStat}>
+                <Text style={styles.overviewStatNum}>{plants.length}</Text>
+                <Text style={styles.overviewStatLabel}>Plants</Text>
+              </View>
+              <View style={styles.overviewDivider} />
+              <View style={styles.overviewStat}>
+                <Text style={[styles.overviewStatNum, garden.attention > 0 && { color: C.waterFg }]}>{garden.attention}</Text>
+                <Text style={styles.overviewStatLabel}>Need care</Text>
+              </View>
+            </View>
           </Animated.View>
         )}
 
-        {/* Hero scan CTA */}
-        <Animated.View entering={FadeInDown.delay(160).duration(M.duration.expressive)} style={{ marginBottom: S.lg }}>
-          <PressableScale style={styles.scanCard} onPress={() => navigation.navigate('Scan')} to={0.97}>
-            <Animated.View style={[styles.scanBlob, blobStyle]} />
-            <Text style={styles.scanLabel}>{isNewUser ? 'START HERE' : 'AI PLANT SCAN'}</Text>
-            <Text style={styles.scanTitle}>
-              {isNewUser ? <>Scan your{'\n'}first plant</> : <>Identify any plant{'\n'}in seconds</>}
-            </Text>
-            <Text style={styles.scanBody}>
-              {isNewUser
-                ? 'Point your camera at any plant — we’ll name it, check its health, and build a care plan just for it.'
-                : 'Species ID, health check, and a personalised care guide — instantly.'}
-            </Text>
-            <View style={styles.scanBtn}><Text style={styles.scanBtnText}>{isNewUser ? 'Scan a plant  →' : 'Open Camera  →'}</Text></View>
-          </PressableScale>
-        </Animated.View>
-
-        {/* What you'll get — shown on first run to explain the app, one tap from a scan */}
+        {/* ── First-run: focused single action ──────────────────────────────── */}
         {isNewUser && (
           <>
+            <Animated.View entering={FadeInDown.delay(120).duration(M.duration.expressive)} style={{ marginBottom: S.lg }}>
+              <PressableScale style={styles.scanCard} onPress={() => goScan('first_run_hero')} to={0.97}>
+                <Animated.View style={[styles.scanBlob, blobStyle]} />
+                <Text style={styles.scanLabel}>START HERE</Text>
+                <Text style={styles.scanTitle}>Scan your{'\n'}first plant</Text>
+                <Text style={styles.scanBody}>Point your camera at any plant — we’ll name it, check its health, and build a care plan just for it.</Text>
+                <View style={styles.scanBtn}><Text style={styles.scanBtnText}>Scan a plant  →</Text></View>
+              </PressableScale>
+            </Animated.View>
             <Text style={styles.valueHeading}>What one scan gives you</Text>
             <View style={styles.valueGrid}>
               {VALUE_PROPS.map((v, i) => (
                 <Animated.View key={v.label} entering={FadeInDown.delay(190 + i * 45).duration(M.duration.standard)} style={{ width: (W - H_PAD * 2 - 10) / 2 }}>
-                  <PressableScale style={styles.valueItem} onPress={() => navigation.navigate('Scan')} to={0.97}>
+                  <PressableScale style={styles.valueItem} onPress={() => goScan('first_run_value')} to={0.97}>
                     <View style={styles.valueIcon}><Text style={styles.valueEmoji}>{v.icon}</Text></View>
                     <Text style={styles.valueLabel}>{v.label}</Text>
                   </PressableScale>
                 </Animated.View>
               ))}
             </View>
+            <Animated.View entering={FadeInDown.delay(360)} style={styles.emptyWrap}>
+              <Text style={styles.emptyText}>Free to start · Save as many plants as you like · No card needed</Text>
+            </Animated.View>
           </>
         )}
 
-        {/* Plant Health Snapshot */}
-        {plants.length > 0 && (
-          <View style={{ marginBottom: SECTION_GAP }}>
-            <SectionHeader label="YOUR GARDEN AT A GLANCE" />
-            <View style={styles.statRow}>
-              <StatCard n={snapshot.needWater} label="Need water" tone={C.waterFg} bg={C.waterBg} delay={0} />
-              <StatCard n={snapshot.thriving} label="Thriving" tone={C.healthyFg} bg={C.healthyBg} delay={70} />
-              <StatCard n={snapshot.watch} label="Watch" tone={C.criticalFg} bg={C.criticalBg} delay={140} />
-            </View>
-          </View>
-        )}
-
-        {/* Today's Care */}
-        {duePlants.length > 0 && (
-          <View style={{ marginBottom: SECTION_GAP }}>
-            <SectionHeader label="TODAY'S CARE" actionLabel="All tasks →" onAction={() => navigation.navigate('Plants', { screen: 'Tasks' })} />
-            <View style={styles.careCard}>
-              {duePlants.slice(0, 4).map((plant, i) => (
-                <CareRow key={plant.plantId} plant={plant} index={i} isLast={i === Math.min(duePlants.length, 4) - 1}
-                  onPress={() => navigation.navigate('Plants', { screen: 'PlantDetail', params: { plantId: plant.plantId } })} />
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* My Garden (recently added) */}
-        {plants.length > 0 && (
-          <View style={[styles.stripWrap, { marginBottom: SECTION_GAP }]}>
-            <View style={{ paddingHorizontal: H_PAD }}>
-              <SectionHeader label="MY GARDEN" actionLabel="See all →" onAction={() => navigation.navigate('Plants')} />
-            </View>
-            <AnimatedScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.plantScroll}
-              decelerationRate="fast" snapToInterval={PLANT_CARD_W + 12} snapToAlignment="start">
-              {recent.map((plant, i) => (
-                <HomePlantCard key={plant.plantId} plant={plant} index={i}
-                  onPress={() => navigation.navigate('Plants', { screen: 'PlantDetail', params: { plantId: plant.plantId } })} />
-              ))}
-            </AnimatedScrollView>
-          </View>
-        )}
-
-        {/* Seasonal tip */}
+        {/* ════════ Populated dashboard ════════ */}
         {!isNewUser && (
-          <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={[styles.seasonCard, { marginBottom: SECTION_GAP }]}>
-            <Text style={styles.cardEyebrow}>{seasonalTip.eyebrow}</Text>
-            <Text style={styles.seasonTitle}>{seasonalTip.title}</Text>
-            <Text style={styles.seasonBody}>{seasonalTip.body}</Text>
-          </Animated.View>
-        )}
-
-        {/* Plant emergency quick actions */}
-        {!isNewUser && (
-          <View style={{ marginBottom: S.xl }}>
-            <SectionHeader label="QUICK DIAGNOSE" />
-            <View style={styles.emergencyGrid}>
-              {EMERGENCIES.map((e, i) => (
-                <Animated.View key={e.id} entering={FadeInDown.delay(i * 50).duration(M.duration.standard)} style={{ width: (W - H_PAD * 2 - 12) / 2 }}>
-                  <PressableScale style={styles.emCard} onPress={() => navigation.navigate('Scan')} to={0.97}>
-                    <View style={styles.emIcon}>
-                      <Svg width={16} height={16} viewBox="0 0 24 24" fill="none"><Path d={e.d} fill={C.primary} opacity={0.85} /></Svg>
-                    </View>
-                    <Text style={styles.emLabel}>{e.label}</Text>
-                  </PressableScale>
-                </Animated.View>
-              ))}
+          <>
+            {/* ── 2 · Today's Care Tasks ────────────────────────────────────── */}
+            <View style={{ marginBottom: SECTION_GAP }}>
+              <SectionHeader label="TODAY'S CARE" actionLabel="View all →" onAction={() => goTasks('todays_care')} />
+              <View style={styles.careCard}>
+                {careTasks.length === 0 ? (
+                  <View style={styles.careEmpty}><Text style={styles.careEmptyText}>All caught up — your garden is happy 🌿</Text></View>
+                ) : (
+                  careTasks.map((t, i) => (
+                    <CareTaskRow key={t.id} task={t} isLast={i === careTasks.length - 1} onPress={t.plantId ? () => goPlant(t.plantId!) : undefined} />
+                  ))
+                )}
+              </View>
             </View>
-          </View>
-        )}
 
-        {isNewUser && (
-          <Animated.View entering={FadeInDown.delay(320)} style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>Free to start · Save as many plants as you like · No card needed</Text>
-          </Animated.View>
+            {/* ── 3 · My Plants carousel ────────────────────────────────────── */}
+            <View style={[styles.stripWrap, { marginBottom: SECTION_GAP }]}>
+              <View style={{ paddingHorizontal: H_PAD }}>
+                <SectionHeader label="MY PLANTS" actionLabel="Add plant +" onAction={() => goAddPlant('my_plants')} />
+              </View>
+              <AnimatedScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.plantScroll}
+                decelerationRate="fast" snapToInterval={PLANT_CARD_W + 12} snapToAlignment="start">
+                {recent.map((plant, i) => (
+                  <HomePlantCard key={plant.plantId} plant={plant} index={i} onPress={() => goPlant(plant.plantId)} />
+                ))}
+              </AnimatedScrollView>
+            </View>
+
+            {/* ── 4 · Featured Scan card (warm neutral, not a green hero) ────── */}
+            <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={{ marginBottom: SECTION_GAP }}>
+              <PressableScale style={styles.featuredScan} onPress={() => goScan('featured_card')} to={0.98}>
+                <Animated.View style={[styles.featuredBlob, blobStyle]} />
+                <View style={styles.featuredLeaf}><Text style={{ fontSize: 22 }}>🌿</Text></View>
+                <Text style={styles.featuredLabel}>AI PLANT SCAN</Text>
+                <Text style={styles.featuredTitle}>Identify any plant in seconds</Text>
+                <Text style={styles.featuredBody}>Species ID, health check and a care plan — instantly.</Text>
+                <View style={styles.featuredBtn}><Text style={styles.featuredBtnText}>Scan a Plant  →</Text></View>
+              </PressableScale>
+            </Animated.View>
+
+            {/* ── 5 · Plant Health Summary (4-tier) ─────────────────────────── */}
+            <View style={{ marginBottom: SECTION_GAP }}>
+              <SectionHeader label="PLANT HEALTH" />
+              <View style={styles.healthGrid}>
+                <HealthTier label="Healthy" n={garden.healthy} color={C.healthyFg} />
+                <HealthTier label="Needs attention" n={garden.needsAttention} color={C.waterFg} />
+                <HealthTier label="At risk" n={garden.atRisk} color={C.secondary} />
+                <HealthTier label="Critical" n={garden.critical} color={C.criticalFg} />
+              </View>
+            </View>
+
+            {/* ── 6 · Weather + AQI Intelligence ────────────────────────────── */}
+            {(weather || aqi) && (
+              <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={[styles.intelCard, { marginBottom: SECTION_GAP }]}>
+                <Text style={styles.cardEyebrow}>TODAY{city ? ` · ${city}` : ''}</Text>
+                <View style={styles.intelRow}>
+                  {weather && <IntelStat value={`${weather.tempC}°`} label="Temp" />}
+                  {weather && <IntelStat value={`${weather.humidity}%`} label="Humidity" />}
+                  {aqi && aqiAdvice && <IntelStat value={String(aqi.aqi)} label="AQI" color={bandColor(aqiAdvice.band)} />}
+                </View>
+                <Text style={styles.intelRec}>{careRecommendation}</Text>
+              </Animated.View>
+            )}
+
+            {/* ── 7 · Learn & Grow ──────────────────────────────────────────── */}
+            <View style={{ marginBottom: SECTION_GAP }}>
+              <SectionHeader label="LEARN & GROW" />
+              <View style={{ gap: 10 }}>
+                {LEARN_CARDS.map(card => (
+                  <LearnCard key={card.id} card={card} open={learnOpen === card.id} onToggle={() => toggleLearn(card.id)} />
+                ))}
+              </View>
+            </View>
+
+            {/* ── 8 · Streaks & Achievements ────────────────────────────────── */}
+            <View style={{ marginBottom: SECTION_GAP }}>
+              <SectionHeader label="YOUR PROGRESS" actionLabel="View all →" onAction={() => { track('home_section_cta', { section: 'progress' }); navigation.navigate('Profile'); }} />
+              <View style={styles.progressRow}>
+                <ProgressStat value={plants.length} label="Plants saved" />
+                <ProgressStat value={scansCompleted} label="Scans completed" />
+              </View>
+            </View>
+
+            {/* ── 9 · Premium Upgrade ───────────────────────────────────────── */}
+            {!isPremium && !bannerDismissed && (
+              <Animated.View entering={FadeInDown.duration(M.duration.standard)} style={[styles.premiumCard, { marginBottom: SECTION_GAP }]}>
+                <TouchableOpacity style={styles.premiumClose} onPress={() => setBannerDismissed(true)} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                  <Text style={styles.premiumCloseText}>✕</Text>
+                </TouchableOpacity>
+                <Text style={styles.premiumEyebrow}>LAWNUP PREMIUM</Text>
+                <Text style={styles.premiumTitle}>More scans, deeper care</Text>
+                <Text style={styles.premiumBody}>Unlimited AI scans · unlimited Dr. Banyan · disease detection · smart reminders.</Text>
+                <PressableScale style={styles.premiumBtn} onPress={goPaywall} to={0.97}>
+                  <Text style={styles.premiumBtnText}>See Premium  →</Text>
+                </PressableScale>
+              </Animated.View>
+            )}
+
+            {/* ── 10 · Quick Actions ────────────────────────────────────────── */}
+            <View style={{ marginBottom: S.xl }}>
+              <SectionHeader label="QUICK ACTIONS" />
+              <View style={styles.quickGrid}>
+                <QuickAction emoji="📷" label="Scan" onPress={() => goScan('quick_action')} />
+                <QuickAction emoji="🪴" label="Add Plant" onPress={() => goAddPlant('quick_action')} />
+                <QuickAction emoji="💬" label="Ask Dr. Banyan" onPress={() => goDoctor('quick_action')} />
+                <QuickAction emoji="✅" label="Tasks" onPress={() => goTasks('quick_action')} />
+              </View>
+            </View>
+          </>
         )}
       </AnimatedScrollView>
 
       {/* FAB */}
       <Animated.View entering={FadeInUp.delay(400).duration(M.duration.expressive).springify().damping(14)} style={styles.fabWrap} pointerEvents="box-none">
-        <PressableScale style={styles.fab} onPress={() => navigation.navigate('Scan')} to={0.9}>
+        <PressableScale style={styles.fab} onPress={() => goScan('fab')} to={0.9}>
           <Svg width={26} height={26} viewBox="0 0 24 24" fill="none"><Path d="M12 5V19M5 12H19" stroke={C.onInkBtn} strokeWidth={2.2} strokeLinecap="round" /></Svg>
         </PressableScale>
       </Animated.View>
@@ -397,11 +442,73 @@ const SectionHeader: React.FC<{ label: string; actionLabel?: string; onAction?: 
   </View>
 );
 
-const StatCard: React.FC<{ n: number; label: string; tone: string; bg: string; delay: number }> = ({ n, label, tone, bg, delay }) => (
-  <Animated.View entering={FadeInDown.delay(delay).duration(M.duration.expressive)} style={[styles.statCard, { backgroundColor: bg }]}>
-    <Text style={[styles.statNum, { color: tone }]}>{n}</Text>
-    <Text style={[styles.statLabel, { color: tone }]}>{label}</Text>
-  </Animated.View>
+const TASK_ICON: Record<'water' | 'fertilizer' | 'sunlight', { emoji: string; bg: string }> = {
+  water: { emoji: '💧', bg: C.waterBg },
+  fertilizer: { emoji: '🌱', bg: C.healthyBg },
+  sunlight: { emoji: '☀️', bg: C.primaryWash },
+};
+
+const CareTaskRow: React.FC<{
+  task: { kind: 'water' | 'fertilizer' | 'sunlight'; title: string; meta: string };
+  isLast: boolean;
+  onPress?: () => void;
+}> = ({ task, isLast, onPress }) => {
+  const icon = TASK_ICON[task.kind];
+  const Inner = (
+    <>
+      <View style={[styles.careIcon, { backgroundColor: icon.bg }]}><Text style={{ fontSize: 15 }}>{icon.emoji}</Text></View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.carePlantName}>{task.title}</Text>
+        <Text style={styles.careTime}>{task.meta}</Text>
+      </View>
+      {onPress && (
+        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none"><Path d="M9 6l6 6-6 6" stroke={C.textMuted} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+      )}
+    </>
+  );
+  return onPress
+    ? <PressableScale style={[styles.careRow, !isLast && styles.careRowBorder]} onPress={onPress} to={0.98}>{Inner}</PressableScale>
+    : <View style={[styles.careRow, !isLast && styles.careRowBorder]}>{Inner}</View>;
+};
+
+const HealthTier: React.FC<{ label: string; n: number; color: string }> = ({ label, n, color }) => (
+  <View style={styles.healthTier}>
+    <View style={[styles.healthDot, { backgroundColor: color }]} />
+    <Text style={styles.healthTierNum}>{n}</Text>
+    <Text style={styles.healthTierLabel}>{label}</Text>
+  </View>
+);
+
+const IntelStat: React.FC<{ value: string; label: string; color?: string }> = ({ value, label, color }) => (
+  <View style={styles.intelStat}>
+    <Text style={[styles.intelValue, color && { color }]}>{value}</Text>
+    <Text style={styles.intelLabel}>{label}</Text>
+  </View>
+);
+
+const ProgressStat: React.FC<{ value: number; label: string }> = ({ value, label }) => (
+  <View style={styles.progressStat}>
+    <Text style={styles.progressNum}>{value}</Text>
+    <Text style={styles.progressLabel}>{label}</Text>
+  </View>
+);
+
+const QuickAction: React.FC<{ emoji: string; label: string; onPress: () => void }> = ({ emoji, label, onPress }) => (
+  <PressableScale style={styles.quickItem} onPress={onPress} to={0.95}>
+    <View style={styles.quickIcon}><Text style={{ fontSize: 20 }}>{emoji}</Text></View>
+    <Text style={styles.quickLabel} numberOfLines={1}>{label}</Text>
+  </PressableScale>
+);
+
+const LearnCard: React.FC<{ card: { icon: string; title: string; body: string }; open: boolean; onToggle: () => void }> = ({ card, open, onToggle }) => (
+  <PressableScale style={styles.learnCard} onPress={onToggle} to={0.99}>
+    <View style={styles.learnHead}>
+      <View style={styles.learnIcon}><Text style={{ fontSize: 16 }}>{card.icon}</Text></View>
+      <Text style={styles.learnTitle}>{card.title}</Text>
+      <Text style={styles.learnChevron}>{open ? '–' : '+'}</Text>
+    </View>
+    {open && <Text style={styles.learnBody}>{card.body}</Text>}
+  </PressableScale>
 );
 
 const HomePlantCard: React.FC<{ plant: UserPlantDoc; index: number; onPress: () => void }> = ({ plant, index, onPress }) => {
@@ -434,21 +541,6 @@ const HomePlantCard: React.FC<{ plant: UserPlantDoc; index: number; onPress: () 
   );
 };
 
-const CareRow: React.FC<{ plant: UserPlantDoc; index: number; isLast: boolean; onPress: () => void }> = ({ plant, index, isLast, onPress }) => (
-  <Animated.View entering={FadeInDown.delay(index * M.stagger.base).duration(M.duration.standard)}>
-    <PressableScale style={[styles.careRow, !isLast && styles.careRowBorder]} onPress={onPress} to={0.98}>
-      <View style={styles.careIcon}><DropIcon color={C.waterFg} /></View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.carePlantName}>Water {plant.nickname}</Text>
-        <Text style={styles.careTime}>Due today</Text>
-      </View>
-      <View style={styles.careCheck}>
-        <Svg width={12} height={12} viewBox="0 0 24 24" fill="none"><Path d="M5 12.5L10 17.5L19 7" stroke={C.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" /></Svg>
-      </View>
-    </PressableScale>
-  </Animated.View>
-);
-
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
@@ -463,52 +555,29 @@ const styles = StyleSheet.create({
   avatarBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
   avatarInitial: { ...T.bodyStrong, fontFamily: F.sansBold, color: C.onPrimary, fontSize: 16 },
 
-  bigHeader: { marginBottom: S.xl },
+  bigHeader: { marginBottom: S.lg },
   dateLabel: { ...T.eyebrow, color: C.textMuted, letterSpacing: 1.8, marginBottom: S.xs + 2 },
   greeting: { ...T.bodyStrong, fontFamily: F.sans, color: C.textMuted, marginBottom: 2 },
-  firstName: { fontFamily: F.serifMediumItalic, fontSize: 48, lineHeight: 52, letterSpacing: -0.6, color: C.textPrimary },
-  skyWeather: { ...T.caption, color: C.textMuted, marginTop: S.sm, letterSpacing: 0.3 },
+  firstName: { fontFamily: F.serifMediumItalic, fontSize: 44, lineHeight: 48, letterSpacing: -0.6, color: C.textPrimary },
 
-  premiumBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.waterBg, borderRadius: R.lg, paddingHorizontal: S.lg, paddingVertical: S.md, marginBottom: S.lg, overflow: 'hidden', borderWidth: 1, borderColor: C.waterFg },
-  premiumEyebrow: { ...T.statLabel, color: C.waterFg, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 3 },
-  premiumText: { ...T.label, fontFamily: F.sansMedium, fontSize: 13, color: C.textSecondary },
-  premiumRight: { flexDirection: 'row', alignItems: 'center', gap: S.md },
-  premiumArrow: { fontSize: 16, color: C.waterFg },
-  premiumClose: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-  premiumCloseText: { fontSize: 12, color: C.textMuted },
+  // 1 · Garden Overview Hero — warm white card with a sage health ring
+  overviewCard: {
+    flexDirection: 'row', alignItems: 'center', gap: S.xl,
+    backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, marginBottom: SECTION_GAP,
+    borderWidth: 1, borderColor: C.border, ...theme.shadows.card,
+  },
+  overviewRingWrap: { alignItems: 'center', gap: 6 },
+  overviewScore: { fontFamily: F.sansHeavy, fontSize: 20, color: C.textPrimary },
+  overviewRingLabel: { ...T.caption, fontSize: 9, letterSpacing: 1, color: C.textMuted, textAlign: 'center' },
+  overviewStats: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  overviewStat: { flex: 1, alignItems: 'center' },
+  overviewStatNum: { fontFamily: F.sansHeavy, fontSize: 30, letterSpacing: -0.5, color: C.textPrimary },
+  overviewStatLabel: { ...T.caption, color: C.textMuted, marginTop: 2 },
+  overviewDivider: { width: StyleSheet.hairlineWidth, height: 36, backgroundColor: C.border },
 
   cardEyebrow: { ...T.statLabel, color: C.textMuted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: S.sm },
 
-  // Weather card
-  weatherCard: {
-    flexDirection: 'row', alignItems: 'center', gap: S.lg,
-    backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, marginBottom: S.lg,
-    borderWidth: 1, borderColor: C.border, ...theme.shadows.card,
-  },
-  weatherTitle: { ...T.h3, color: C.textPrimary, marginBottom: S.xs },
-  weatherBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 20 },
-  weatherTempCol: { alignItems: 'flex-end' },
-  weatherTemp: { fontFamily: F.serifMedium, fontSize: 38, lineHeight: 40, color: C.textPrimary },
-  weatherHum: { fontFamily: F.sansHeavy, fontSize: 13, color: C.primary },
-  weatherHumLabel: { ...T.caption, fontSize: 10, color: C.textMuted },
-
-  // AQI card
-  aqiCard: {
-    flexDirection: 'row', alignItems: 'center', gap: S.lg,
-    backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, marginBottom: S.lg,
-    borderWidth: 1, borderColor: C.border, ...theme.shadows.card,
-  },
-  aqiBand: { ...T.h3, color: C.textPrimary, marginBottom: S.xs },
-  aqiBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 20 },
-  aqiBadge: { alignItems: 'center', minWidth: 48 },
-  aqiNum: { fontFamily: F.sansHeavy, fontSize: 30, letterSpacing: -0.5 },
-  aqiNumLabel: { ...T.statLabel, fontSize: 10, color: C.textMuted, letterSpacing: 1 },
-
-  narrativeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: S.md, marginBottom: SECTION_GAP, paddingRight: S.sm },
-  narrativeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.primary, marginTop: 6 },
-  narrativeText: { ...T.bodyMd, fontFamily: F.sansMedium, color: C.textPrimary, lineHeight: 21, flex: 1 },
-
-  // Scan CTA — deep botanical green hero (the one bold block on a light home)
+  // First-run scan hero (kept deep green — it's the single first-run focal point)
   scanCard: { backgroundColor: C.primaryDark, borderRadius: R.sheet, paddingHorizontal: 26, paddingTop: 28, paddingBottom: 28, overflow: 'hidden', ...theme.shadows.lg },
   scanBlob: { position: 'absolute', width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(255,255,255,0.07)', top: -100, right: -80 },
   scanLabel: { ...T.statLabel, color: 'rgba(255,255,255,0.7)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: S.md },
@@ -517,7 +586,6 @@ const styles = StyleSheet.create({
   scanBtn: { backgroundColor: C.card, borderRadius: R.pill, paddingVertical: 15, paddingHorizontal: 26, alignSelf: 'flex-start' },
   scanBtnText: { ...T.button, fontFamily: F.sansBold, color: C.primaryDark },
 
-  // Value props grid
   valueHeading: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2, marginBottom: S.md },
   valueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: SECTION_GAP },
   valueItem: { flexDirection: 'row', alignItems: 'center', gap: S.md, backgroundColor: C.card, borderRadius: R.lg, paddingVertical: S.md, paddingHorizontal: S.md, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
@@ -526,17 +594,21 @@ const styles = StyleSheet.create({
   valueLabel: { ...T.bodyMd, fontFamily: F.sansMedium, fontSize: 13, color: C.textPrimary, flex: 1 },
 
   // Sections
-  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: S.lg },
+  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: S.md },
   sectionLabel: { ...T.label, fontFamily: F.sansBold, color: C.textMuted, letterSpacing: 2.2, textTransform: 'uppercase' },
   sectionLink: { ...T.label, fontSize: 13, color: C.primary },
 
-  // Stat snapshot
-  statRow: { flexDirection: 'row', gap: 12 },
-  statCard: { flex: 1, borderRadius: R.lg, paddingVertical: S.lg, paddingHorizontal: S.md, alignItems: 'flex-start' },
-  statNum: { fontFamily: F.sansHeavy, fontSize: 30, letterSpacing: -0.5, marginBottom: 2 },
-  statLabel: { ...T.label, fontSize: 12 },
+  // 2 · Care
+  careCard: { backgroundColor: C.card, borderRadius: R.xl, overflow: 'hidden', borderWidth: 1, borderColor: C.border, ...theme.shadows.card },
+  careRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: S.lg, paddingHorizontal: 16, gap: S.md },
+  careRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.border },
+  careIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  carePlantName: { ...T.bodyMd, fontFamily: F.sansMedium, color: C.textPrimary, marginBottom: 2 },
+  careTime: { ...T.caption, color: C.textMuted },
+  careEmpty: { padding: S.xl, alignItems: 'center' },
+  careEmptyText: { ...T.bodyMd, color: C.textMuted },
 
-  // Strip
+  // 3 · Strip
   stripWrap: { marginLeft: -H_PAD, marginRight: -H_PAD },
   plantScroll: { paddingHorizontal: H_PAD, gap: 12 },
   plantCard: { width: PLANT_CARD_W, backgroundColor: C.card, borderRadius: R.xl, overflow: 'hidden', ...theme.shadows.card },
@@ -549,25 +621,60 @@ const styles = StyleSheet.create({
   plantName: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary, marginBottom: 4 },
   plantStatus: { ...T.caption, color: C.textSecondary },
 
-  // Care
-  careCard: { backgroundColor: C.card, borderRadius: R.xl, overflow: 'hidden', borderWidth: 1, borderColor: C.border, ...theme.shadows.card },
-  careRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: S.lg, paddingHorizontal: 18, gap: S.lg },
-  careRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.border },
-  careIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.waterBg, alignItems: 'center', justifyContent: 'center' },
-  carePlantName: { ...T.bodyMd, fontFamily: F.sansMedium, color: C.textPrimary, marginBottom: 2 },
-  careTime: { ...T.caption, color: C.textMuted },
-  careCheck: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
+  // 4 · Featured Scan — warm sand card with sage CTA
+  featuredScan: { backgroundColor: C.surface, borderRadius: R.sheet, padding: S.xl, overflow: 'hidden', borderWidth: 1, borderColor: C.border, ...theme.shadows.card },
+  featuredBlob: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: C.primaryWash, top: -90, right: -70 },
+  featuredLeaf: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', marginBottom: S.md, ...theme.shadows.sm },
+  featuredLabel: { ...T.statLabel, color: C.primary, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: S.xs },
+  featuredTitle: { fontFamily: F.serifMedium, fontSize: 26, lineHeight: 30, letterSpacing: -0.4, color: C.textPrimary, marginBottom: S.xs },
+  featuredBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 21, marginBottom: S.lg },
+  featuredBtn: { backgroundColor: C.primary, borderRadius: R.pill, paddingVertical: 14, paddingHorizontal: 24, alignSelf: 'flex-start' },
+  featuredBtnText: { ...T.button, fontFamily: F.sansBold, color: C.onPrimary },
 
-  // Seasonal
-  seasonCard: { backgroundColor: C.primaryWash, borderRadius: R.xl, padding: S.xl, borderWidth: 1, borderColor: C.primarySoft },
-  seasonTitle: { fontFamily: F.serifMedium, fontSize: 24, lineHeight: 28, color: C.textPrimary, marginBottom: S.sm },
-  seasonBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 21 },
+  // 5 · Health summary (4-tier)
+  healthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  healthTier: { width: (W - H_PAD * 2 - 10) / 2, backgroundColor: C.card, borderRadius: R.lg, paddingVertical: S.lg, paddingHorizontal: S.lg, borderWidth: 1, borderColor: C.border, flexDirection: 'row', alignItems: 'center', gap: S.md, ...theme.shadows.sm },
+  healthDot: { width: 10, height: 10, borderRadius: 5 },
+  healthTierNum: { fontFamily: F.sansHeavy, fontSize: 22, color: C.textPrimary, minWidth: 24 },
+  healthTierLabel: { ...T.caption, color: C.textSecondary, flex: 1 },
 
-  // Emergency
-  emergencyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  emCard: { flexDirection: 'row', alignItems: 'center', gap: S.md, backgroundColor: C.card, borderRadius: R.lg, paddingVertical: S.lg, paddingHorizontal: S.lg, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
-  emIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center' },
-  emLabel: { ...T.bodyMd, fontFamily: F.sansMedium, color: C.textPrimary, flex: 1 },
+  // 6 · Weather + AQI
+  intelCard: { backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, borderWidth: 1, borderColor: C.border, ...theme.shadows.card },
+  intelRow: { flexDirection: 'row', gap: S.md, marginBottom: S.lg },
+  intelStat: { flex: 1, alignItems: 'center', backgroundColor: C.surface, borderRadius: R.md, paddingVertical: S.md },
+  intelValue: { fontFamily: F.sansHeavy, fontSize: 22, color: C.textPrimary },
+  intelLabel: { ...T.caption, fontSize: 11, color: C.textMuted, marginTop: 2 },
+  intelRec: { ...T.bodyMd, fontFamily: F.sansMedium, color: C.textSecondary, lineHeight: 21 },
+
+  // 7 · Learn & Grow
+  learnCard: { backgroundColor: C.card, borderRadius: R.lg, paddingHorizontal: S.lg, paddingVertical: S.lg, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
+  learnHead: { flexDirection: 'row', alignItems: 'center', gap: S.md },
+  learnIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center' },
+  learnTitle: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary, flex: 1 },
+  learnChevron: { fontFamily: F.sansBold, fontSize: 20, color: C.textMuted, width: 16, textAlign: 'center' },
+  learnBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 21, marginTop: S.md },
+
+  // 8 · Progress
+  progressRow: { flexDirection: 'row', gap: 12 },
+  progressStat: { flex: 1, backgroundColor: C.card, borderRadius: R.lg, paddingVertical: S.xl, alignItems: 'center', borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
+  progressNum: { fontFamily: F.sansHeavy, fontSize: 30, letterSpacing: -0.5, color: C.primary },
+  progressLabel: { ...T.caption, color: C.textSecondary, marginTop: 2 },
+
+  // 9 · Premium
+  premiumCard: { backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, borderWidth: 1, borderColor: C.primarySoft, ...theme.shadows.card },
+  premiumClose: { position: 'absolute', top: 12, right: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+  premiumCloseText: { fontSize: 13, color: C.textMuted },
+  premiumEyebrow: { ...T.statLabel, color: C.primary, letterSpacing: 2, textTransform: 'uppercase', marginBottom: S.xs },
+  premiumTitle: { fontFamily: F.serifMedium, fontSize: 22, color: C.textPrimary, marginBottom: S.xs },
+  premiumBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 20, marginBottom: S.lg },
+  premiumBtn: { backgroundColor: C.primary, borderRadius: R.pill, paddingVertical: 13, paddingHorizontal: 22, alignSelf: 'flex-start' },
+  premiumBtnText: { ...T.button, fontFamily: F.sansBold, color: C.onPrimary },
+
+  // 10 · Quick actions
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  quickItem: { width: (W - H_PAD * 2 - 10) / 2, flexDirection: 'row', alignItems: 'center', gap: S.md, backgroundColor: C.card, borderRadius: R.lg, paddingVertical: S.lg, paddingHorizontal: S.lg, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
+  quickIcon: { width: 36, height: 36, borderRadius: 11, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center' },
+  quickLabel: { ...T.bodyMd, fontFamily: F.sansMedium, fontSize: 13, color: C.textPrimary, flex: 1 },
 
   emptyWrap: { paddingVertical: S['2xl'], alignItems: 'center' },
   emptyText: { ...T.bodyMd, color: C.textMuted, textAlign: 'center' },

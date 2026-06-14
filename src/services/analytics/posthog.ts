@@ -28,7 +28,12 @@ export type AnalyticsEvent =
   | 'app_opened'
   | 'scan_result_viewed'
   | 'plant_saved_from_scan'
-  | 'plant_updated';
+  | 'plant_updated'
+  | 'home_viewed'
+  | 'home_quick_action'
+  | 'home_section_cta'
+  | 'home_learn_open'
+  | 'home_premium_tap';
 
 export const identifyUser = (uid: string, properties: Record<string, unknown>): void => {
   posthog.identify(uid, properties as any);
