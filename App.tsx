@@ -1,9 +1,7 @@
-import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import './global.css';
 import React, { memo, useCallback, useEffect, useState } from 'react';
 import { View, ActivityIndicator, LogBox, Dimensions } from 'react-native';
-
-const WINDOW_HEIGHT = Dimensions.get('window').height;
 import { registerRootComponent } from 'expo';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
@@ -14,7 +12,6 @@ import {
   PlusJakartaSans_600SemiBold_Italic,
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
@@ -26,6 +23,8 @@ import { AnimatedSplash } from './src/shared/components/motion/AnimatedSplash';
 import { RootAtmosphere, setAtmosphereForRoute, getActiveRouteName } from './src/shared/components/motion/RootAtmosphere';
 import { JourneyVine, setVineForRoute } from './src/shared/components/motion/JourneyVine';
 import { logger } from './src/shared/utils/logger';
+
+const WINDOW_HEIGHT = Dimensions.get('window').height;
 // DevOverlay is imported lazily so it is only bundled in __DEV__ builds
 const DevOverlay = __DEV__
   ? require('./src/shared/components/feedback/DevOverlay').DevOverlay
