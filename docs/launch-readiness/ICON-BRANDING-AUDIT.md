@@ -227,3 +227,30 @@ This environment has **no SVG rasterizer** (`rsvg-convert`/`resvg`/ImageMagick/`
 3. **First-pass vector**: I can hand-author an Option-A **SVG** (editable source) for a designer to refine — but I can't visually verify it here, so treat it as a starting point, not a final.
 
 Once real PNGs exist, the only code change is `app.json:29` `backgroundColor "#0A0D0B" → "#F6F1EA"`, then a native rebuild (EAS workstream).
+
+---
+
+# FINAL LOGO DELIVERED & ICONS GENERATED (2026-06-15)
+
+The owner supplied the **final logo** (`ChatGPT Image Jun 15…png`, 1254²): a **lichen-textured green "L" monogram with leaf accents on cream** (tagline "Don't let It Die!" baked under it). **This supersedes the Option-A bonsai concept** — it is the decided identity.
+
+**Pipeline (Pillow):** sampled cream `#ECE7E0`; extracted an anti-aliased alpha matte of the mark; auto-detected the logomark rows (220–892) and **excluded the tagline** (rows 970–1041); composited to each target treatment.
+
+### Generated & committed
+| File | Size | Treatment | ✓ |
+|---|---|---|---|
+| `assets/images/icon.png` | 1024² | opaque, cream bg, mark ~76%, tagline removed | ✅ visually verified |
+| `assets/images/adaptive-icon.png` | 1024² | transparent fg, mark ~62% (safe zone) | ✅ |
+| `assets/images/notification-icon.png` | 96² | white silhouette on transparent | ✅ verified on dark |
+| `assets/images/splash.png` | 1024² | transparent mark (reads on the dark first-frame) | ✅ verified |
+| `assets/images/favicon.png` | 48² | opaque cream | ✅ |
+| `assets/branding/play-store-icon-512.png` | 512² | opaque cream (upload-only) | ✅ |
+| `app.json` adaptiveIcon.backgroundColor | — | `#0A0D0B` → **`#ECE7E0`** (kills the green square; matches the icon) | ✅ |
+
+Splash `backgroundColor` kept **dark `#0A0D0B`** (decision); notification tint kept `#C8A24E`.
+
+### Still outstanding
+- **Feature graphic 1024×500** — intentionally NOT auto-generated (needs the Plus Jakarta "LawnUp" wordmark + layout; auto-gen would undercut the premium bar). Hand to a designer using the Phase-4 direction.
+- **Native rebuild required** — launcher/splash/notification icons are native; they only update after an `expo prebuild` + dev/EAS rebuild (separate EAS workstream). Until then the running dev build still shows the old square.
+- **Tagline mismatch flag:** the logo file reads "Don't let It Die!"; the app/splash use **"Grow something beautiful."** — reconcile which is the brand tagline (not icon-blocking).
+- Recommend a **48 px on-device proof** after the rebuild.

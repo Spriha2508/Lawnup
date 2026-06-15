@@ -26,7 +26,7 @@
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0A0D0B"
+        "backgroundColor": "#ECE7E0"
       },
       "package": "com.lawnup.app",
       "permissions": [
