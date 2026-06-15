@@ -1,0 +1,61 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LawnUp — Branding Asset Preview & QA</title>
+<style>
+:root{--ink:#2A2E27;--mut:#6b6b6b;--cream:#ECE7E0;--dark:#0A0D0B;--ok:#1f8a30;--bad:#c0392b;--warn:#c98a1a}
+*{box-sizing:border-box}body{font:15px/1.5 -apple-system,Segoe UI,Roboto,Arial;margin:0;color:var(--ink);background:#faf9f6}
+header{padding:28px 32px;background:#fff;border-bottom:1px solid #eee}
+h1{margin:0 0 4px;font-size:22px}h2{margin:36px 32px 10px;font-size:18px}.sub{color:var(--mut)}
+.wrap{padding:0 32px 60px}.row{display:flex;flex-wrap:wrap;gap:20px;margin:10px 0}
+.card{background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;width:240px}
+.card h3{margin:0 0 8px;font-size:14px}.swatches{display:flex;gap:8px}
+.sw{flex:1;border-radius:8px;padding:10px;display:flex;align-items:center;justify-content:center;min-height:90px}
+.lite{background:var(--cream)}.drk{background:var(--dark)}.chk{background:conic-gradient(#e6e6e6 25%,#f6f6f6 0 50%,#e6e6e6 0 75%,#f6f6f6 0) 0/22px 22px}
+.sw img{max-width:80px;max-height:80px;display:block}.meta{font-size:12px;color:var(--mut);margin-top:8px}
+img.full{max-width:100%;border:1px solid #eee;border-radius:10px;background:#fff;display:block}
+table{border-collapse:collapse;width:calc(100% - 64px);margin:12px 32px}
+th,td{border:1px solid #e3e3e3;padding:9px 11px;font-size:13px;text-align:left;vertical-align:top}
+th{background:#f3f1ec}.pass{color:var(--ok);font-weight:700}.fail{color:var(--bad);font-weight:700}.warnc{color:var(--warn);font-weight:700}
+code{background:#f1efe9;padding:1px 5px;border-radius:4px}
+</style></head><body>
+<header><h1>LawnUp — Branding Asset Preview &amp; QA</h1>
+<div class="sub">Source logo → generated icon set. Rendered on light/dark, masked for Android &amp; iOS, with safe-zone overlay. Cream <code>#ECE7E0</code> · splash dark <code>#0A0D0B</code> · notif tint <code>#C8A24E</code>.</div></header>
+<div class="wrap">
+
+<h2>1 · Every asset on light · dark · transparency</h2>
+<div class="row">
+<!--cards-->
+<div class="card"><h3>icon.png — 1024² · opaque</h3><div class="swatches"><div class="sw lite"><img src="../../assets/images/icon.png"></div><div class="sw drk"><img src="../../assets/images/icon.png"></div></div><div class="meta">iOS/base. No alpha (iOS-compliant). Tagline cropped. Logo padded ~12%.</div></div>
+<div class="card"><h3>adaptive-icon.png — 1024² · transp</h3><div class="swatches"><div class="sw chk"><img src="../../assets/images/adaptive-icon.png"></div><div class="sw drk"><img src="../../assets/images/adaptive-icon.png"></div></div><div class="meta">Android foreground. Fits 66.6% safe zone (corrected).</div></div>
+<div class="card"><h3>notification-icon.png — 96²</h3><div class="swatches"><div class="sw chk"><img src="../../assets/images/notification-icon.png"></div><div class="sw drk"><img src="../../assets/images/notification-icon.png"></div></div><div class="meta">White silhouette on transparent; Android tints it gold.</div></div>
+<div class="card"><h3>splash.png — 1024² · transp</h3><div class="swatches"><div class="sw lite"><img src="../../assets/images/splash.png"></div><div class="sw drk"><img src="../../assets/images/splash.png"></div></div><div class="meta">Shown on dark <code>#0A0D0B</code> first-frame.</div></div>
+<div class="card"><h3>favicon.png — 48² · opaque</h3><div class="swatches"><div class="sw lite"><img src="../../assets/images/favicon.png"></div><div class="sw drk"><img src="../../assets/images/favicon.png"></div></div><div class="meta">Web favicon.</div></div>
+<div class="card"><h3>play-store-icon-512 — 512²</h3><div class="swatches"><div class="sw lite"><img src="../../assets/branding/play-store-icon-512.png"></div><div class="sw drk"><img src="../../assets/branding/play-store-icon-512.png"></div></div><div class="meta">Upload-only.</div></div>
+</div>
+
+<h2>2 · Launcher mockups — Android &amp; iOS masks</h2>
+<img class="full" src="preview/3-launcher-masks.png">
+<h2>3 · Android adaptive safe-zone overlay (66.6%)</h2>
+<img class="full" src="preview/4-adaptive-safezone.png">
+<h2>4 · App icon on white / dark / grey + 4× texture zoom</h2>
+<img class="full" src="preview/2-icon-backgrounds.png">
+<h2>5 · Notification visibility test (gold tint, light+dark, small sizes)</h2>
+<img class="full" src="preview/5-notification-test.png">
+<h2>6 · Splash screen on simulated device</h2>
+<img class="full" src="preview/6-splash-device.png">
+<h2>7 · Small-size readability (192→24 px)</h2>
+<img class="full" src="preview/7-small-sizes.png">
+<h2>8 · Overview contact sheet</h2>
+<img class="full" src="preview/1-overview.png">
+
+<h2>QA Summary</h2>
+<table><tr><th>Asset</th><th>Resolution</th><th>Result</th><th>Issues found</th><th>Fix</th></tr>
+<tr><td>icon.png</td><td>1024×1024</td><td class="pass">PASS</td><td>"Touches edge" in contact sheet = the opaque cream background filling the canvas (expected/required for iOS — no alpha). Logo itself has ~12% padding, not clipped.</td><td>None.</td></tr>
+<tr><td>adaptive-icon.png</td><td>1024×1024</td><td class="pass">PASS <span class="warnc">(was FAIL → fixed)</span></td><td>Originally the mark reached 86.6% diameter — outside the 66.6% safe zone → clippable on aggressive launcher masks.</td><td>Regenerated at 63.9% diameter; now fully inside 66.6%. (Renders smaller on Android — normal. Can bump to ~72% if a larger look is wanted.)</td></tr>
+<tr><td>notification-icon.png</td><td>96×96</td><td class="pass">PASS</td><td>Clear to ~36px on light &amp; dark; at 24px (mdpi) the leaf detail merges but the L still reads — inherent to tiny notif icons.</td><td>None required.</td></tr>
+<tr><td>splash.png</td><td>1024×1024</td><td class="pass">PASS</td><td>Green texture reads well on the dark first-frame; centered, uncropped; matches the AnimatedSplash open.</td><td>None.</td></tr>
+<tr><td>favicon.png</td><td>48×48</td><td class="pass">PASS</td><td>Legible monogram at favicon size.</td><td>None.</td></tr>
+<tr><td>play-store-icon-512.png</td><td>512×512</td><td class="pass">PASS</td><td>Matches the app icon; opaque; ≤1MB.</td><td>None.</td></tr>
+<tr><td>Feature graphic 1024×500</td><td>—</td><td class="fail">MISSING</td><td>Not generated (needs the Plus Jakarta wordmark + layout).</td><td>Produce via designer per the Phase-4 direction.</td></tr>
+</table>
+<p class="sub" style="margin:0 32px">Cross-cutting: icon cream <code>#ECE7E0</code> differs slightly from the in-app ivory <code>#F6F1EA</code> — internally consistent across the icon set; unify later if desired. Native rebuild (<code>expo prebuild</code> + EAS) required for launcher/splash/notification to update on device.</p>
+</div></body></html>
