@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "lawnup",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "primaryColor": "#C8A24E",
     "splash": {
       "image": "./assets/images/splash.png",
