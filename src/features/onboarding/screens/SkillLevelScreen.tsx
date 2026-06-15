@@ -17,9 +17,10 @@ const OPTIONS = [
 
 export const SkillLevelScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const [selected, setSelected] = useState<string[]>([]);
-  const toggle = (id: string) =>
-    setSelected(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]));
+  // Single-select: only one skill level can be chosen. Tapping the active card
+  // again clears it. (The other personality screens stay multi-select.)
+  const [selected, setSelected] = useState<string | null>(null);
+  const select = (id: string) => setSelected(prev => (prev === id ? null : id));
 
   return (
     <OnboardingScaffold
@@ -28,7 +29,7 @@ export const SkillLevelScreen: React.FC = () => {
       title={'How would you\ndescribe yourself?'}
       subtitle="So your care tips land right — never too basic, never over your head."
       ctaLabel="Continue"
-      ctaEnabled={selected.length > 0}
+      ctaEnabled={selected !== null}
       onCta={() => navigation.navigate('PlantsType')}
       scroll
     >
@@ -40,8 +41,8 @@ export const SkillLevelScreen: React.FC = () => {
             icon={o.icon}
             label={o.label}
             descriptor={o.desc}
-            active={selected.includes(o.id)}
-            onPress={() => toggle(o.id)}
+            active={selected === o.id}
+            onPress={() => select(o.id)}
             width={CARD_W}
             tall
           />

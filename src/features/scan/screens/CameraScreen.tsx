@@ -363,10 +363,17 @@ export const CameraScreen: React.FC = () => {
           <Text style={styles.permMark}>◇</Text>
           <Text style={styles.permTitle}>Access denied</Text>
           <Text style={styles.permSubtitle}>
-            Open your device settings and enable camera access to continue scanning.
+            Camera access is turned off. Enable it in Settings to scan, or pick a photo from your gallery.
           </Text>
-          <TouchableOpacity style={styles.permBtn} onPress={handleGallery} activeOpacity={0.88}>
-            <Text style={styles.permBtnText}>Choose from Gallery</Text>
+          <TouchableOpacity
+            style={styles.permBtn}
+            onPress={() => Linking.openSettings().catch(() => {})}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.permBtnText}>Open settings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.permSecondaryBtn} onPress={handleGallery} activeOpacity={0.82}>
+            <Text style={styles.permSecondaryBtnText}>Choose from Gallery</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleClose} style={styles.permCancel}>
             <Text style={styles.permCancelText}>Go back</Text>
@@ -628,6 +635,20 @@ const styles = StyleSheet.create({
   permBtnText: {
     ...T.button,
     color: C.onInkBtn,
+  },
+  permSecondaryBtn: {
+    marginTop: S.xs,
+    borderRadius: R.pill,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: S['2xl'],
+    paddingVertical: 15,
+    width: '100%',
+    alignItems: 'center',
+  },
+  permSecondaryBtnText: {
+    ...T.button,
+    color: C.textPrimary,
   },
   permCancel: { paddingVertical: S.xs },
   permCancelText: {
