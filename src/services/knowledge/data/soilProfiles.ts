@@ -85,6 +85,21 @@ export const SOIL_PROFILES: Record<string, SoilProfile> = {
     ph: '6.0–7.0',
     suitableFor: ['rose', 'hibiscus', 'marigold', 'jasmine', 'bougainvillea', 'flowering'],
   },
+  'bark-epiphyte': {
+    id: 'bark-epiphyte',
+    name: 'Orchid / Epiphyte Bark Mix',
+    components: [
+      { material: 'Pine/fir bark (medium)', percent: 50 },
+      { material: 'Coconut husk chips', percent: 20 },
+      { material: 'Horticultural charcoal', percent: 15 },
+      { material: 'Perlite', percent: 10 },
+      { material: 'Sphagnum moss', percent: 5 },
+    ],
+    description:
+      'Extremely open, fast-draining chunky mix — NOT regular potting soil. Epiphytic orchids and bromeliads cling to bark in the wild; their aerial roots need air and must dry between waterings, so they rot in ordinary soil. Many (Vanda, air-plants) are grown bare-root or mounted with no medium at all.',
+    ph: '5.5–6.5',
+    suitableFor: ['orchid', 'phalaenopsis', 'dendrobium', 'vanda', 'cattleya', 'bromeliad', 'epiphyte', 'air-plant'],
+  },
 };
 
 export const ALL_SOIL_PROFILES: SoilProfile[] = Object.values(SOIL_PROFILES);
