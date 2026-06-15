@@ -8,7 +8,7 @@
 |---|---|---|
 | **Branding** | ✅ **COMPLETE / FROZEN** | Logo, full icon system (QA'd, adaptive @63.9% safe), splash animation, feature graphic (Concept 1, frozen). Palette + fonts locked. |
 | **Assets** | ◑ **MOSTLY READY** | Icons + 512² + feature graphic ready. ❌ 8 store screenshots not yet produced. ⚠️ 6 tagline/copy strings pending approval (Phase 1). |
-| **Build** | ❌ **NOT READY (gated)** | 2 critical gates: stale committed `android/` would ship the old green-square icon → needs `expo prebuild --clean`; EAS `projectId` is a placeholder. Plus minor (`eas.json` dup profile, no `google-services.json`, no version source). |
+| **Build** | ◑ **MOSTLY READY (1 gate)** | ✅ Clean prebuild done — `android/`+`ios/` regenerated with on-brand icons + `#ECE7E0` (green square gone natively); `eas.json` preview profile + version source added; name = `LawnUp`. ❌ **One gate left:** EAS `projectId` placeholder → needs `eas init`. (See `EAS-BUILD-SYNC.md`.) |
 | **QA** | ⏳ **NOT RUN** | Comprehensive device checklist prepared (Phase 3, 20 areas). Must be executed on real Android + iOS **after** the clean prebuild. |
 | **Play Store** | ◑ **PARTIAL** | Copy drafted; icon + feature graphic ready; ❌ screenshots, app-name decision, data-safety form + privacy-policy URL outstanding. |
 
@@ -16,8 +16,8 @@
 
 | Sev | Risk | Mitigation |
 |---|---|---|
-| 🔴 | Build ships the **old green-square icon** if EAS runs against the stale committed `android/` | Mandatory `expo prebuild --clean` + verify regenerated `android/.../colors.xml` = `#ECE7E0`, then commit |
-| 🔴 | `eas build` fails on placeholder **projectId** | `eas init` |
+| ✅ | ~~Build ships the old green-square icon~~ | **RESOLVED** — clean prebuild regenerated native icons + `#ECE7E0`; committed |
+| 🔴 | `eas build` fails on placeholder **projectId** | `eas init` (only remaining hard gate) |
 | 🟠 | **Dr. Banyan is non-AI** (`OPENAI_API_KEY` empty) → local responder only | Known/accepted for internal; add key + rebuild for live AI |
 | 🟠 | **No remote push** (`google-services.json` absent) | Add for FCM, or launch with local reminders only (deferred workstream) |
 | 🟡 | **Monetization is a no-op** in release (no RevenueCat/Billing) | Deferred workstream; launch free or wire billing first |
