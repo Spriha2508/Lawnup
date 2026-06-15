@@ -100,6 +100,19 @@ export const SOIL_PROFILES: Record<string, SoilProfile> = {
     ph: '5.5–6.5',
     suitableFor: ['orchid', 'phalaenopsis', 'dendrobium', 'vanda', 'cattleya', 'bromeliad', 'epiphyte', 'air-plant'],
   },
+  'aquatic-bog': {
+    id: 'aquatic-bog',
+    name: 'Aquatic / Pond Planting Mix',
+    components: [
+      { material: 'Heavy garden loam / clay', percent: 60 },
+      { material: 'Well-rotted compost or cow manure', percent: 25 },
+      { material: 'Coarse sand', percent: 15 },
+    ],
+    description:
+      'Heavy, low-floating loam for pond baskets — NOT light potting mix (peat/perlite float away and foul the water). Lotus, water-lily and bog marginals are planted in this in a wide basket, topped with 2–3 cm gravel, then submerged. Free-floating plants (water-hyacinth, water-lettuce) need no soil at all — their roots dangle in the water.',
+    ph: '6.5–7.5',
+    suitableFor: ['lotus', 'water-lily', 'aquatic', 'pond', 'marginal', 'bog'],
+  },
 };
 
 export const ALL_SOIL_PROFILES: SoilProfile[] = Object.values(SOIL_PROFILES);
