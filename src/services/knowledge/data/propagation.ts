@@ -110,6 +110,51 @@ export const PROPAGATION_METHODS: Record<string, PropagationMethod> = {
     timeToRoot: '1–3 weeks to germinate',
     notes: 'Best for herbs and vegetables — coriander, fenugreek, chilli, tomato, spinach, marigold.',
   },
+  'grafting': {
+    id: 'grafting',
+    name: 'Grafting',
+    steps: [
+      'Choose a healthy seedling rootstock and a scion (a short shoot of the desired variety)',
+      'Make a clean, matching cut on both (cleft, whip or wedge) so the green cambium layers line up',
+      'Join the scion to the rootstock and bind firmly with grafting tape',
+      'Seal exposed cuts; keep humid and shaded until the union takes',
+      'Once new growth appears, remove the tape and any rootstock suckers',
+    ],
+    difficulty: 'hard',
+    bestSeason: 'summer',
+    timeToRoot: '3–8 weeks to unite',
+    notes: 'Standard for fruit trees that don\'t come true from seed — mango, guava, citrus, apple, sapota, rose.',
+  },
+  'tuber': {
+    id: 'tuber',
+    name: 'Tuber / Bulb Division',
+    steps: [
+      'Lift the dormant tuber/bulb clump and brush off the soil',
+      'Separate individual tubers or bulbs, each with at least one growth eye/bud',
+      'Let the cut surfaces dry/cure for a day to prevent rot',
+      'Plant at the correct depth in well-draining mix, eye facing up',
+      'Water lightly and keep warm until shoots emerge',
+    ],
+    difficulty: 'easy',
+    bestSeason: 'summer',
+    timeToRoot: '2–6 weeks to sprout',
+    notes: 'For tuber/bulb plants — potato, dahlia, caladium, gloxinia, colocasia, safed-musli, spider lily.',
+  },
+  'rhizome': {
+    id: 'rhizome',
+    name: 'Rhizome Division',
+    steps: [
+      'Lift the clump and shake/wash off excess soil to expose the horizontal rhizomes',
+      'Cut the rhizome into sections, each with a growth bud and some roots',
+      'Dust cuts with cinnamon or fungicide to prevent rot',
+      'Replant sections just below the surface in fresh mix',
+      'Water in and keep warm, lightly moist, until new shoots appear',
+    ],
+    difficulty: 'easy',
+    bestSeason: 'monsoon',
+    timeToRoot: '2–5 weeks to establish',
+    notes: 'For rhizomatous plants — ginger, turmeric, canna, calathea, banana, cardamom, lotus.',
+  },
 };
 
 export const ALL_PROPAGATION: PropagationMethod[] = Object.values(PROPAGATION_METHODS);

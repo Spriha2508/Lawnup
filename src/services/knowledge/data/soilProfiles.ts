@@ -113,6 +113,35 @@ export const SOIL_PROFILES: Record<string, SoilProfile> = {
     ph: '6.5–7.5',
     suitableFor: ['lotus', 'water-lily', 'aquatic', 'pond', 'marginal', 'bog'],
   },
+  'seedling-mix': {
+    id: 'seedling-mix',
+    name: 'Seed-Starting Mix',
+    components: [
+      { material: 'Cocopeat', percent: 50 },
+      { material: 'Fine compost / vermicompost', percent: 25 },
+      { material: 'Perlite', percent: 15 },
+      { material: 'Fine sand', percent: 10 },
+    ],
+    description:
+      'Light, fine, sterile and low-nutrient mix for germinating seeds and rooting cuttings — holds gentle moisture without packing down, so delicate roots and shoots push through easily. Pot on into a richer mix once true leaves appear.',
+    ph: '6.0–6.8',
+    suitableFor: ['seedling', 'seed-starting', 'cutting', 'nursery'],
+  },
+  'citrus-mix': {
+    id: 'citrus-mix',
+    name: 'Citrus & Fruit-Tree Pot Mix',
+    components: [
+      { material: 'Garden soil / loam', percent: 35 },
+      { material: 'Compost', percent: 25 },
+      { material: 'Cocopeat', percent: 20 },
+      { material: 'Coarse sand', percent: 15 },
+      { material: 'Bone meal', percent: 5 },
+    ],
+    description:
+      'Free-draining yet fertile mix for citrus and fruit trees in containers — they hate wet feet but are hungry feeders. Top up with compost yearly and feed with a micronutrient (zinc/iron/magnesium) citrus feed in the growing season.',
+    ph: '6.0–7.0',
+    suitableFor: ['lemon', 'orange', 'sweet-lime', 'citrus', 'fig', 'pomegranate', 'fruit-tree'],
+  },
 };
 
 export const ALL_SOIL_PROFILES: SoilProfile[] = Object.values(SOIL_PROFILES);

@@ -25,11 +25,19 @@ export function aqiBand(aqi: number): AqiBand {
 const BAND_RULES: Record<AqiBand, { label: string; rules: string[] }> = {
   good: {
     label: 'Good (0–50)',
-    rules: ['Air is clean — open windows for fresh air and good circulation.'],
+    rules: [
+      'Air is clean — open windows for fresh air and good circulation.',
+      'A great time to move plants outdoors or onto the balcony for a light boost.',
+      'Ideal conditions for repotting, pruning and propagating with less stress on plants.',
+    ],
   },
   satisfactory: {
     label: 'Satisfactory (51–100)',
-    rules: ['Minor dust — wipe broad leaves weekly so they can breathe and photosynthesise.'],
+    rules: [
+      'Minor dust — wipe broad leaves weekly so they can breathe and photosynthesise.',
+      'Outdoor and balcony plants are fine; flowering and fruiting are unaffected.',
+      'Still a good window for repotting and propagation.',
+    ],
   },
   moderate: {
     label: 'Moderate (101–200)',
@@ -60,6 +68,9 @@ const BAND_RULES: Record<AqiBand, { label: string; rules: string[] }> = {
       'Keep balcony/outdoor plants protected; bring delicate pots indoors if possible.',
       'Clean foliage frequently; a thick dust film blocks light and gas exchange.',
       'Prioritise hardy air-purifying species indoors (snake plant, ZZ, areca palm).',
+      'Hold off on repotting or heavy pruning until the air improves — plants are already stressed.',
+      'Wipe leaves with plain water only (no leaf-shine products, which trap more dust).',
+      'Run an air purifier in plant rooms if you have one — it helps the plants and you.',
     ],
   },
 };

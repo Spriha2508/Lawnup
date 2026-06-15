@@ -29,7 +29,10 @@ export type PropagationMethodId =
   | 'offsets'
   | 'air-layering'
   | 'water-propagation'
-  | 'seed';
+  | 'seed'
+  | 'grafting'
+  | 'tuber'
+  | 'rhizome';
 
 export type DiseaseId =
   | 'root-rot'
@@ -39,7 +42,13 @@ export type DiseaseId =
   | 'nutrient-deficiency'
   | 'overwatering'
   | 'underwatering'
-  | 'sunburn';
+  | 'sunburn'
+  | 'spider-mites'
+  | 'mealybugs'
+  | 'aphids'
+  | 'anthracnose'
+  | 'rust'
+  | 'sooty-mould';
 
 export type DiseaseType = 'fungal' | 'bacterial' | 'pest' | 'environmental' | 'nutrient';
 export type Difficulty = 'easy' | 'moderate' | 'hard';
