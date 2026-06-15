@@ -85,9 +85,9 @@ export const AnimatedSplashFallback: React.FC<Props> = ({ onDone }) => {
           </Svg>
         </Animated.View>
 
-        <Animated.Text style={[styles.brand, wordStyle]}>Lawnup</Animated.Text>
+        <Animated.Text style={[styles.brand, wordStyle]}>LawnUp</Animated.Text>
         <View style={styles.rule} />
-        <Animated.Text style={[styles.tag, tagStyle]}>YOUR AI PLANT COMPANION</Animated.Text>
+        <Animated.Text style={[styles.tag, tagStyle]}>DON'T LET IT DIE!</Animated.Text>
       </View>
     </Animated.View>
   );

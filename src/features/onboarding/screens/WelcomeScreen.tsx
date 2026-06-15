@@ -1,5 +1,5 @@
 /**
- * WelcomeScreen — "Step into a living world".
+ * WelcomeScreen — in-app welcome: "Grow Something Beautiful".
  *
  * The first emotional beat after the splash: WONDER. An immersive environment
  * rather than a page — warm light pouring in from above, botanicals drifting at
@@ -41,10 +41,10 @@ export const WelcomeScreen: React.FC = () => {
           {/* Oversized editorial statement, line by line */}
           <View style={styles.headlineWrap}>
             <Animated.Text entering={FadeInDown.delay(320).duration(M.duration.cinematic)} style={styles.line}>
-              Step into a
+              Grow Something
             </Animated.Text>
             <Animated.Text entering={FadeInDown.delay(440).duration(M.duration.cinematic)} style={styles.lineEmph}>
-              living world.
+              Beautiful
             </Animated.Text>
           </View>
 

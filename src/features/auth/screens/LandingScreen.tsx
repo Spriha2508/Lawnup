@@ -40,11 +40,11 @@ export const LandingScreen: React.FC = () => {
           </Animated.View>
 
           <Animated.Text entering={FadeInDown.delay(240).duration(M.duration.expressive)} style={styles.eyebrow}>
-            YOUR AI PLANT COMPANION
+            DON'T LET IT DIE!
           </Animated.Text>
 
           <Animated.Text entering={FadeInDown.delay(340).duration(M.duration.expressive)} style={styles.headline}>
-            Grow something{'\n'}<Text style={styles.headlineAccent}>beautiful.</Text>
+            Grow Something{'\n'}<Text style={styles.headlineAccent}>Beautiful</Text>
           </Animated.Text>
 
           <Animated.Text entering={FadeInDown.delay(460).duration(M.duration.expressive)} style={styles.body}>

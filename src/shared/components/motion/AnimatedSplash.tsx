@@ -11,7 +11,7 @@
  *              colour, top-down (band by band).
  *   2.2–2.9s   FOLIAGE thickens + soft blossoms open — the plant goes VIBRANT.
  *   2.6–3.2s   The world DAWNS: void → warm ivory daylight.
- *   3.0–3.5s   "LawnUp" resolves on the ivory; "Grow something beautiful."
+ *   3.0–3.5s   "LawnUp" resolves on the ivory; brand tagline "Don't Let It Die!"
  *   EXIT       (tap from 1.8s, or auto ~3.7s) fades to reveal the live app.
  *
  * Reanimated + react-native-svg, UI-thread, no setTimeout. Foliage is reused
@@ -449,7 +449,7 @@ export const AnimatedSplash: React.FC<Props> = ({ onDone }) => {
           </View>
         </Animated.View>
         <Animated.View style={[styles.tagWrap, tagStyle]} pointerEvents="none">
-          <Animated.Text style={styles.tagline}>GROW SOMETHING BEAUTIFUL</Animated.Text>
+          <Animated.Text style={styles.tagline}>DON'T LET IT DIE!</Animated.Text>
         </Animated.View>
 
         {/* skip */}
