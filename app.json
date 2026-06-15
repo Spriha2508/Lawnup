@@ -2,6 +2,7 @@
   "expo": {
     "name": "LawnUp",
     "slug": "lawnup",
+    "owner": "spriha007",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -44,11 +45,15 @@
     "plugins": [
       [
         "expo-camera",
-        { "cameraPermission": "LawnUp needs camera access to scan your plants." }
+        {
+          "cameraPermission": "LawnUp needs camera access to scan your plants."
+        }
       ],
       [
         "expo-image-picker",
-        { "photosPermission": "LawnUp needs photo access to select plant images." }
+        {
+          "photosPermission": "LawnUp needs photo access to select plant images."
+        }
       ],
       [
         "expo-notifications",
@@ -61,13 +66,23 @@
       [
         "expo-build-properties",
         {
-          "android": { "compileSdkVersion": 35, "targetSdkVersion": 35 },
-          "ios": { "deploymentTarget": "15.1" }
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
         }
       ]
     ],
-"extra": {
-      "eas": { "projectId": "YOUR_EAS_PROJECT_ID" }
+    "extra": {
+      "openWeatherKey": "",
+      "plantIdKey": "",
+      "openaiKey": "",
+      "eas": {
+        "projectId": "75c90b84-f62b-4c99-9b64-ccc7ee9ab8e5"
+      }
     }
   }
 }
