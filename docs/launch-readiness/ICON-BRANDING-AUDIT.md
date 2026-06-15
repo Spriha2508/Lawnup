@@ -254,3 +254,14 @@ Splash `backgroundColor` kept **dark `#0A0D0B`** (decision); notification tint k
 - **Native rebuild required** — launcher/splash/notification icons are native; they only update after an `expo prebuild` + dev/EAS rebuild (separate EAS workstream). Until then the running dev build still shows the old square.
 - **Tagline mismatch flag:** the logo file reads "Don't let It Die!"; the app/splash use **"Grow something beautiful."** — reconcile which is the brand tagline (not icon-blocking).
 - Recommend a **48 px on-device proof** after the rebuild.
+
+---
+
+# 🔒 BRANDING SYSTEM — FROZEN / PRODUCTION-READY (2026-06-15)
+
+The final logo (textured green **L** monogram) drives the whole system. Decided/approved:
+- **App icons** — generated, visually QA'd (see `branding-preview.html`); adaptive foreground corrected to **63.9 % dia** (inside the 66.6 % safe zone) and **locked there** (owner: do not increase). Adaptive background `#ECE7E0` (green-square fixed).
+- **Google Play Feature Graphic** — **Concept 1 "Minimal Premium" APPROVED & FROZEN**. Positioning = premium consumer lifestyle brand (not an AI utility): brand quality, trust, elegance, memorability. Exports: `assets/branding/feature-graphic-1024x500.png` + `…@2x.png` (2048×1000). All 7 owner checks verified (wordmark strongest · L hero · botanical corners · cream-consistent · thumbnail-legible · centre clear of video overlay).
+- **Fonts:** Plus Jakarta Sans (ExtraBold wordmark / Medium tagline). **Cream `#ECE7E0`**, sage `#5E7F61`, charcoal `#2A2E27`, notif tint `#C8A24E`, splash dark `#0A0D0B`.
+
+**Status: branding production-ready.** Remaining is non-design: the **native rebuild** (`expo prebuild` + EAS) to apply icons on device, and reconciling the two taglines in use ("Don't Let It Die!" on the logo/feature-graphic vs "Grow something beautiful." in the in-app splash).
