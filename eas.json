@@ -1,5 +1,5 @@
 {
-  "cli": { "version": ">= 10.0.0" },
+  "cli": { "version": ">= 10.0.0", "appVersionSource": "remote" },
   "build": {
     "development": {
       "distribution": "internal",
@@ -7,6 +7,13 @@
       "env": {
         "FIREBASE_PROJECT_ID": "lawnup-dev",
         "APP_ENV": "development"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": {
+        "APP_ENV": "preview"
       }
     },
     "staging": {
