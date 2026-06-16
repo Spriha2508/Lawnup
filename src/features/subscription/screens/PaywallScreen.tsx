@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path, Ellipse } from 'react-native-svg';
 import { useSubscriptionStore } from '../store/subscriptionStore';
+import { purchase as purchaseTier, PAYMENTS_READY } from '../services/purchasesService';
 import { FEATURE_LABELS, FREE_WEEKLY_SCAN_LIMIT } from '../constants/plans';
 import type { FeatureName } from '../constants/plans';
 import { theme } from '@constants/designSystem';
@@ -80,9 +81,15 @@ export const PaywallScreen: React.FC = () => {
   const pressOut = (a: Animated.Value) =>
     Animated.spring(a, { toValue: 1,    damping: 18, stiffness: 250, useNativeDriver: true }).start();
 
-  const handleUpgrade = useCallback(() => {
-    // In production this would launch RevenueCat / Cashfree payment.
-    // For now: activate mock premium so the app works end-to-end.
+  const handleUpgrade = useCallback(async () => {
+    // Real payments go through RevenueCat once PAYMENTS_READY (see
+    // purchasesService + docs/revenuecat-setup.md). Until then, DEV builds use a
+    // mock so the app is testable end-to-end.
+    if (PAYMENTS_READY) {
+      const res = await purchaseTier(selectedPlan);
+      if (res.success) navigation.goBack();
+      return;
+    }
     if (__DEV__) {
       activateMockPremium(true);
       setPlan('premium', undefined, selectedPlan);
@@ -266,11 +273,17 @@ export const PaywallScreen: React.FC = () => {
             </Pressable>
           </Animated.View>
 
-          {/* CTA */}
-          {/* Payments aren't wired yet — don't show a tappable CTA that does nothing in release. */}
-          <Pressable style={[styles.ctaBtn, !__DEV__ && styles.ctaBtnDisabled]} onPress={handleUpgrade} disabled={!__DEV__}>
-            <Text style={styles.ctaBtnText}>{__DEV__ ? 'Start Premium  →' : 'Premium — coming soon'}</Text>
-          </Pressable>
+          {/* CTA — tappable once payments are live (RevenueCat) or in DEV (mock).
+              In release before payments are wired it stays disabled rather than
+              dead-tapping. */}
+          {(() => {
+            const ctaEnabled = PAYMENTS_READY || __DEV__;
+            return (
+              <Pressable style={[styles.ctaBtn, !ctaEnabled && styles.ctaBtnDisabled]} onPress={handleUpgrade} disabled={!ctaEnabled}>
+                <Text style={styles.ctaBtnText}>{ctaEnabled ? 'Start Premium  →' : 'Premium — coming soon'}</Text>
+              </Pressable>
+            );
+          })()}
         </View>
 
         {/* ── Trust row ──────────────────────────────────────────────────── */}
