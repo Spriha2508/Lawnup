@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -11,10 +11,12 @@ import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 
-// Google OAuth is not implemented yet (the button previously routed to email
-// signup, which is misleading). Hide it until real Google Sign-In is wired —
-// flip to true once expo-auth-session / native OAuth client IDs are in place.
-const GOOGLE_AUTH_ENABLED = false;
+// Google Sign-In ships before launch via @react-native-google-signin. The
+// button stays VISIBLE; until the native flow is wired it shows a "coming soon"
+// notice rather than silently opening email signup. Flip to true once
+// GoogleSignin.configure({ webClientId }) → signInWithGoogle(idToken) is in
+// place. See docs/google-signin-setup.md and the Google Auth task.
+const GOOGLE_AUTH_READY = false;
 
 const GoogleLogo: React.FC = () => (
   <Svg width={18} height={18} viewBox="0 0 24 24">
@@ -27,6 +29,18 @@ const GoogleLogo: React.FC = () => (
 
 export const LandingScreen: React.FC = () => {
   const { navigate } = useAuthNavigation();
+
+  const handleGoogle = () => {
+    if (!GOOGLE_AUTH_READY) {
+      Alert.alert(
+        'Google Sign-In coming soon',
+        'We’re putting the finishing touches on Google sign-in. Please continue with email for now.',
+      );
+      return;
+    }
+    // TODO(google-auth): GoogleSignin.hasPlayServices() → signIn() →
+    // signInWithGoogle(idToken). See docs/google-signin-setup.md.
+  };
 
   return (
     <View style={styles.root}>
@@ -57,12 +71,10 @@ export const LandingScreen: React.FC = () => {
             <Text style={styles.btnEmailText}>Continue with Email</Text>
           </PressableScale>
 
-          {GOOGLE_AUTH_ENABLED && (
-            <PressableScale style={styles.btnGoogle} onPress={() => navigate('Signup')} to={0.97}>
-              <GoogleLogo />
-              <Text style={styles.btnSocialText}>Continue with Google</Text>
-            </PressableScale>
-          )}
+          <PressableScale style={styles.btnGoogle} onPress={handleGoogle} to={0.97}>
+            <GoogleLogo />
+            <Text style={styles.btnSocialText}>Continue with Google</Text>
+          </PressableScale>
 
           <View style={styles.signinRow}>
             <Text style={styles.signinLabel}>Already have an account?  </Text>
