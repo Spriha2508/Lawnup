@@ -77,40 +77,45 @@ Audited current state:
 
 ---
 
-## Install & wire (run in order — each ends building)
+## Install & wire — CODE DONE ✅ (env-gated; activates on key + rebuild)
 
-### A. Google Sign-In (Task #19)
-1. `npx expo install @react-native-google-signin/google-signin`
-2. Add its config plugin to `app.json` `plugins`.
-3. `GoogleSignin.configure({ webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID })` at startup.
-4. LandingScreen `handleGoogle`: `hasPlayServices()` → `signIn()` → `signInWithGoogle(idToken)` (already in `authService`).
-5. Set `GOOGLE_AUTH_READY = true` (LandingScreen).
+The three SDKs are installed and fully wired against real types (tsc clean).
+Each is gated on its env key, so it stays **off** until the key is set AND a
+native rebuild includes the module. **No code changes remain** — only the env
+keys, dashboards, and a prebuild+build.
 
-### B. RevenueCat (Task #20)
-1. `npx expo install react-native-purchases`
-2. Fill `TODO(revenuecat)` blocks in `purchasesService.ts`.
-3. Set `PAYMENTS_READY = true`. (Paywall CTA + Restore + boot `initPurchases/syncEntitlement` already wired.)
-
-### C. Sentry (Task #21)
-1. `npx expo install @sentry/react-native` + add config plugin.
-2. Fill `TODO(sentry)` blocks in `crashReporting.ts`.
-3. Set `CRASH_REPORTING_READY = true`. (Boot init + `setCrashUser` + logger forwarding already wired.)
+| Integration | Installed | Wired | Activates when |
+|---|---|---|---|
+| Google Sign-In (Task #19) | `@react-native-google-signin/google-signin@16` | `googleSignIn` service · Landing `handleGoogle` · boot `configureGoogleSignIn` · plugin in app.json | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` set |
+| RevenueCat (Task #20) | `react-native-purchases@10` | `purchasesService` (real API) · Paywall + Restore · boot init/sync | `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` set |
+| Sentry (Task #21) | `@sentry/react-native@7` | `crashReporting` (init/setUser/capture) · logger forwarding · boot init · plugin in app.json | `EXPO_PUBLIC_SENTRY_DSN` set |
 
 ### D. Analytics
 1. Set `EXPO_PUBLIC_POSTHOG_KEY`; verify events fire in a **release** build (disabled in `__DEV__`).
 
 ### E. Build & verify (Task #23)
-1. Rebuild dev/EAS client (native modules can't hot-reload).
-2. Upload to Play internal track.
-3. Device QA (see `docs/launch-runbook.md` §6).
+> ⚠️ **CRITICAL — native folders are committed (`android/`, `ios/` tracked).**
+> EAS Build does **not** sync `plugins` or `android.googleServicesFile` from
+> app.json when native folders exist. The config plugins added for Google
+> Sign-In and Sentry (and the google-services copy) only take effect after a
+> **prebuild regen** (the project's normal workflow — see commit `5d2baf6`).
+1. Place `google-services.json` at repo root (required — prebuild fails without it).
+2. Set the three integration keys + `POSTHOG_KEY` (+ `OPENAI_API_KEY`) in `.env`.
+3. **`npx expo prebuild --clean -p android`** — regenerates `android/` with the
+   new plugins + google-services + on-brand assets (reproduced from app.json).
+4. EAS/local Android build → upload to Play internal track.
+5. Device QA (see `docs/launch-runbook.md` §6) — verify Google sign-in, a real
+   purchase + restore, a forced crash reaching Sentry.
 
 ---
 
 ## Blockers summary (must clear before launch)
-- ⚠️ `google-services.json` not placed.
+- ⚠️ `google-services.json` not placed (also blocks prebuild).
+- ⚠️ **Must `expo prebuild --clean` after placing google-services.json** — else the build ships without the Google/Sentry plugins.
 - ⚠️ `EXPO_PUBLIC_POSTHOG_KEY` empty (analytics).
 - ⚠️ `OPENAI_API_KEY` empty → Doc. Sage AI chat replies disabled.
 - ⬜ RevenueCat + Play products (no real payment path until done).
 - ⬜ Google OAuth (Web client id + SHA) and Sentry DSN.
 - ⬜ Privacy Policy URL + Play Data Safety / Content Rating.
+- ✅ Code complete: all three SDKs installed + wired + tsc-clean (env-gated).
 - ✅ Not a blocker: `PLANT_ID_KEY` (client scans) — wired via `app.config.ts` extra.
