@@ -11,7 +11,7 @@ import {
   sendTestReminder,
 } from '../../../services/reminders/notificationScheduler';
 import { useNotificationPrefsStore, type NotificationCategory } from '../store/notificationPrefsStore';
-import { restore as restorePurchases, PAYMENTS_READY } from '../../subscription/services/purchasesService';
+import { restore as restorePurchases, presentCustomerCenter, PAYMENTS_READY } from '../../subscription/services/purchasesService';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
 import type { ProfileStackParamList } from '../../../navigation/types';
@@ -225,6 +225,15 @@ export const SettingsScreen: React.FC = () => {
           {/* Account */}
           <Text style={styles.sectionLabel}>ACCOUNT</Text>
           <View style={styles.card}>
+            {PAYMENTS_READY && (
+              <>
+                <PressableScale style={styles.row} onPress={presentCustomerCenter} to={0.99}>
+                  <Text style={[styles.rowTitle, { flex: 1 }]}>Manage subscription</Text>
+                  <Chevron />
+                </PressableScale>
+                <View style={styles.divider} />
+              </>
+            )}
             <PressableScale style={styles.row} onPress={onRestore} to={0.99}>
               <Text style={[styles.rowTitle, { flex: 1 }]}>Restore purchases</Text>
               <Chevron />
