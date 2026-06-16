@@ -76,7 +76,7 @@ const CityChip: React.FC<{ city: string; active: boolean; onPress: () => void; i
 export const LocationScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { setCity } = useOnboardingStore();
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState('');
   const [focused, setFocused] = useState(false);
@@ -87,9 +87,13 @@ export const LocationScreen: React.FC = () => {
     if (!selected || !user) return;
     const zone = ZONE_MAP[selected] ?? 'north';
     setCity(selected, zone);
+    // Keep the in-session auth user in sync so Profile / Edit Profile show the
+    // city immediately (the persisted user doc drops city; the boot listener
+    // re-hydrates it on next launch, but this avoids a stale "Not set").
+    setUser({ ...user, city: selected, climateZone: zone });
     await updateDoc(doc(db, `users/${user.uid}`), { city: selected, climateZone: zone });
     navigation.navigate('PlaceType');
-  }, [selected, user, setCity, navigation]);
+  }, [selected, user, setCity, setUser, navigation]);
 
   return (
     <View style={styles.root}>

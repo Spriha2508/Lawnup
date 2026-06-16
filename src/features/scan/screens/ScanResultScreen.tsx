@@ -359,6 +359,24 @@ export const ScanResultScreen: React.FC = () => {
                 </View>
                 <Text style={styles.aiDoctorArrow}>→</Text>
               </TouchableOpacity>
+
+              {/* Soil & potting — available right after ID, no save required */}
+              <TouchableOpacity
+                style={styles.soilCard}
+                onPress={() => {
+                  navigation.getParent<any>()?.navigate('Plants', {
+                    screen: 'SoilAdvisor',
+                    params: { speciesName: scanResult.commonName },
+                  });
+                }}
+                activeOpacity={0.82}
+              >
+                <View style={styles.aiDoctorLeft}>
+                  <Text style={styles.soilLabel}>SOIL &amp; POTTING</Text>
+                  <Text style={styles.soilTitle}>See the right soil mix for {scanResult.commonName}</Text>
+                </View>
+                <Text style={styles.aiDoctorArrow}>→</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -869,6 +887,34 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: 'Nunito-Regular',
     flexShrink: 0,
+  },
+
+  // Soil & potting CTA (CARE tab)
+  soilCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: C.card,
+    borderRadius: 24,
+    paddingHorizontal: 22,
+    paddingVertical: 22,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  soilLabel: {
+    fontSize: 9,
+    fontFamily: 'Nunito-Bold',
+    color: C.secondary,
+    letterSpacing: 2.2,
+    textTransform: 'uppercase',
+  },
+  soilTitle: {
+    fontFamily: 'Jakarta-SemiBoldItalic',
+    fontSize: 22,
+    color: C.textPrimary,
+    lineHeight: 26,
+    letterSpacing: -0.2,
+    paddingRight: 14,
   },
 
   // Scan meta (INFO tab)

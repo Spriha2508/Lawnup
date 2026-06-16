@@ -14,8 +14,6 @@ export type OnboardingStackParamList = {
   Location: undefined;
   PlaceType: undefined;
   SkillLevel: undefined;
-  PlantsType: undefined;
-  Goal: undefined;
 };
 
 // Scan Stack

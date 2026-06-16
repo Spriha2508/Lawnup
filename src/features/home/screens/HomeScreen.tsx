@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import Animated, {
-  FadeInDown, FadeInUp, Easing,
+  FadeInDown, Easing,
   useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, interpolate, Extrapolation,
   withRepeat, withTiming, withDelay,
 } from 'react-native-reanimated';
@@ -343,18 +343,6 @@ export const HomeScreen: React.FC = () => {
               </AnimatedScrollView>
             </View>
 
-            {/* ── 4 · Featured Scan card (warm neutral, not a green hero) ────── */}
-            <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={{ marginBottom: SECTION_GAP }}>
-              <PressableScale style={styles.featuredScan} onPress={() => goScan('featured_card')} to={0.98}>
-                <Animated.View style={[styles.featuredBlob, blobStyle]} />
-                <View style={styles.featuredLeaf}><Text style={{ fontSize: 22 }}>🌿</Text></View>
-                <Text style={styles.featuredLabel}>AI PLANT SCAN</Text>
-                <Text style={styles.featuredTitle}>Identify any plant in seconds</Text>
-                <Text style={styles.featuredBody}>Species ID, health check and a care plan — instantly.</Text>
-                <View style={styles.featuredBtn}><Text style={styles.featuredBtnText}>Scan a Plant  →</Text></View>
-              </PressableScale>
-            </Animated.View>
-
             {/* ── 5 · Plant Health Summary (4-tier) ─────────────────────────── */}
             <View style={{ marginBottom: SECTION_GAP }}>
               <SectionHeader label="PLANT HEALTH" />
@@ -417,7 +405,6 @@ export const HomeScreen: React.FC = () => {
             <View style={{ marginBottom: S.xl }}>
               <SectionHeader label="QUICK ACTIONS" />
               <View style={styles.quickGrid}>
-                <QuickAction emoji="📷" label="Scan" onPress={() => goScan('quick_action')} />
                 <QuickAction emoji="🪴" label="Add Plant" onPress={() => goAddPlant('quick_action')} />
                 <QuickAction emoji="💬" label="Ask Dr. Banyan" onPress={() => goDoctor('quick_action')} />
                 <QuickAction emoji="✅" label="Tasks" onPress={() => goTasks('quick_action')} />
@@ -426,14 +413,6 @@ export const HomeScreen: React.FC = () => {
           </>
         )}
       </AnimatedScrollView>
-
-      {/* FAB */}
-      <Animated.View entering={FadeInUp.delay(400).duration(M.duration.expressive).springify().damping(14)} style={styles.fabWrap} pointerEvents="box-none">
-        <PressableScale style={styles.fab} onPress={() => goScan('fab')} to={0.9}
-          accessibilityRole="button" accessibilityLabel="Scan a plant">
-          <Svg width={26} height={26} viewBox="0 0 24 24" fill="none"><Path d="M12 5V19M5 12H19" stroke={C.onInkBtn} strokeWidth={2.2} strokeLinecap="round" /></Svg>
-        </PressableScale>
-      </Animated.View>
     </View>
   );
 };
@@ -625,16 +604,6 @@ const styles = StyleSheet.create({
   plantName: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary, marginBottom: 4 },
   plantStatus: { ...T.caption, color: C.textSecondary },
 
-  // 4 · Featured Scan — warm sand card with sage CTA
-  featuredScan: { backgroundColor: C.surface, borderRadius: R.sheet, padding: S.xl, overflow: 'hidden', borderWidth: 1, borderColor: C.border, ...theme.shadows.card },
-  featuredBlob: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: C.primaryWash, top: -90, right: -70 },
-  featuredLeaf: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', marginBottom: S.md, ...theme.shadows.sm },
-  featuredLabel: { ...T.statLabel, color: C.primary, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: S.xs },
-  featuredTitle: { fontFamily: F.serifMedium, fontSize: 26, lineHeight: 30, letterSpacing: -0.4, color: C.textPrimary, marginBottom: S.xs },
-  featuredBody: { ...T.bodyMd, color: C.textSecondary, lineHeight: 21, marginBottom: S.lg },
-  featuredBtn: { backgroundColor: C.primary, borderRadius: R.pill, paddingVertical: 14, paddingHorizontal: 24, alignSelf: 'flex-start' },
-  featuredBtnText: { ...T.button, fontFamily: F.sansBold, color: C.onPrimary },
-
   // 5 · Health summary (4-tier)
   healthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   healthTier: { width: (W - H_PAD * 2 - 10) / 2, backgroundColor: C.card, borderRadius: R.lg, paddingVertical: S.lg, paddingHorizontal: S.lg, borderWidth: 1, borderColor: C.border, flexDirection: 'row', alignItems: 'center', gap: S.md, ...theme.shadows.sm },
@@ -682,8 +651,4 @@ const styles = StyleSheet.create({
 
   emptyWrap: { paddingVertical: S['2xl'], alignItems: 'center' },
   emptyText: { ...T.bodyMd, color: C.textMuted, textAlign: 'center' },
-
-  // FAB
-  fabWrap: { position: 'absolute', right: H_PAD, bottom: 24, zIndex: theme.z.fab },
-  fab: { width: 56, height: 56, borderRadius: 28, backgroundColor: C.inkBtn, alignItems: 'center', justifyContent: 'center', ...theme.shadows.floating },
 });

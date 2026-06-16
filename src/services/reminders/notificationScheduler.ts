@@ -57,6 +57,39 @@ export async function hasNotificationPermission(): Promise<boolean> {
   }
 }
 
+// ── Test reminder ────────────────────────────────────────────────────────────
+
+export type TestReminderResult = 'scheduled' | 'no_permission' | 'error';
+
+/**
+ * Fire a one-off local notification a few seconds out so the user can confirm
+ * notifications actually arrive on their device (a "does this work?" check).
+ * Requests permission if not already granted.
+ */
+export async function sendTestReminder(delaySeconds = 5): Promise<TestReminderResult> {
+  try {
+    const granted = await requestNotificationPermission();
+    if (!granted) return 'no_permission';
+
+    await Notifications.scheduleNotificationAsync({
+      identifier: `${ID_PREFIX}test`,
+      content: {
+        title: '🌿 LawnUp reminder test',
+        body: 'Nice — reminders are working. This is how watering reminders will arrive.',
+        data: { type: 'test' } as Record<string, unknown>,
+        sound: false,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: Math.max(1, delaySeconds),
+      },
+    });
+    return 'scheduled';
+  } catch {
+    return 'error';
+  }
+}
+
 // ── Scheduling ─────────────────────────────────────────────────────────────────
 
 export async function scheduleWateringReminder(

@@ -161,6 +161,11 @@ function buildLeaves(): { core: Leaf[]; more: Leaf[]; minY: number; maxY: number
 const { core: CORE_LEAVES, more: MORE_LEAVES, minY: LEAF_MIN_Y, maxY: LEAF_MAX_Y } = buildLeaves();
 const LEAF_SPAN = LEAF_MAX_Y - LEAF_MIN_Y || 1;
 
+// Anchor the "IDENTIFIED" detection HUD a fixed gap ABOVE the highest leaf, so
+// it never lands on the canopy (a fractional H position overlapped the foliage
+// on shorter devices). Clamped so it can't ride under the status bar.
+const IDENT_LABEL_Y = Math.max(54, LEAF_MIN_Y - 56);
+
 // Split the core foliage into horizontal bands (top → bottom) so colour can
 // flood downward in the wake of the scan.
 const CORE_BANDS: Leaf[][] = Array.from({ length: NBANDS }, () => []);
@@ -469,7 +474,7 @@ const styles = StyleSheet.create({
   identWrap: { position: 'absolute', left: 0, right: 0, top: baseY - 150, alignItems: 'center' },
   pulseRing: { width: 220, height: 220, borderRadius: 110, borderWidth: 1.5, borderColor: SCAN_HALO },
   identLabel: {
-    position: 'absolute', left: 0, right: 0, top: H * 0.24,
+    position: 'absolute', left: 0, right: 0, top: IDENT_LABEL_Y,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
   },
   checkDot: {

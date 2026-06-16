@@ -4,8 +4,6 @@ import { WelcomeScreen }    from '../features/onboarding/screens/WelcomeScreen';
 import { LocationScreen }   from '../features/onboarding/screens/LocationScreen';
 import { PlaceTypeScreen }  from '../features/onboarding/screens/PlaceTypeScreen';
 import { SkillLevelScreen } from '../features/onboarding/screens/SkillLevelScreen';
-import { PlantsTypeScreen } from '../features/onboarding/screens/PlantsTypeScreen';
-import { GoalScreen }       from '../features/onboarding/screens/GoalScreen';
 import { fadeTransition } from './transitions';
 import { theme } from '@constants/designSystem';
 import type { OnboardingStackParamList } from './types';
@@ -26,7 +24,5 @@ export const OnboardingNavigator: React.FC = () => (
     <Stack.Screen name="Location"   component={LocationScreen}   />
     <Stack.Screen name="PlaceType"  component={PlaceTypeScreen}  />
     <Stack.Screen name="SkillLevel" component={SkillLevelScreen} />
-    <Stack.Screen name="PlantsType" component={PlantsTypeScreen} />
-    <Stack.Screen name="Goal"       component={GoalScreen}       />
   </Stack.Navigator>
 );

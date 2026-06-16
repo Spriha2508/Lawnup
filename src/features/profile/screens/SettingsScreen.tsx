@@ -8,10 +8,20 @@ import { useAuthStore } from '../../auth/store/authStore';
 import {
   hasNotificationPermission,
   requestNotificationPermission,
+  sendTestReminder,
 } from '../../../services/reminders/notificationScheduler';
+import { useNotificationPrefsStore, type NotificationCategory } from '../store/notificationPrefsStore';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
 import type { ProfileStackParamList } from '../../../navigation/types';
+
+const CATEGORIES: { key: NotificationCategory; title: string; sub: string }[] = [
+  { key: 'water',          title: 'Watering reminders',  sub: 'When a plant needs water' },
+  { key: 'fertilizer',     title: 'Fertilizer reminders', sub: 'Seasonal feeding nudges' },
+  { key: 'care',           title: 'Care reminders',       sub: 'Turning, light & repotting tips' },
+  { key: 'productUpdates', title: 'Product updates',      sub: 'New features & app news' },
+  { key: 'marketing',      title: 'Offers & promotions',  sub: 'Occasional deals — off by default' },
+];
 
 const { color: C, spacing: S, typography: T, radii: R, fonts: F } = theme;
 type Nav = StackNavigationProp<ProfileStackParamList, 'Settings'>;
@@ -22,6 +32,9 @@ export const SettingsScreen: React.FC = () => {
 
   const [notifGranted, setNotifGranted] = useState<boolean | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [testing, setTesting] = useState(false);
+
+  const prefs = useNotificationPrefsStore();
 
   // Re-check OS permission whenever the screen regains focus (it may have been
   // changed in system settings while we were away).
@@ -54,6 +67,26 @@ export const SettingsScreen: React.FC = () => {
       );
     }
   }, [notifGranted]);
+
+  const onSendTest = useCallback(async () => {
+    if (testing) return;
+    setTesting(true);
+    const res = await sendTestReminder();
+    setTesting(false);
+    if (res === 'scheduled') {
+      setNotifGranted(true);
+      Alert.alert('Test reminder sent', 'You’ll get a notification in about 5 seconds — keep the app in the background to see it.');
+    } else if (res === 'no_permission') {
+      setNotifGranted(false);
+      Alert.alert(
+        'Notifications blocked',
+        'Enable notifications for LawnUp in your device Settings to receive reminders.',
+        [{ text: 'Not now', style: 'cancel' }, { text: 'Open Settings', onPress: () => Linking.openSettings() }],
+      );
+    } else {
+      Alert.alert('Could not send test', 'Please try again in a moment.');
+    }
+  }, [testing]);
 
   const confirmDelete = useCallback(() => {
     Alert.alert(
@@ -101,14 +134,14 @@ export const SettingsScreen: React.FC = () => {
         </View>
 
         <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-          {/* Notifications */}
+          {/* Notifications — master OS permission */}
           <Text style={styles.sectionLabel}>NOTIFICATIONS</Text>
           <View style={styles.card}>
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>Watering reminders</Text>
+                <Text style={styles.rowTitle}>Allow notifications</Text>
                 <Text style={styles.rowSub}>
-                  {notifGranted === null ? 'Checking…' : notifGranted ? 'On — you’ll get care reminders' : 'Off — enable to get reminders'}
+                  {notifGranted === null ? 'Checking…' : notifGranted ? 'On — reminders can reach you' : 'Off — turn on to receive reminders'}
                 </Text>
               </View>
               <Switch
@@ -119,6 +152,40 @@ export const SettingsScreen: React.FC = () => {
                 disabled={notifGranted === null}
               />
             </View>
+          </View>
+
+          {/* Per-category controls (gated by the OS permission above) */}
+          <Text style={styles.sectionLabel}>WHAT YOU’LL HEAR ABOUT</Text>
+          <View style={styles.card}>
+            {CATEGORIES.map((cat, i) => (
+              <View key={cat.key} style={[styles.row, i < CATEGORIES.length - 1 && styles.rowDivider]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.rowTitle, !notifGranted && styles.rowDisabled]}>{cat.title}</Text>
+                  <Text style={styles.rowSub}>{cat.sub}</Text>
+                </View>
+                <Switch
+                  value={!!notifGranted && prefs[cat.key]}
+                  onValueChange={(v) => prefs.setPref(cat.key, v)}
+                  trackColor={{ false: C.border, true: C.primarySoft }}
+                  thumbColor={!!notifGranted && prefs[cat.key] ? C.primary : C.card}
+                  disabled={!notifGranted}
+                />
+              </View>
+            ))}
+          </View>
+          {!notifGranted && notifGranted !== null && (
+            <Text style={styles.hint}>Turn on “Allow notifications” to choose what you hear about.</Text>
+          )}
+
+          {/* Test reminder — verify notifications actually arrive */}
+          <View style={[styles.card, { marginTop: S.sm }]}>
+            <PressableScale style={styles.row} onPress={onSendTest} to={0.99} disabled={testing}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: C.primary }]}>{testing ? 'Sending…' : 'Send a test reminder'}</Text>
+                <Text style={styles.rowSub}>Get a sample notification in ~5 seconds</Text>
+              </View>
+              <Chevron />
+            </PressableScale>
           </View>
 
           {/* Appearance */}
@@ -175,7 +242,9 @@ const styles = StyleSheet.create({
   sectionLabel: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2, marginTop: S.xl, marginBottom: S.sm },
   card: { backgroundColor: C.card, borderRadius: R.xl, borderWidth: 1, borderColor: C.border, paddingHorizontal: 16, ...theme.shadows.sm },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 },
+  rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.border },
   rowTitle: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary },
+  rowDisabled: { color: C.textMuted },
   rowSub: { ...T.caption, color: C.textMuted, marginTop: 2 },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: C.border },
 

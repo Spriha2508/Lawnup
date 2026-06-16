@@ -81,10 +81,10 @@ export const PLAN_DEFS: PlanDef[] = [
   {
     id: 'premium_annual',
     label: 'Premium Annual',
-    price: 2189,
+    price: 1990,
     period: '/ year',
-    perMonthNote: 'Just ₹182 per month',
-    savingsBadge: 'SAVE 8%',
+    perMonthNote: 'Just ₹166 per month',
+    savingsBadge: 'SAVE 17%',
     isPopular: true,
     scanLimit: PREMIUM_ANNUAL_SCAN_LIMIT,
     plantLimit: -1,

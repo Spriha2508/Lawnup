@@ -37,9 +37,8 @@ let bloomed = false;
 const PROGRESS: Record<string, number> = {
   Landing: 0.06, Login: 0.06, ForgotPassword: 0.06,
   Signup: 0.16,
-  Welcome: 0.3,
-  Location: 0.45, PlaceType: 0.6, SkillLevel: 0.75, PlantsType: 0.9,
-  Goal: 1.0,
+  Welcome: 0.35,
+  Location: 0.58, PlaceType: 0.78, SkillLevel: 0.95,
 };
 
 export function setVineForRoute(name?: string) {
@@ -90,6 +89,17 @@ const MILESTONES = [
   { t: 0.9,  x: 10, y: H * 0.24, side: -1 },
 ];
 
+// Foliage: small leaves that unfurl along the vine between milestones, so the
+// thread reads as a living, leafy vine rather than a bare line.
+const LEAVES = [
+  { t: 0.10, x: 12, y: H * 0.85, side: -1 },
+  { t: 0.30, x: 14, y: H * 0.69, side: 1 },
+  { t: 0.38, x: 10, y: H * 0.63, side: -1 },
+  { t: 0.54, x: 14, y: H * 0.50, side: 1 },
+  { t: 0.72, x: 16, y: H * 0.34, side: 1 },
+  { t: 0.82, x: 11, y: H * 0.29, side: -1 },
+];
+
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 // ── A curling tendril that spirals out as the vine passes its milestone ─────
@@ -126,6 +136,31 @@ const Blossom: React.FC<{ t: number; x: number; y: number; side: number }> = ({ 
           <Circle key={a} cx={7 + Math.cos((a * Math.PI) / 180) * 3.6} cy={7 + Math.sin((a * Math.PI) / 180) * 3.6} r={2.4} fill={C.secondary} opacity={0.9} />
         ))}
         <Circle cx={7} cy={7} r={2} fill="#FFE9B8" />
+      </Svg>
+    </Animated.View>
+  );
+};
+
+// ── A small leaf that unfurls (scale + rotate) as the vine passes it ────────
+const Leaf: React.FC<{ t: number; x: number; y: number; side: number }> = ({ t, x, y, side }) => {
+  const style = useAnimatedStyle(() => {
+    const v = Math.min(1, Math.max(0, (vineProgress.value - t) * 7));
+    return {
+      opacity: v * 0.92 * vineVisible.value,
+      transform: [
+        { translateX: x + side * 3 - 7 },
+        { translateY: y - 7 },
+        { rotate: `${side * (35 - v * 20)}deg` },
+        { scale: 0.2 + v * 0.8 },
+      ],
+    };
+  });
+  return (
+    <Animated.View style={[styles.abs, style]} pointerEvents="none">
+      <Svg width={14} height={14} viewBox="0 0 14 14">
+        {/* a simple teardrop leaf with a centre vein */}
+        <Path d="M7 1 C11 4 11 10 7 13 C3 10 3 4 7 1 Z" fill={C.primarySoft} opacity={0.85} />
+        <Path d="M7 2.5 L7 11.5" stroke={C.primaryDark} strokeWidth={0.7} opacity={0.5} />
       </Svg>
     </Animated.View>
   );
@@ -199,6 +234,7 @@ export const JourneyVine: React.FC = () => {
         <AnimatedPath d={VINE_D} stroke={C.primary} strokeOpacity={0.14} strokeWidth={6} strokeLinecap="round" fill="none" strokeDasharray={VINE_LEN} animatedProps={vineProps} />
         <AnimatedPath d={VINE_D} stroke="#A9F5C5" strokeWidth={1.8} strokeLinecap="round" fill="none" strokeDasharray={VINE_LEN} animatedProps={vineProps} />
       </Svg>
+      {LEAVES.map((l, i) => <Leaf key={`l${i}`} {...l} />)}
       {MILESTONES.map((m, i) => <Tendril key={`t${i}`} {...m} />)}
       {MILESTONES.map((m, i) => <Blossom key={`b${i}`} {...m} />)}
       <GrowingTip />

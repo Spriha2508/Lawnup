@@ -78,8 +78,12 @@ export const SoilAdvisorScreen: React.FC = () => {
   const route = useRoute<Route>();
   const { plants } = usePlantsStore();
 
+  // When opened straight from a scan we receive a speciesName (and no plantId).
+  // In that case honour the scanned species rather than defaulting to the first
+  // saved plant — so soil advice is available right after identification, even
+  // for users who already have a garden.
   const [selectedId, setSelectedId] = useState<string | null>(
-    route.params?.plantId ?? plants[0]?.plantId ?? null,
+    route.params?.plantId ?? (route.params?.speciesName ? null : plants[0]?.plantId ?? null),
   );
 
   const selectedPlant = plants.find((p) => p.plantId === selectedId) ?? null;

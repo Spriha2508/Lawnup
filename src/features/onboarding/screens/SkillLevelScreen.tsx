@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useAuthStore } from '../../auth/store/authStore';
+import { db } from '../../../services/firebase/firebaseConfig';
+import { track } from '../../../services/analytics/posthog';
 import { OnboardingScaffold, SelectCard } from '../components/OnboardingKit';
-import type { OnboardingStackParamList } from '@navigation/types';
 
-type Nav = StackNavigationProp<OnboardingStackParamList, 'SkillLevel'>;
 const CARD_W = (Dimensions.get('window').width - 56 - 12) / 2;
 
 const OPTIONS = [
@@ -16,21 +16,43 @@ const OPTIONS = [
 ];
 
 export const SkillLevelScreen: React.FC = () => {
-  const navigation = useNavigation<Nav>();
+  const { user, setUser } = useAuthStore();
   // Single-select: only one skill level can be chosen. Tapping the active card
-  // again clears it. (The other personality screens stay multi-select.)
+  // again clears it.
   const [selected, setSelected] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const select = (id: string) => setSelected(prev => (prev === id ? null : id));
+
+  // Final onboarding step — completes the flow and enters the app.
+  const handleFinish = () => {
+    if (!user || isLoading) return;
+    setIsLoading(true);
+    track('onboarding_completed', { skillLevel: selected, city: user.city });
+
+    // Enter the app on local state immediately — never block first-run on the
+    // server round-trip. The write is queued by Firestore (offline-persistent)
+    // and retried on reconnect, so a flaky/absent connection can't strand the
+    // user here. A hard failure is logged but must not trap the user.
+    updateDoc(doc(db, `users/${user.uid}`), { onboardingComplete: true }).catch((e: any) => {
+      console.warn('[Onboarding] onboardingComplete write failed (will retry on sync):', e?.message);
+    });
+
+    setUser({ ...user, onboardingComplete: true });
+  };
+
+  const canSubmit = selected !== null && !isLoading;
 
   return (
     <OnboardingScaffold
-      step={{ current: 2, total: 4 }}
-      eyebrow="STEP 2 OF 4"
+      step={{ current: 2, total: 2 }}
+      eyebrow="STEP 2 OF 2"
       title={'How would you\ndescribe yourself?'}
       subtitle="So your care tips land right — never too basic, never over your head."
-      ctaLabel="Continue"
-      ctaEnabled={selected !== null}
-      onCta={() => navigation.navigate('PlantsType')}
+      ctaLabel={isLoading ? 'Setting up your garden…' : 'Enter LawnUp'}
+      ctaEnabled={canSubmit}
+      onCta={handleFinish}
+      secondaryLabel={isLoading ? undefined : 'Skip for now'}
+      onSecondary={handleFinish}
       scroll
     >
       <View style={styles.grid}>

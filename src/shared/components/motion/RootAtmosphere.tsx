@@ -32,7 +32,7 @@ export const atmosphereDepth = makeMutable(0);
 const DEPTH: Record<string, number> = {
   Landing: 0.2, Login: 0.25, ForgotPassword: 0.25, Signup: 0.4,
   Welcome: 0.5,
-  Location: 0.62, PlaceType: 0.62, SkillLevel: 0.62, PlantsType: 0.62, Goal: 0.62,
+  Location: 0.62, PlaceType: 0.62, SkillLevel: 0.62,
   Home: 1.0,
 };
 

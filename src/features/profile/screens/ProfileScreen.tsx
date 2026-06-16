@@ -119,6 +119,11 @@ export const ProfileScreen: React.FC = () => {
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${growthPct}%` }]} />
             </View>
+            <Text style={styles.growthHint}>
+              {isMaxLevel
+                ? 'You’ve reached the top garden level — keep your collection thriving.'
+                : `Your garden level grows as you add plants. ${plants.length}/${nextAt} to become a ${nextName}.`}
+            </Text>
           </Animated.View>
 
           {/* Premium */}
@@ -224,18 +229,13 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', backgroundColor: C.card, borderRadius: R.xl, paddingVertical: S.lg, marginBottom: S.lg, borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
 
   // Growth progress
-  welcomeCard: { backgroundColor: C.card, borderRadius: R.xl, padding: S.xl, marginBottom: S['3xl'], borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
-  welcomeTitle: { fontFamily: F.serifMedium, fontSize: 20, color: C.textPrimary, marginBottom: S.xs },
-  welcomeBody: { ...T.bodyMd, color: C.textSecondary, marginBottom: S.lg },
-  welcomeBtn: { backgroundColor: C.primary, borderRadius: R.pill, paddingVertical: 14, alignItems: 'center' },
-  welcomeBtnText: { ...T.button, fontFamily: F.sansBold, color: C.onPrimary, letterSpacing: 0.2 },
-
   growthCard: { backgroundColor: C.card, borderRadius: R.xl, paddingHorizontal: S.lg, paddingVertical: S.lg, marginBottom: S['3xl'], borderWidth: 1, borderColor: C.border, ...theme.shadows.sm },
   growthHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: S.md },
   growthLevel: { fontFamily: F.serifMedium, fontSize: 18, color: C.textPrimary },
   growthNext: { ...T.caption, color: C.textMuted },
   progressTrack: { height: 8, borderRadius: 4, backgroundColor: C.input, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 4, backgroundColor: C.primary },
+  growthHint: { ...T.caption, color: C.textMuted, marginTop: S.md, lineHeight: 17 },
   statBlock: { flex: 1, alignItems: 'center' },
   statValue: { fontFamily: F.sansHeavy, fontSize: 26, color: C.textPrimary, marginBottom: 4 },
   statLabel: { ...T.statLabel, color: C.textMuted, letterSpacing: 1.2, textTransform: 'uppercase' },

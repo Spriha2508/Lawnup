@@ -23,8 +23,8 @@ export const PlaceTypeScreen: React.FC = () => {
 
   return (
     <OnboardingScaffold
-      step={{ current: 1, total: 4 }}
-      eyebrow="STEP 1 OF 4"
+      step={{ current: 1, total: 2 }}
+      eyebrow="STEP 1 OF 2"
       title={'Where will your\nplants live?'}
       subtitle="So we tailor light and watering advice to your space."
       ctaLabel="Continue"
