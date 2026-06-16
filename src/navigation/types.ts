@@ -18,7 +18,6 @@ export type OnboardingStackParamList = {
 
 // Scan Stack
 export type ScanStackParamList = {
-  ScanLanding: undefined;
   Camera: undefined;
   Processing: { imageUri: string; extraUris?: string[] };
   ScanResult: { scanId: string };

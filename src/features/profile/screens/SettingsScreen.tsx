@@ -15,12 +15,15 @@ import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
 import type { ProfileStackParamList } from '../../../navigation/types';
 
-const CATEGORIES: { key: NotificationCategory; title: string; sub: string }[] = [
-  { key: 'water',          title: 'Watering reminders',  sub: 'When a plant needs water' },
-  { key: 'fertilizer',     title: 'Fertilizer reminders', sub: 'Seasonal feeding nudges' },
-  { key: 'care',           title: 'Care reminders',       sub: 'Turning, light & repotting tips' },
-  { key: 'productUpdates', title: 'Product updates',      sub: 'New features & app news' },
-  { key: 'marketing',      title: 'Offers & promotions',  sub: 'Occasional deals — off by default' },
+// `live` = the channel actually delivers today. Watering reminders are wired to
+// the local scheduler; the rest are stored preferences whose delivery engines
+// ship later — shown as "Soon" so we never present a fake working toggle.
+const CATEGORIES: { key: NotificationCategory; title: string; sub: string; live: boolean }[] = [
+  { key: 'water',          title: 'Watering reminders',   sub: 'When a plant needs water',        live: true  },
+  { key: 'fertilizer',     title: 'Fertilizer reminders', sub: 'Seasonal feeding nudges',         live: false },
+  { key: 'care',           title: 'Care reminders',       sub: 'Turning, light & repotting tips', live: false },
+  { key: 'productUpdates', title: 'Product updates',      sub: 'New features & app news',         live: false },
+  { key: 'marketing',      title: 'Offers & promotions',  sub: 'Occasional deals — off by default', live: false },
 ];
 
 const { color: C, spacing: S, typography: T, radii: R, fonts: F } = theme;
@@ -160,16 +163,20 @@ export const SettingsScreen: React.FC = () => {
             {CATEGORIES.map((cat, i) => (
               <View key={cat.key} style={[styles.row, i < CATEGORIES.length - 1 && styles.rowDivider]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.rowTitle, !notifGranted && styles.rowDisabled]}>{cat.title}</Text>
+                  <Text style={[styles.rowTitle, (!notifGranted || !cat.live) && styles.rowDisabled]}>{cat.title}</Text>
                   <Text style={styles.rowSub}>{cat.sub}</Text>
                 </View>
-                <Switch
-                  value={!!notifGranted && prefs[cat.key]}
-                  onValueChange={(v) => prefs.setPref(cat.key, v)}
-                  trackColor={{ false: C.border, true: C.primarySoft }}
-                  thumbColor={!!notifGranted && prefs[cat.key] ? C.primary : C.card}
-                  disabled={!notifGranted}
-                />
+                {cat.live ? (
+                  <Switch
+                    value={!!notifGranted && prefs[cat.key]}
+                    onValueChange={(v) => prefs.setPref(cat.key, v)}
+                    trackColor={{ false: C.border, true: C.primarySoft }}
+                    thumbColor={!!notifGranted && prefs[cat.key] ? C.primary : C.card}
+                    disabled={!notifGranted}
+                  />
+                ) : (
+                  <View style={styles.soonPill}><Text style={styles.soonText}>SOON</Text></View>
+                )}
               </View>
             ))}
           </View>

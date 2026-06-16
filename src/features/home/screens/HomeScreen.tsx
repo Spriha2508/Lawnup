@@ -343,16 +343,20 @@ export const HomeScreen: React.FC = () => {
               </AnimatedScrollView>
             </View>
 
-            {/* ── 5 · Plant Health Summary (4-tier) ─────────────────────────── */}
-            <View style={{ marginBottom: SECTION_GAP }}>
-              <SectionHeader label="PLANT HEALTH" />
-              <View style={styles.healthGrid}>
-                <HealthTier label="Healthy" n={garden.healthy} color={C.healthyFg} />
-                <HealthTier label="Needs attention" n={garden.needsAttention} color={C.waterFg} />
-                <HealthTier label="At risk" n={garden.atRisk} color={C.secondary} />
-                <HealthTier label="Critical" n={garden.critical} color={C.criticalFg} />
+            {/* ── 5 · Plant Health Summary (4-tier) — only meaningful once the ──
+                garden is large enough to span tiers; for 1–2 plants the Garden
+                Overview ring already says it all. */}
+            {plants.length >= 3 && (
+              <View style={{ marginBottom: SECTION_GAP }}>
+                <SectionHeader label="PLANT HEALTH" />
+                <View style={styles.healthGrid}>
+                  <HealthTier label="Healthy" n={garden.healthy} color={C.healthyFg} />
+                  <HealthTier label="Needs attention" n={garden.needsAttention} color={C.waterFg} />
+                  <HealthTier label="At risk" n={garden.atRisk} color={C.secondary} />
+                  <HealthTier label="Critical" n={garden.critical} color={C.criticalFg} />
+                </View>
               </View>
-            </View>
+            )}
 
             {/* ── 6 · Weather + AQI Intelligence ────────────────────────────── */}
             {(weather || aqi) && (

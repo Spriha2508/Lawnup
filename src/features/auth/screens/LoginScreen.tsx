@@ -10,6 +10,9 @@ import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, fonts: F } = theme;
 
+// Lightweight email-format guard (Firebase does authoritative validation).
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const LoginScreen: React.FC = () => {
   const { navigate: authNavigate, goBack: authGoBack } = useAuthNavigation();
   const { signIn, isLoading, error, clearError } = useAuth();
@@ -17,11 +20,11 @@ export const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('');
 
   const handleLogin = useCallback(async () => {
-    if (!email.trim() || !password) return;
+    if (!EMAIL_RE.test(email.trim()) || !password) return;
     await signIn({ email: email.trim().toLowerCase(), password });
   }, [email, password, signIn]);
 
-  const canSubmit = email.trim().length > 0 && password.length > 0;
+  const canSubmit = EMAIL_RE.test(email.trim()) && password.length > 0;
 
   return (
     <AuthScaffold

@@ -107,6 +107,7 @@ export const ScanResultScreen: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [savedNickname, setSavedNickname] = useState<string | null>(null);
   const [savedPlantId, setSavedPlantId] = useState<string | null>(null);
+  const [savedIsFirst, setSavedIsFirst] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [upgradeVisible, setUpgradeVisible] = useState(false);
 
@@ -149,6 +150,8 @@ export const ScanResultScreen: React.FC = () => {
   const handleSavePlant = useCallback(async (nickname: string) => {
     if (!scanResult || !user) return;
     setIsSaving(true);
+    // Capture before the add — drives the first-plant activation reward.
+    const wasFirstPlant = usePlantsStore.getState().plants.length === 0;
 
     try {
       const now = new Date();
@@ -181,6 +184,7 @@ export const ScanResultScreen: React.FC = () => {
       addPlant(plant);
       setSavedNickname(nickname);
       setSavedPlantId(plantId);
+      setSavedIsFirst(wasFirstPlant);
       setModalVisible(false);
 
       logger.scan.nicknamed(scanResult.commonName, nickname);
@@ -195,6 +199,10 @@ export const ScanResultScreen: React.FC = () => {
         setUpgradeVisible(true);
         return;
       }
+
+      // First plant → stay on the result and show the activation reward
+      // ("View My Garden"). Subsequent saves go straight to the plant.
+      if (wasFirstPlant) return;
 
       navigation.getParent<any>()?.navigate('Plants', {
         screen: 'PlantDetail',
@@ -220,7 +228,7 @@ export const ScanResultScreen: React.FC = () => {
         <Text style={styles.errorSub}>Let's try again with a closer photo.</Text>
         <TouchableOpacity
           style={styles.errorBtn}
-          onPress={() => navigation.navigate('ScanLanding')}
+          onPress={() => navigation.navigate('Camera')}
         >
           <Text style={styles.errorBtnText}>Identify a plant</Text>
         </TouchableOpacity>
@@ -242,7 +250,7 @@ export const ScanResultScreen: React.FC = () => {
       {/* ── Floating back button ── */}
       <TouchableOpacity
         style={[styles.backBtn, { top: insets.top + 12 }]}
-        onPress={() => navigation.navigate('ScanLanding')}
+        onPress={() => navigation.getParent<any>()?.navigate('Home')}
         hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
         activeOpacity={0.8}
       >
@@ -287,10 +295,11 @@ export const ScanResultScreen: React.FC = () => {
           {/* Global banners inside sticky bar */}
           {savedNickname && (
             <View style={styles.savedBanner}>
-              <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
-                <Path d="M5 12.5L10 17.5L19 7" stroke={C.healthyFg} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-              <Text style={styles.savedBannerText}>{savedNickname} added to your garden</Text>
+              <Text style={styles.savedBannerText}>
+                {savedIsFirst
+                  ? `🌱 Your first plant has been added to My Garden`
+                  : `${savedNickname} added to your garden`}
+              </Text>
             </View>
           )}
           {!isPremium && remaining !== -1 && remaining <= 1 && (
@@ -546,6 +555,21 @@ export const ScanResultScreen: React.FC = () => {
             <Text style={styles.saveBtnText}>Add to my garden  →</Text>
           </TouchableOpacity>
         </Animated.View>
+      )}
+
+      {/* ── First-plant activation reward — view the new garden ── */}
+      {savedNickname && savedIsFirst && (
+        <View style={[styles.ctaContainer, { paddingBottom: insets.bottom + 16 }]}>
+          <TouchableOpacity
+            style={styles.saveBtn}
+            onPress={() =>
+              navigation.getParent<any>()?.navigate('Plants', { screen: 'MyPlants' })
+            }
+            activeOpacity={0.88}
+          >
+            <Text style={styles.saveBtnText}>View My Garden  →</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* ── Save plant modal ── */}

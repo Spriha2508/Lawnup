@@ -11,6 +11,11 @@ import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 
+// Google OAuth is not implemented yet (the button previously routed to email
+// signup, which is misleading). Hide it until real Google Sign-In is wired —
+// flip to true once expo-auth-session / native OAuth client IDs are in place.
+const GOOGLE_AUTH_ENABLED = false;
+
 const GoogleLogo: React.FC = () => (
   <Svg width={18} height={18} viewBox="0 0 24 24">
     <Path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -52,10 +57,12 @@ export const LandingScreen: React.FC = () => {
             <Text style={styles.btnEmailText}>Continue with Email</Text>
           </PressableScale>
 
-          <PressableScale style={styles.btnGoogle} onPress={() => navigate('Signup')} to={0.97}>
-            <GoogleLogo />
-            <Text style={styles.btnSocialText}>Continue with Google</Text>
-          </PressableScale>
+          {GOOGLE_AUTH_ENABLED && (
+            <PressableScale style={styles.btnGoogle} onPress={() => navigate('Signup')} to={0.97}>
+              <GoogleLogo />
+              <Text style={styles.btnSocialText}>Continue with Google</Text>
+            </PressableScale>
+          )}
 
           <View style={styles.signinRow}>
             <Text style={styles.signinLabel}>Already have an account?  </Text>

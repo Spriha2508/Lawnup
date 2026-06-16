@@ -10,6 +10,10 @@ import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, fonts: F } = theme;
 
+// Lightweight email-format guard so the CTA stays disabled until a plausible
+// address is entered (Firebase still does the authoritative validation).
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const SignupScreen: React.FC = () => {
   const { navigate: authNavigate, goBack: authGoBack } = useAuthNavigation();
   const { signUp, isLoading, error, clearError } = useAuth();
@@ -18,12 +22,14 @@ export const SignupScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const emailValid = EMAIL_RE.test(email.trim());
+
   const handleSignup = useCallback(async () => {
-    if (!name.trim() || !email.trim() || !password) return;
+    if (!name.trim() || !EMAIL_RE.test(email.trim()) || password.length < 6) return;
     await signUp({ name: name.trim(), email: email.trim().toLowerCase(), password });
   }, [name, email, password, signUp]);
 
-  const canSubmit = name.trim().length > 0 && email.trim().length > 0 && password.length >= 6;
+  const canSubmit = name.trim().length > 0 && emailValid && password.length >= 6;
 
   return (
     <AuthScaffold

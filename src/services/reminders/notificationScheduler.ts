@@ -5,6 +5,7 @@
 import * as Notifications from 'expo-notifications';
 import type { UserPlantDoc } from '../../types/firestore.types';
 import { getWaterInfo, generateWateringMessage } from './reminderService';
+import { useNotificationPrefsStore } from '../../features/profile/store/notificationPrefsStore';
 import type { WeatherData } from '../weather/weatherService';
 
 export type LocalReminderType =
@@ -99,6 +100,9 @@ export async function scheduleWateringReminder(
   try {
     const permitted = await hasNotificationPermission();
     if (!permitted) return null;
+
+    // Honour the global "Watering reminders" preference (Settings master switch).
+    if (!useNotificationPrefsStore.getState().water) return null;
 
     // Rain today → skip watering reminder
     if (weather?.isRaining) return null;

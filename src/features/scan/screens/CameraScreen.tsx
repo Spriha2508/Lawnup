@@ -79,7 +79,7 @@ export const CameraScreen: React.FC = () => {
       openCameraSettings();
     }
   }, [request]);
-  const { setCapturedImageUri } = useScanStore();
+  const { setCapturedImageUri, reset: resetScan } = useScanStore();
   const isUsageHydrated = useSubscriptionStore(s => s.isUsageHydrated);
   // Weekly gate (free: 3/week; premium bypasses). Functions are stable store refs;
   // call them at render / via getState() rather than putting them in dep arrays.
@@ -114,6 +114,10 @@ export const CameraScreen: React.FC = () => {
   // ── [CAMERA_MOUNT] lifecycle ────────────────────────────────────────────────
   useEffect(() => {
     if (__DEV__) console.log('[CAMERA_MOUNT] CameraScreen mounted');
+    // Camera is the scan entry point — clear any stale scan state from a prior
+    // run so a fresh capture never inherits an old result (was done by the
+    // removed ScanLanding screen).
+    resetScan();
     return () => {
       if (__DEV__) console.log('[CAMERA_MOUNT] CameraScreen unmounted');
       if (qualityWarnTimer.current) clearTimeout(qualityWarnTimer.current);
@@ -300,7 +304,13 @@ export const CameraScreen: React.FC = () => {
     setCapturedUri(null);
     setQualityResult(null);
   };
-  const handleClose = () => navigation.goBack();
+  // Camera is the base of the Scan stack — when opened from the tab there's
+  // nothing to pop back to, so exit to Home; otherwise pop (e.g. from "Scan
+  // again" where a result sits below).
+  const handleClose = () => {
+    if (navigation.canGoBack()) navigation.goBack();
+    else navigation.getParent<any>()?.navigate('Home');
+  };
 
   const topPad    = insets.top + (Platform.OS === 'android' ? 12 : 0);
   const bottomPad = insets.bottom + 12;
