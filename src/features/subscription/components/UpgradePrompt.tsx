@@ -16,31 +16,34 @@ interface UpgradePromptProps {
   onDismiss: () => void;
 }
 
+// Copy reflects ACTUAL premium value: more scans per month + unlimited Dr.
+// Banyan chat. Disease detection, reminders, weather tips and unlimited plants
+// are FREE — never sell them as premium-only here.
 const COPY: Record<string, { title: string; message: string }> = {
   scan_limit: {
     title: "You've used all 3 free scans this week",
     message:
-      "Free users get 3 scans per week. Upgrade to Premium for unlimited AI identification — scan every plant in your garden, any time.",
+      'Free includes 3 scans a week. Premium gives you 80–100 scans every month — scan every plant in your garden.',
   },
   ai_doctor: {
-    title: 'AI Doctor is a Premium feature',
+    title: "You've hit today's free AI messages",
     message:
-      'Get personalised care advice for every plant in your garden. Diagnose issues before they spread with AI-powered analysis.',
+      'Free includes 20 Dr. Banyan messages a day. Premium makes them unlimited, so you can keep the conversation going.',
   },
   reminders: {
-    title: 'Smart reminders need Premium',
+    title: 'Get more from LawnUp',
     message:
-      'Never miss a watering again. Set intelligent reminders based on your plant species and local weather conditions.',
+      'Premium gives you many more scans each month and unlimited Dr. Banyan chat for your whole garden.',
   },
   after_save: {
-    title: 'Unlock smarter plant care',
+    title: 'Keep scanning your garden',
     message:
-      "You're building a beautiful garden. Premium gives you unlimited plants, disease detection, and personalised AI care guides.",
+      "You're building a beautiful garden. Premium gives you 80–100 scans a month and unlimited Dr. Banyan chat.",
   },
   general: {
     title: 'Upgrade to LawnUp Premium',
     message:
-      'Unlimited scans, AI Doctor, disease detection, and smart reminders — everything your garden needs.',
+      'More AI scans every month and unlimited Dr. Banyan chat — the full LawnUp experience.',
   },
 };
 

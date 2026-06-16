@@ -298,6 +298,9 @@ if (RUN_FULL_APP) {
 
   SplashScreen.preventAutoHideAsync().catch(() => {});
 
+  // Initialise crash reporting once at boot (no-op until Sentry is wired).
+  require('../services/monitoring/crashReporting').initCrashReporting();
+
   const FullApp: React.FC = () => {
     const [fontsLoaded, setFontsLoaded] = useState(false);
     const [splashDone, setSplashDone]   = useState(false);

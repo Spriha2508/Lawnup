@@ -398,7 +398,7 @@ export const HomeScreen: React.FC = () => {
                 </TouchableOpacity>
                 <Text style={styles.premiumEyebrow}>LAWNUP PREMIUM</Text>
                 <Text style={styles.premiumTitle}>More scans, deeper care</Text>
-                <Text style={styles.premiumBody}>Unlimited AI scans · unlimited Dr. Banyan · disease detection · smart reminders.</Text>
+                <Text style={styles.premiumBody}>80–100 AI scans every month · unlimited Dr. Banyan chat.</Text>
                 <PressableScale style={styles.premiumBtn} onPress={goPaywall} to={0.97}>
                   <Text style={styles.premiumBtnText}>See Premium  →</Text>
                 </PressableScale>

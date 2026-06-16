@@ -11,6 +11,7 @@ import {
   sendTestReminder,
 } from '../../../services/reminders/notificationScheduler';
 import { useNotificationPrefsStore, type NotificationCategory } from '../store/notificationPrefsStore';
+import { restore as restorePurchases, PAYMENTS_READY } from '../../subscription/services/purchasesService';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { theme } from '@constants/designSystem';
 import type { ProfileStackParamList } from '../../../navigation/types';
@@ -90,6 +91,20 @@ export const SettingsScreen: React.FC = () => {
       Alert.alert('Could not send test', 'Please try again in a moment.');
     }
   }, [testing]);
+
+  const onRestore = useCallback(async () => {
+    if (!PAYMENTS_READY) {
+      Alert.alert('Restore purchases', 'Purchases will be available at launch — nothing to restore yet.');
+      return;
+    }
+    const res = await restorePurchases();
+    Alert.alert(
+      res.success ? 'Purchases restored' : 'Nothing to restore',
+      res.success
+        ? 'Your Premium access is active again.'
+        : 'We couldn’t find a previous Premium purchase on this account.',
+    );
+  }, []);
 
   const confirmDelete = useCallback(() => {
     Alert.alert(
@@ -210,6 +225,11 @@ export const SettingsScreen: React.FC = () => {
           {/* Account */}
           <Text style={styles.sectionLabel}>ACCOUNT</Text>
           <View style={styles.card}>
+            <PressableScale style={styles.row} onPress={onRestore} to={0.99}>
+              <Text style={[styles.rowTitle, { flex: 1 }]}>Restore purchases</Text>
+              <Chevron />
+            </PressableScale>
+            <View style={styles.divider} />
             <PressableScale style={styles.row} onPress={signOut} to={0.99}>
               <Text style={[styles.rowTitle, { flex: 1 }]}>Sign out</Text>
               <Chevron />

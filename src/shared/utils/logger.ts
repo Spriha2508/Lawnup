@@ -11,6 +11,8 @@
  *   logger.api.error('/processPlantScan', new Error('timeout'));
  */
 
+import { reportError } from '../../services/monitoring/crashReporting';
+
 // ── ANSI color codes (work in Metro bundler terminal) ─────────────────────────
 const C = {
   reset:   '\x1b[0m',
@@ -83,6 +85,9 @@ const ts = (): string => new Date().toLocaleTimeString('en-IN', { hour12: false 
 function print(ns: Namespace, level: LogLevel, message: string, data?: unknown): void {
   // Production: warnings + errors only. debug/info/event are dev-only console noise.
   if (!isDev && (level === 'debug' || level === 'info' || level === 'event')) return;
+
+  // Route handled errors to crash reporting (no-op until Sentry is wired).
+  if (level === 'error') reportError(`[${ns}] ${message}`, data);
 
   const nsColor  = NS_COLOR[ns];
   const lvlColor = LEVEL_COLOR[level];

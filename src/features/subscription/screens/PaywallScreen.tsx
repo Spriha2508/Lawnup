@@ -7,14 +7,14 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path, Ellipse } from 'react-native-svg';
 import { useSubscriptionStore } from '../store/subscriptionStore';
-import { purchase as purchaseTier, PAYMENTS_READY } from '../services/purchasesService';
-import { FEATURE_LABELS, FREE_WEEKLY_SCAN_LIMIT } from '../constants/plans';
-import type { FeatureName } from '../constants/plans';
+import { purchase as purchaseTier, restore as restorePurchases, PAYMENTS_READY } from '../services/purchasesService';
+import { FREE_WEEKLY_SCAN_LIMIT } from '../constants/plans';
 import { theme } from '@constants/designSystem';
 
 const C = theme.color;
@@ -25,17 +25,20 @@ const { width: W } = Dimensions.get('window');
 const STORIES = [
   { emoji: '🌿', from: 'Yellowing leaves', to: 'Lush & thriving', days: '~3 weeks', how: 'AI Doctor flags overwatering early' },
   { emoji: '🌱', from: 'Brown, crispy tips', to: 'Fresh new growth', days: '~2 weeks', how: 'A care plan tuned to its light & soil' },
-  { emoji: '🌸', from: 'No blooms in months', to: 'Flowering again', days: '~5 weeks', how: 'Smart reminders + seasonal tips' },
+  { emoji: '🌸', from: 'No blooms in months', to: 'Flowering again', days: '~5 weeks', how: 'Unlimited Dr. Banyan check-ins as it recovers' },
 ];
 
-// Feature comparison rows
-const FEATURE_ROWS: { feature: FeatureName; freeValue: string; premiumValue: string }[] = [
-  { feature: 'unlimitedScans',   freeValue: `${FREE_WEEKLY_SCAN_LIMIT} / week`, premiumValue: '80–100 / month' },
-  { feature: 'aiDoctor',         freeValue: '20 / day',                         premiumValue: 'Unlimited' },
-  { feature: 'diseaseDetection', freeValue: '—',                               premiumValue: 'Included' },
-  { feature: 'advancedWeather',  freeValue: 'Basic',                           premiumValue: 'Full insights' },
-  { feature: 'reminders',        freeValue: '—',                               premiumValue: 'Smart reminders' },
-  { feature: 'priorityAI',       freeValue: '—',                               premiumValue: 'Priority' },
+// Feature comparison — reflects ACTUAL app functionality. Premium's real value
+// is higher scan + AI-chat quotas; everything else is included on both plans
+// ("✓"). Do not advertise as premium-only anything free users already get.
+// `__SCANS__` is filled per selected tier at render.
+const FEATURE_ROWS: { label: string; free: string; premium: string }[] = [
+  { label: 'AI plant scans',           free: `${FREE_WEEKLY_SCAN_LIMIT} / week`, premium: '__SCANS__' },
+  { label: 'Dr. Banyan AI chat',       free: '20 / day',                         premium: 'Unlimited' },
+  { label: 'Plant ID & disease check', free: '✓',                                premium: '✓' },
+  { label: 'Watering reminders',       free: '✓',                                premium: '✓' },
+  { label: 'Weather & AQI care tips',  free: '✓',                                premium: '✓' },
+  { label: 'Plants in your garden',    free: 'Unlimited',                        premium: 'Unlimited' },
 ];
 
 // SVG decorative elements
@@ -97,6 +100,20 @@ export const PaywallScreen: React.FC = () => {
     }
   }, [activateMockPremium, setPlan, navigation, selectedPlan]);
 
+  const handleRestore = useCallback(async () => {
+    if (!PAYMENTS_READY) {
+      Alert.alert('Restore purchases', 'Purchases will be available at launch — nothing to restore yet.');
+      return;
+    }
+    const res = await restorePurchases();
+    if (res.success) {
+      Alert.alert('Purchases restored', 'Your Premium access is active again.');
+      navigation.goBack();
+    } else {
+      Alert.alert('Nothing to restore', 'We couldn’t find a previous Premium purchase on this account.');
+    }
+  }, [navigation]);
+
   return (
     <View style={styles.root}>
       <ScrollView
@@ -124,7 +141,7 @@ export const PaywallScreen: React.FC = () => {
           <Text style={styles.heroEyebrow}>LAWNUP PREMIUM</Text>
           <Text style={styles.heroTitle}>Never lose a{'\n'}plant to a guess.</Text>
           <Text style={styles.heroSubtitle}>
-            Unlimited AI scans, smart reminders, and expert plant care — tailored for Indian gardens.
+            Many more AI scans each month and unlimited Dr. Banyan chat — the full LawnUp experience, tuned for Indian gardens.
           </Text>
         </View>
 
@@ -143,33 +160,37 @@ export const PaywallScreen: React.FC = () => {
             </View>
             <View style={styles.compDivider} />
 
-            {FEATURE_ROWS.map((row, i) => (
-              <View key={row.feature}>
-                <View style={styles.compRow}>
-                  <View style={styles.colFeature}>
-                    <Text style={styles.featureLabel}>{FEATURE_LABELS[row.feature]}</Text>
-                  </View>
-                  <View style={styles.colFree}>
-                    {row.freeValue === '—' ? (
-                      <CrossMark />
-                    ) : (
-                      <Text style={styles.freeVal}>{row.freeValue}</Text>
-                    )}
-                  </View>
-                  <View style={styles.colPremium}>
-                    <View style={styles.premiumValRow}>
-                      <CheckMark />
-                      <Text style={styles.premiumVal}>
-                        {row.feature === 'unlimitedScans'
-                          ? (selectedPlan === 'annual' ? '100 / month' : '80 / month')
-                          : row.premiumValue}
-                      </Text>
+            {FEATURE_ROWS.map((row, i) => {
+              const premiumText =
+                row.premium === '__SCANS__'
+                  ? (selectedPlan === 'annual' ? '100 / month' : '80 / month')
+                  : row.premium;
+              return (
+                <View key={row.label}>
+                  <View style={styles.compRow}>
+                    <View style={styles.colFeature}>
+                      <Text style={styles.featureLabel}>{row.label}</Text>
+                    </View>
+                    <View style={styles.colFree}>
+                      {row.free === '—' ? (
+                        <CrossMark />
+                      ) : row.free === '✓' ? (
+                        <CheckMark />
+                      ) : (
+                        <Text style={styles.freeVal}>{row.free}</Text>
+                      )}
+                    </View>
+                    <View style={styles.colPremium}>
+                      <View style={styles.premiumValRow}>
+                        <CheckMark />
+                        {premiumText !== '✓' && <Text style={styles.premiumVal}>{premiumText}</Text>}
+                      </View>
                     </View>
                   </View>
+                  {i < FEATURE_ROWS.length - 1 && <View style={styles.compRowDivider} />}
                 </View>
-                {i < FEATURE_ROWS.length - 1 && <View style={styles.compRowDivider} />}
-              </View>
-            ))}
+              );
+            })}
           </View>
         </View>
 
@@ -284,6 +305,10 @@ export const PaywallScreen: React.FC = () => {
               </Pressable>
             );
           })()}
+
+          <Pressable style={styles.restoreBtn} onPress={handleRestore} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Text style={styles.restoreBtnText}>Restore purchases</Text>
+          </Pressable>
         </View>
 
         {/* ── Trust row ──────────────────────────────────────────────────── */}
@@ -546,6 +571,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-Bold',
     color: C.onPrimary,
     letterSpacing: 0.2,
+  },
+  restoreBtn: {
+    alignItems: 'center',
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  restoreBtnText: {
+    fontSize: 14,
+    fontFamily: 'Nunito-SemiBold',
+    color: C.textMuted,
+    textDecorationLine: 'underline',
   },
 
   // Trust row
