@@ -91,7 +91,7 @@ const Sprout: React.FC<{ active: boolean }> = ({ active }) => {
 type TabKey = keyof MainTabParamList;
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'Home',    label: 'Home'   },
-  { key: 'Plants',  label: 'Plants' },
+  { key: 'Plants',  label: 'Garden' },
   { key: 'Scan',    label: ''       },
   { key: 'Chat',    label: 'Doctor' },
   { key: 'Profile', label: 'Profile' },

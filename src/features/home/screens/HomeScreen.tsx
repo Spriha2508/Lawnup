@@ -333,7 +333,7 @@ export const HomeScreen: React.FC = () => {
             {/* ── 3 · My Plants carousel ────────────────────────────────────── */}
             <View style={[styles.stripWrap, { marginBottom: SECTION_GAP }]}>
               <View style={{ paddingHorizontal: H_PAD }}>
-                <SectionHeader label="MY PLANTS" actionLabel="Add plant +" onAction={() => goAddPlant('my_plants')} />
+                <SectionHeader label="MY GARDEN" actionLabel="Add plant +" onAction={() => goAddPlant('my_plants')} />
               </View>
               <AnimatedScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.plantScroll}
                 decelerationRate="fast" snapToInterval={PLANT_CARD_W + 12} snapToAlignment="start">

@@ -125,7 +125,7 @@ export const AddPlantScreen: React.FC = () => {
         >
           <Text style={styles.headerBackText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add to My Plants</Text>
+        <Text style={styles.headerTitle}>Add to My Garden</Text>
         <View style={{ width: 32 }} />
       </View>
 
@@ -238,7 +238,7 @@ export const AddPlantScreen: React.FC = () => {
           activeOpacity={0.88}
         >
           <Text style={styles.saveBtnText}>
-            {isSaving ? 'Adding...' : 'Add to My Plants'}
+            {isSaving ? 'Adding...' : 'Add to My Garden'}
           </Text>
         </TouchableOpacity>
       </View>

@@ -11,12 +11,6 @@ import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 
-const AppleLogo: React.FC = () => (
-  <Svg width={18} height={18} viewBox="0 0 814 1000" fill={C.textPrimary}>
-    <Path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-105.5-90.5-170.1-90.5-252.9c0-156.7 100.7-239.3 199.3-239.3 51.7 0 94.9 33.2 126.4 33.2 30.4 0 78.7-35.1 136.8-35.1 55.1 0 145.3 35.8 195.7 150zm-201.4-227.6c34.8-41.5 58.9-99.4 58.9-157.3 0-8.1-.6-16.2-1.9-23.8-55.4 2.1-120.9 37-159.7 82.9-31 35.8-59.5 93.2-59.5 152.1 0 9.2 1.6 18.4 2.3 21.4 3.2.6 8.4 1.3 13.6 1.3 49.4 0 111.2-32.5 146.3-76.6z" />
-  </Svg>
-);
-
 const GoogleLogo: React.FC = () => (
   <Svg width={18} height={18} viewBox="0 0 24 24">
     <Path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -58,16 +52,10 @@ export const LandingScreen: React.FC = () => {
             <Text style={styles.btnEmailText}>Continue with Email</Text>
           </PressableScale>
 
-          <View style={styles.socialRow}>
-            <PressableScale style={styles.btnSocial} onPress={() => navigate('Signup')} to={0.95}>
-              <AppleLogo />
-              <Text style={styles.btnSocialText}>Apple</Text>
-            </PressableScale>
-            <PressableScale style={styles.btnSocial} onPress={() => navigate('Signup')} to={0.95}>
-              <GoogleLogo />
-              <Text style={styles.btnSocialText}>Google</Text>
-            </PressableScale>
-          </View>
+          <PressableScale style={styles.btnGoogle} onPress={() => navigate('Signup')} to={0.97}>
+            <GoogleLogo />
+            <Text style={styles.btnSocialText}>Continue with Google</Text>
+          </PressableScale>
 
           <View style={styles.signinRow}>
             <Text style={styles.signinLabel}>Already have an account?  </Text>
@@ -99,10 +87,9 @@ const styles = StyleSheet.create({
   buttons: { gap: S.md },
   btnEmail: { alignItems: 'center', justifyContent: 'center', backgroundColor: C.inkBtn, borderRadius: R.pill, paddingVertical: 18, ...theme.shadows.cta },
   btnEmailText: { ...T.button, color: C.onInkBtn, fontFamily: F.sansMedium },
-  socialRow: { flexDirection: 'row', gap: S.md },
-  btnSocial: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: S.sm,
-    backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: R.pill, paddingVertical: 15,
+  btnGoogle: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: S.sm,
+    backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: R.pill, paddingVertical: 16,
     borderWidth: 1, borderColor: C.border,
   },
   btnSocialText: { ...T.bodyStrong, color: C.textPrimary },

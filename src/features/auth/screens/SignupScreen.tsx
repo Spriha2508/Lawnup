@@ -35,7 +35,7 @@ export const SignupScreen: React.FC = () => {
       {error ? <SoftError message={error} onDismiss={clearError} /> : null}
 
       <Animated.View entering={calm(0)}>
-        <AuthField label="Full name" placeholder="Spriha Roy" value={name} onChangeText={setName}
+        <AuthField label="Full name" placeholder="Alex Green" value={name} onChangeText={setName}
           autoCapitalize="words" autoComplete="name" returnKeyType="next" />
       </Animated.View>
       <Animated.View entering={calm(1)}>

@@ -108,17 +108,6 @@ export const ProfileScreen: React.FC = () => {
             <StatBlock value={scansUsed} label="AI SCANS" />
           </Animated.View>
 
-          {/* First-run: a warm invitation, not an empty scorecard */}
-          {plants.length === 0 && (
-            <Animated.View entering={FadeInDown.delay(90).duration(M.duration.expressive)} style={styles.welcomeCard}>
-              <Text style={styles.welcomeTitle}>Your garden starts here</Text>
-              <Text style={styles.welcomeBody}>Scan your first plant to begin your collection — your stats and achievements grow from there.</Text>
-              <PressableScale style={styles.welcomeBtn} onPress={() => navigation.getParent<any>()?.navigate('Scan')} to={0.97}>
-                <Text style={styles.welcomeBtnText}>Scan your first plant  →</Text>
-              </PressableScale>
-            </Animated.View>
-          )}
-
           {/* Growth progress — toward the next garden level */}
           <Animated.View entering={FadeInDown.delay(110).duration(M.duration.expressive)} style={styles.growthCard}>
             <View style={styles.growthHead}>
