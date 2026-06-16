@@ -11,6 +11,8 @@ import { subscribeToUserPlants } from '../features/my-plants/services/plantServi
 import { identifyUser } from '../services/analytics/posthog';
 import { checkUsageLimit } from '../services/firebase/functions';
 import { useSubscriptionStore } from '../features/subscription/store/subscriptionStore';
+import { initPurchases, syncEntitlement } from '../features/subscription/services/purchasesService';
+import { setCrashUser } from '../services/monitoring/crashReporting';
 import { config } from '../constants/config';
 import { AuthNavigator } from './AuthNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
@@ -79,6 +81,7 @@ export const RootNavigator = memo(function RootNavigator() {
 
       if (!firebaseUser) {
         setUser(null);
+        setCrashUser(null);
         // Stop the plants subscription and clear cached garden on sign-out
         plantsUnsubRef.current?.();
         plantsUnsubRef.current = null;
@@ -91,6 +94,10 @@ export const RootNavigator = memo(function RootNavigator() {
       try {
         const userDoc = await fetchUserWithRetry(firebaseUser);
         setUser(userDoc);
+        // Attribute crash reports + reconcile RevenueCat entitlement (both no-op
+        // until their SDKs are wired — see crashReporting / purchasesService).
+        setCrashUser({ id: userDoc.uid, email: userDoc.email });
+        initPurchases(userDoc.uid).then(syncEntitlement).catch(() => {});
 
         // Live-sync the user's garden from Firestore into the plants store
         plantsUnsubRef.current?.();
