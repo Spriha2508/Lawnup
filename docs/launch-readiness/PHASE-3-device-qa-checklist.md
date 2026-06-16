@@ -44,10 +44,10 @@
 | E1 | All 5 tabs + back/gesture | 🟠 | Every tab loads; Android hardware-back & iOS swipe never trap the user | |
 | E2 | Deep stacks (plant→edit→back, paywall modal) | 🟡 | Back returns cleanly; paywall opens as modal over current tab | |
 
-## F. AI plant diagnosis flow (Dr. Banyan)
+## F. AI plant diagnosis flow (Doc. Sage)
 | # | Test | Sev | Expected | P/F |
 |---|---|---|---|---|
-| F1 | Open Chat empty state | 🟡 | "Meet Dr. Banyan" intro + starter prompts | |
+| F1 | Open Chat empty state | 🟡 | "Meet Doc. Sage" intro + starter prompts | |
 | F2 | Send a message | 🟠 | Reply appears (local responder unless `OPENAI_API_KEY` set — known state) | |
 | F3 | Message credit only on success | 🟡 | Failed send does **not** decrement daily count | |
 | F4 | Plant-context entry | 🟡 | Header "Caring for {nickname}"; replies plant-aware | |

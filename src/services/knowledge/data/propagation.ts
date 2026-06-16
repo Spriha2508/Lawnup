@@ -1,7 +1,7 @@
 import type { PropagationMethod } from '../types';
 
 /**
- * propagationLibrary seed — the 6 core methods. Dr. Banyan retrieves these
+ * propagationLibrary seed — the 6 core methods. Doc. Sage retrieves these
  * steps verbatim and never invents propagation instructions.
  */
 export const PROPAGATION_METHODS: Record<string, PropagationMethod> = {

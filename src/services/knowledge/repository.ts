@@ -1,7 +1,7 @@
 /**
  * Knowledge repository — the RETRIEVAL layer (the "70%").
  *
- * All structured facts Dr. Banyan needs come through these query functions.
+ * All structured facts Doc. Sage needs come through these query functions.
  * Behind a KnowledgeSource interface so the bundled LocalKnowledgeSource (used
  * during client-side internal-testing mode) can be swapped for a Firestore
  * source later without touching callers.

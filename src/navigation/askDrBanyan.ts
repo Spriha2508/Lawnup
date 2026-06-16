@@ -1,7 +1,7 @@
 /**
- * Open Dr. Banyan with inherited context (continuity).
+ * Open Doc. Sage with inherited context (continuity).
  *
- * One assistant: Dr. Banyan IS the AI Doctor. Callers from Plant Detail, Scan
+ * One assistant: Doc. Sage IS the AI Doctor. Callers from Plant Detail, Scan
  * Result, Soil Advisor and Light Assessment seed a focused plant/diagnosis +
  * opening prompt via the chat store, then this navigates to the Chat tab.
  * `navigate('Chat')` bubbles up the navigator tree from any nested stack

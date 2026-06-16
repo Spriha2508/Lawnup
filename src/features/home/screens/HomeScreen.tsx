@@ -228,7 +228,7 @@ export const HomeScreen: React.FC = () => {
   // ── navigation helpers (analytics-wrapped) ──────────────────────────────────
   const goScan = useCallback((src: string) => { track('home_quick_action', { action: 'scan', src }); navigation.navigate('Scan'); }, [navigation]);
   const goAddPlant = useCallback((src: string) => { track('home_quick_action', { action: 'add_plant', src }); navigation.navigate('Plants', { screen: 'AddPlant' }); }, [navigation]);
-  const goDoctor = useCallback((src: string) => { track('home_quick_action', { action: 'dr_banyan', src }); navigation.navigate('Chat'); }, [navigation]);
+  const goDoctor = useCallback((src: string) => { track('home_quick_action', { action: 'doc_sage', src }); navigation.navigate('Chat'); }, [navigation]);
   const goTasks = useCallback((src: string) => { track('home_section_cta', { section: 'tasks', src }); navigation.navigate('Plants', { screen: 'Tasks' }); }, [navigation]);
   const goPlant = useCallback((plantId: string) => navigation.navigate('Plants', { screen: 'PlantDetail', params: { plantId } }), [navigation]);
   const goPaywall = useCallback(() => { track('home_premium_tap'); openPaywall(navigation); }, [navigation]);
@@ -398,7 +398,7 @@ export const HomeScreen: React.FC = () => {
                 </TouchableOpacity>
                 <Text style={styles.premiumEyebrow}>LAWNUP PREMIUM</Text>
                 <Text style={styles.premiumTitle}>More scans, deeper care</Text>
-                <Text style={styles.premiumBody}>80–100 AI scans every month · unlimited Dr. Banyan chat.</Text>
+                <Text style={styles.premiumBody}>80–100 AI scans every month · unlimited Doc. Sage chat.</Text>
                 <PressableScale style={styles.premiumBtn} onPress={goPaywall} to={0.97}>
                   <Text style={styles.premiumBtnText}>See Premium  →</Text>
                 </PressableScale>
@@ -410,7 +410,7 @@ export const HomeScreen: React.FC = () => {
               <SectionHeader label="QUICK ACTIONS" />
               <View style={styles.quickGrid}>
                 <QuickAction emoji="🪴" label="Add Plant" onPress={() => goAddPlant('quick_action')} />
-                <QuickAction emoji="💬" label="Ask Dr. Banyan" onPress={() => goDoctor('quick_action')} />
+                <QuickAction emoji="🌿" label="Ask Doc. Sage" onPress={() => goDoctor('quick_action')} />
                 <QuickAction emoji="✅" label="Tasks" onPress={() => goTasks('quick_action')} />
               </View>
             </View>

@@ -20,7 +20,7 @@ This Privacy Policy explains what information LawnUp collects, how we use it, wh
 - **Onboarding preferences:** your city, where your plants live, your gardening experience, plant interests, and goals.
 - **Your garden:** plants you save, nicknames, watering settings, and notes.
 - **Plant photos:** images you capture or upload for identification and diagnosis.
-- **AI assistant messages:** the questions and text you send to the in-app AI assistant ("Dr. Banyan").
+- **AI assistant messages:** the questions and text you send to the in-app AI assistant ("Doc. Sage").
 
 ### 2.2 Information collected automatically
 - **Usage & device data:** app interactions, feature usage, app version, device model, OS version, and crash/diagnostic logs, collected via our analytics provider.
@@ -46,7 +46,7 @@ We share limited data with service providers strictly to operate LawnUp. We do *
 |---|---|---|
 | **Google Firebase** (Google LLC) | Authentication, database, file storage, hosting | Account info, your garden data, plant images |
 | **Plant.id** (Kindwise) | Plant identification & health diagnosis | Plant photos you submit |
-| **OpenAI** | AI assistant ("Dr. Banyan") responses | The text of messages you send to the assistant |
+| **OpenAI** | AI assistant ("Doc. Sage") responses | The text of messages you send to the assistant |
 | **OpenWeather** | Weather & air-quality (AQI) data | Your selected city/coordinates |
 | **PostHog** | Product analytics & crash diagnostics | Usage events, device & app metadata |
 | **Google Play** (if you subscribe) | Payment processing for subscriptions | Handled by Google; we do not receive card details |

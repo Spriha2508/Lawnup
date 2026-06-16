@@ -2,7 +2,7 @@ import type { SoilProfile } from '../types';
 
 /**
  * soilProfiles seed — plant-specific recipes as exact component percentages
- * (each recipe sums to 100%). Dr. Banyan retrieves these recipes verbatim and
+ * (each recipe sums to 100%). Doc. Sage retrieves these recipes verbatim and
  * never invents soil mixes. Plants reference a profile by `soilProfileId`.
  */
 export const SOIL_PROFILES: Record<string, SoilProfile> = {

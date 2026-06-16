@@ -18,7 +18,7 @@ const FAQS = [
   { q: 'How do I scan a plant?', a: 'Tap the Scan tab (or the + button), point your camera at a single leaf or the whole plant in good natural light, and capture. You\'ll get the species, a health check, and a care plan in seconds.' },
   { q: 'How accurate is identification?', a: 'Most scans are highly accurate, but lighting and angle matter. For the best result, fill the frame with one leaf on a plain background in daylight. If confidence is low, we\'ll suggest a better photo and show alternative matches.' },
   { q: 'How do watering reminders work?', a: 'Open a plant (or Profile → Reminders) and turn on its reminder. We schedule a local notification based on its watering frequency — fully on-device, no account needed. Enable notifications when prompted.' },
-  { q: 'What does Premium include?', a: 'More scans per month, unlimited AI Doctor messages, smart reminders, disease detection, and full weather insights. You can manage it from Profile → Premium.' },
+  { q: 'What does Premium include?', a: 'More scans per month and unlimited Doc. Sage chat. Disease detection, watering reminders and weather insights are included free. You can manage Premium from Profile → Premium.' },
   { q: 'Is my data private?', a: 'Your plants and profile sync to your private account. Scans are processed to identify your plant and are not shared with other users.' },
 ];
 

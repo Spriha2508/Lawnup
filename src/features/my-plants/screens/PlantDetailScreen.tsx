@@ -506,7 +506,7 @@ export const PlantDetailScreen: React.FC = () => {
             activeOpacity={0.82}
           >
             <View>
-              <Text style={styles.aiCardLabel}>ASK DR. BANYAN</Text>
+              <Text style={styles.aiCardLabel}>🌿  ASK DOC. SAGE</Text>
               <Text style={styles.aiCardTitle}>
                 Get advice personalised{'\n'}for {plant.nickname}
               </Text>

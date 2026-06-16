@@ -245,7 +245,7 @@ export const SoilAdvisorScreen: React.FC = () => {
               prompt: `What soil mix and repotting advice do you recommend${species ? ` for my ${species}` : ''}?`,
             })}
           >
-            <Text style={styles.askBanyanLabel}>ASK DR. BANYAN</Text>
+            <Text style={styles.askBanyanLabel}>🌿  ASK DOC. SAGE</Text>
             <Text style={styles.askBanyanText}>Get a soil & repotting plan  →</Text>
           </TouchableOpacity>
 

@@ -93,7 +93,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'Home',    label: 'Home'   },
   { key: 'Plants',  label: 'Garden' },
   { key: 'Scan',    label: ''       },
-  { key: 'Chat',    label: 'Doctor' },
+  { key: 'Chat',    label: 'Doc. Sage' },
   { key: 'Profile', label: 'Profile' },
 ];
 

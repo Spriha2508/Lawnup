@@ -9,7 +9,7 @@
 | 1 | **Verify generated `projectId` stored** | ❌ **FAIL** | `app.json:70` is still `"eas": { "projectId": "YOUR_EAS_PROJECT_ID" }`. `expo config` resolves `projectId: 'YOUR_EAS_PROJECT_ID'`. No `owner` field. `.expo/settings.json` has no projectId. Last commit touching `app.json` = the theme fix, not an `eas init`. |
 | 2 | **Revalidate `app.json` / `eas.json`** | ✅ PASS (except #1) | `app.json`: name `LawnUp`, slug `lawnup`, version `1.0.0`, `android.package com.lawnup.app`, `ios.bundleIdentifier com.lawnup.app`, `userInterfaceStyle light`. `eas.json`: valid JSON, `appVersionSource remote`. |
 | 3 | **Android preview build profile** | ✅ PASS | `build.preview = { distribution: "internal", android: { buildType: "apk" }, env: { APP_ENV: "preview" } }`. |
-| 4 | **Remaining build blockers** | ❌ 1 critical | **projectId placeholder** (above). Non-blocking for a preview: no `google-services.json` (remote push only), `OPENAI_API_KEY` empty (Dr. Banyan local), Android keystore (EAS auto-generates on first build). |
+| 4 | **Remaining build blockers** | ❌ 1 critical | **projectId placeholder** (above). Non-blocking for a preview: no `google-services.json` (remote push only), `OPENAI_API_KEY` empty (Doc. Sage local), Android keystore (EAS auto-generates on first build). |
 | 5 | **Exact build command** | ⏸ gated | `eas build --profile preview --platform android` — will **fail/prompt** until the real projectId is in `app.json`. |
 | 6 | **This report** | ✅ | — |
 

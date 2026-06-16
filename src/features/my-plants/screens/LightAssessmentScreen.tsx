@@ -250,7 +250,7 @@ export const LightAssessmentScreen: React.FC = () => {
                   prompt: `My spot gets ${RESULT[level].label.toLowerCase()}.${plantInfo ? ` Is that right for my ${plantInfo.name}, and` : ' Which plants suit it, and'} how should I care for it?`,
                 })}
               >
-                <Text style={styles.askBanyanLabel}>ASK DR. BANYAN</Text>
+                <Text style={styles.askBanyanLabel}>🌿  ASK DOC. SAGE</Text>
                 <Text style={styles.askBanyanText}>Get light & placement advice  →</Text>
               </TouchableOpacity>
             </Animated.View>

@@ -1,7 +1,7 @@
 /**
  * LawnUp Knowledge Layer — public surface.
  *
- * The structured, authoritative plant-fact store that grounds Dr. Banyan (70%
+ * The structured, authoritative plant-fact store that grounds Doc. Sage (70%
  * retrieval / 30% reasoning). Import from here:
  *
  *   import { knowledge, assembleBanyanContext } from '@/services/knowledge';

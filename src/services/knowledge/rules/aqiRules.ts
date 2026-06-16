@@ -1,8 +1,8 @@
 /**
  * AQI Rules Engine — deterministic plant-care guidance by air-quality band
- * (India CPCB / US-EPA AQI scale). Dr. Banyan retrieves this guidance; it is
+ * (India CPCB / US-EPA AQI scale). Doc. Sage retrieves this guidance; it is
  * never LLM-generated. Live AQI is fed in from the OpenWeather Air Pollution
- * API (src/services/weather/aqiService.ts) — Home, Dr. Banyan context, and
+ * API (src/services/weather/aqiService.ts) — Home, Doc. Sage context, and
  * care recommendations all pass the resolved AQI value into aqiRules().
  */
 export type AqiBand = 'good' | 'satisfactory' | 'moderate' | 'poor' | 'very-poor' | 'severe';

@@ -57,6 +57,6 @@ Detailed guides: `revenuecat-setup.md`, `google-signin-setup.md`, `sentry-setup.
 - [ ] Store listing assets (screenshots, description; icon/feature graphic done).
 
 ## Premium gating note
-Per Task #22, premium = **more scans + unlimited Dr. Banyan** only. All paywall/
+Per Task #22, premium = **more scans + unlimited Doc. Sage** only. All paywall/
 prompt copy now matches; do **not** re-introduce premium-only claims for disease
 detection, reminders, weather tips, or unlimited plants (those are free).

@@ -23,9 +23,9 @@ const { width: W } = Dimensions.get('window');
 // Illustrative recovery examples — what Premium helps with (no fabricated
 // testimonials; each names the feature that does the work, honestly).
 const STORIES = [
-  { emoji: '🌿', from: 'Yellowing leaves', to: 'Lush & thriving', days: '~3 weeks', how: 'AI Doctor flags overwatering early' },
+  { emoji: '🌿', from: 'Yellowing leaves', to: 'Lush & thriving', days: '~3 weeks', how: 'Doc. Sage flags overwatering early' },
   { emoji: '🌱', from: 'Brown, crispy tips', to: 'Fresh new growth', days: '~2 weeks', how: 'A care plan tuned to its light & soil' },
-  { emoji: '🌸', from: 'No blooms in months', to: 'Flowering again', days: '~5 weeks', how: 'Unlimited Dr. Banyan check-ins as it recovers' },
+  { emoji: '🌸', from: 'No blooms in months', to: 'Flowering again', days: '~5 weeks', how: 'Unlimited Doc. Sage check-ins as it recovers' },
 ];
 
 // Feature comparison — reflects ACTUAL app functionality. Premium's real value
@@ -34,7 +34,7 @@ const STORIES = [
 // `__SCANS__` is filled per selected tier at render.
 const FEATURE_ROWS: { label: string; free: string; premium: string }[] = [
   { label: 'AI plant scans',           free: `${FREE_WEEKLY_SCAN_LIMIT} / week`, premium: '__SCANS__' },
-  { label: 'Dr. Banyan AI chat',       free: '20 / day',                         premium: 'Unlimited' },
+  { label: 'Doc. Sage AI chat',       free: '20 / day',                         premium: 'Unlimited' },
   { label: 'Plant ID & disease check', free: '✓',                                premium: '✓' },
   { label: 'Watering reminders',       free: '✓',                                premium: '✓' },
   { label: 'Weather & AQI care tips',  free: '✓',                                premium: '✓' },
@@ -141,7 +141,7 @@ export const PaywallScreen: React.FC = () => {
           <Text style={styles.heroEyebrow}>LAWNUP PREMIUM</Text>
           <Text style={styles.heroTitle}>Never lose a{'\n'}plant to a guess.</Text>
           <Text style={styles.heroSubtitle}>
-            Many more AI scans each month and unlimited Dr. Banyan chat — the full LawnUp experience, tuned for Indian gardens.
+            Many more AI scans each month and unlimited Doc. Sage chat — the full LawnUp experience, tuned for Indian gardens.
           </Text>
         </View>
 
@@ -229,7 +229,7 @@ export const PaywallScreen: React.FC = () => {
         {/* AI Doctor example */}
         <View style={styles.section}>
           <View style={styles.aiCard}>
-            <Text style={styles.aiEyebrow}>✦  AI PLANT DOCTOR</Text>
+            <Text style={styles.aiEyebrow}>🌿  DOC. SAGE</Text>
             <View style={styles.bubbleUser}><Text style={styles.bubbleUserText}>Why are my Tulsi leaves curling?</Text></View>
             <View style={styles.bubbleAI}>
               <Text style={styles.bubbleAIText}>

@@ -2,7 +2,7 @@ import type { WeatherData } from '../../weather/weatherService';
 
 /**
  * Weather Rules Engine — deterministic care adjustments from current weather.
- * Returns structured advice strings that Dr. Banyan retrieves (not invents)
+ * Returns structured advice strings that Doc. Sage retrieves (not invents)
  * and weaves into its reasoning. Pure function, no LLM.
  */
 export interface WeatherAdvice {

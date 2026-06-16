@@ -2,7 +2,7 @@ import type { CityClimate } from '../types';
 
 /**
  * India knowledge layer — per-city climate, seasonal care emphasis, and AQI
- * tendency. Keyed by lowercase city name. Dr. Banyan uses the user's city to
+ * tendency. Keyed by lowercase city name. Doc. Sage uses the user's city to
  * ground seasonal + air-quality guidance.
  */
 export const CITY_CLIMATES: Record<string, CityClimate> = {

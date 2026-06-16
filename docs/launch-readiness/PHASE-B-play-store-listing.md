@@ -15,7 +15,7 @@ Alternatives:
 **Primary:** `Identify plants, diagnose problems & get AI care tips for Indian gardens.` *(72)*
 
 Alternatives:
-- `Scan any plant, meet Dr. Banyan AI, and grow something beautiful.` (64)
+- `Scan any plant, meet Doc. Sage AI, and grow something beautiful.` (64)
 - `AI plant identifier & care guide built for India's weather and seasons.` (70)
 
 ## 3. Full Description (max 4000 chars)
@@ -27,8 +27,8 @@ LawnUp is an AI-powered plant care companion built for India — your home garde
 — IDENTIFY ANY PLANT —
 Point your camera at a plant and LawnUp recognises it in seconds, with its common Indian name, scientific name, and a confidence score. Not sure if it's healthy? LawnUp also checks for visible disease and stress.
 
-— MEET DR. BANYAN, YOUR AI PLANT DOCTOR —
-Ask anything — yellowing leaves, watering, pests, soil, repotting, propagation — and get grounded, practical answers. Dr. Banyan draws on a curated knowledge base of common Indian plants, so the advice fits Indian homes, seasons, and conditions.
+— MEET DOC. SAGE, YOUR PLANT EXPERT —
+Ask anything — yellowing leaves, watering, pests, soil, repotting, propagation — and get grounded, practical answers. Doc. Sage draws on a curated knowledge base of common Indian plants, so the advice fits Indian homes, seasons, and conditions.
 
 — CARE THAT KNOWS YOUR CITY —
 LawnUp factors in live weather and air quality (AQI) for your city, plus the Indian seasons — summer, monsoon, and winter — so watering and care tips actually match what your plants need right now.
@@ -69,7 +69,7 @@ Long-tail: `plant identification India`, `which plant is this`, `why are my leav
 
 ## 5. Feature Highlights (for store + screenshots overlay text)
 1. **Scan & identify** any plant instantly
-2. **Dr. Banyan** — AI plant doctor in your pocket
+2. **Doc. Sage** — plant expert in your pocket
 3. **Diagnose** disease & stress from a photo
 4. **City-aware care** — weather + AQI + Indian seasons
 5. **Soil & light** advice that fits your home
@@ -84,7 +84,7 @@ Long-tail: `plant identification India`, `which plant is this`, `why are my leav
 | # | Screen | Headline overlay |
 |---|---|---|
 | 1 | Scan result (hero plant + name + confidence) | "Identify any plant in seconds" |
-| 2 | Dr. Banyan chat (a real Q&A) | "Ask your AI plant doctor anything" |
+| 2 | Doc. Sage chat (a real Q&A) | "Ask your plant expert anything" |
 | 3 | Disease/health diagnosis card | "Spot problems before it's too late" |
 | 4 | Home dashboard (weather/AQI/care) | "Care that knows your city's weather" |
 | 5 | My Garden (saved plants) | "Your whole garden, remembered" |

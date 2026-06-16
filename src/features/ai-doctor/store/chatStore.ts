@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { ChatDoc } from '../../../types/firestore.types';
 import type { BanyanDiagnosis } from '../../../services/knowledge';
 
-/** The plant Dr. Banyan is currently focused on (drives context retrieval). */
+/** The plant Doc. Sage is currently focused on (drives context retrieval). */
 export interface ActivePlant {
   plantId?: string;
   nickname?: string;

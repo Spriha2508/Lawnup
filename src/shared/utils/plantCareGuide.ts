@@ -293,6 +293,6 @@ export function buildSpeciesActions(
     waterTip,
     'Keep in bright indirect light — avoid harsh afternoon sun',
     'Inspect leaves monthly for common pests like mealybugs, aphids, and scale',
-    `Ask AI Doctor for personalised care advice on your ${commonName}`,
+    `Ask Doc. Sage for personalised care advice on your ${commonName}`,
   ];
 }

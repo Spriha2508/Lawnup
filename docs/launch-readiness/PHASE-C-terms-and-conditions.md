@@ -21,7 +21,7 @@ By downloading, accessing, or using LawnUp, you agree to these Terms & Condition
 LawnUp provides:
 - **Plant identification** from photos you submit.
 - **Disease/health diagnosis** suggestions from photos.
-- An **AI assistant ("Dr. Banyan")** that answers plant-care questions.
+- An **AI assistant ("Doc. Sage")** that answers plant-care questions.
 - **Weather- and air-quality (AQI)-aware** and seasonal care guidance.
 - **Soil and light** suggestions, a saved garden, and watering reminders.
 

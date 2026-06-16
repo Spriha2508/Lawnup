@@ -171,9 +171,9 @@ export const ChatScreen: React.FC = () => {
     <View style={styles.header}>
       <View style={styles.headerBadge}><DoctorMark size={20} /></View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.headerTitle}>Dr. Banyan</Text>
+        <Text style={styles.headerTitle}>Doc. Sage</Text>
         <Text style={styles.headerSub}>
-          {enrichedPlant?.nickname ? `Caring for ${enrichedPlant.nickname}` : 'AI plant doctor'}
+          {enrichedPlant?.nickname ? `Caring for ${enrichedPlant.nickname}` : 'Plant Expert'}
         </Text>
       </View>
       {!isPremium && (
@@ -187,12 +187,12 @@ export const ChatScreen: React.FC = () => {
   const empty = (
     <Animated.View entering={FadeIn.duration(M.duration.expressive)} style={styles.empty}>
       <View style={styles.emptyBadge}><DoctorMark size={34} /></View>
-      <Text style={styles.emptyEyebrow}>AI PLANT DOCTOR</Text>
-      <Text style={styles.emptyTitle}>Meet Dr. Banyan</Text>
+      <Text style={styles.emptyEyebrow}>🌿  PLANT EXPERT</Text>
+      <Text style={styles.emptyTitle}>Meet Doc. Sage</Text>
       <Text style={styles.emptyBody}>
         {enrichedPlant?.nickname
           ? `I know ${enrichedPlant.nickname} — ask me anything about its watering, light, soil, or any trouble you’re seeing.`
-          : 'I’m your AI plant doctor, grounded in care data for 100+ Indian plants. Ask about watering, light, soil, pests — or that mystery yellow leaf.'}
+          : 'I’m Doc. Sage, your plant expert, grounded in care data for 100+ Indian plants. Ask about watering, light, soil, pests — or that mystery yellow leaf.'}
       </Text>
       <Text style={styles.chipsHint}>Tap a question to begin</Text>
       <View style={styles.chips}>
@@ -225,7 +225,7 @@ export const ChatScreen: React.FC = () => {
             <View style={styles.avatar}><DoctorMark size={18} /></View>
             <View style={[styles.bubble, styles.bubbleTheirs, styles.typingBubble]}>
               <ActivityIndicator size="small" color={C.primary} />
-              <Text style={styles.typingText}>Dr. Banyan is thinking…</Text>
+              <Text style={styles.typingText}>Doc. Sage is thinking…</Text>
             </View>
           </View>
         )}

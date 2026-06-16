@@ -20,13 +20,13 @@
 | 8 | Onboarding Welcome — CTA | `WelcomeScreen.tsx:64` | `Begin your garden` | **Keep** | Action label, not a tagline. |
 | 9 | Onboarding final — CTA | `GoalScreen.tsx:57` | `Enter LawnUp` | **Keep** | Action label (regression-guarded for casing). |
 | 10 | Paywall — hero | `PaywallScreen.tsx:118` | `Never lose a plant to a guess.` | **Keep** | Purpose-specific *conversion* headline; thematically consistent with "Don't Let It Die!"; it is not the brand tagline and shouldn't be replaced. |
-| 11 | Dr. Banyan — empty state | `ChatScreen.tsx:190–195` | `AI PLANT DOCTOR` / `Meet Dr. Banyan` / `I'm your AI plant doctor…` | **Keep** | Feature-intro copy, not a brand tagline. |
-| 12 | Dr. Banyan — system prompt | `retrieval.ts:75` | `LawnUp's warm, expert plant companion…` | **Keep** | Internal LLM prompt; never shown as a tagline. |
+| 11 | Doc. Sage — empty state | `ChatScreen.tsx:190–195` | `🌿 PLANT EXPERT` / `Meet Doc. Sage` / `I'm Doc. Sage, your plant expert…` | **Keep** | Feature-intro copy, not a brand tagline. |
+| 12 | Doc. Sage — system prompt | `retrieval.ts:75` | `LawnUp's warm, expert plant companion…` | **Keep** | Internal LLM prompt; never shown as a tagline. |
 | 13 | **App display name** | `app.json:3` | `LawnUp AI` | **Consider `LawnUp`** (decision) | The frozen brand is positioned as a *premium consumer lifestyle* brand, "not an AI utility". `LawnUp` matches the wordmark + feature graphic. ⚠️ Changing the launcher/store name is a decision with store-listing impact — flagged, not auto-recommended. |
 
 ## Notes
 - **Casing:** the approved strings are Title Case — `Don't Let It Die!` and `Grow Something Beautiful`. Where copy uses an all-caps *style* (splash, landing eyebrow), the styling stays; the words are what must match.
-- **No conflicts** beyond the above; paywall/Dr. Banyan/feature copy is purpose-specific and correctly distinct from the brand tagline.
+- **No conflicts** beyond the above; paywall/Doc. Sage/feature copy is purpose-specific and correctly distinct from the brand tagline.
 - **Net change set (on approval):** 5 user-facing strings (#1, #3, #4, #5, #7) + 1 comment (#2), plus the optional app-name decision (#13). All are pure copy — no layout, logic, or asset changes.
 
 **Awaiting approval of this mapping before any edits are made.**

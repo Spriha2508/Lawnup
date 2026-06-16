@@ -361,7 +361,7 @@ export const ScanResultScreen: React.FC = () => {
                 activeOpacity={0.82}
               >
                 <View style={styles.aiDoctorLeft}>
-                  <Text style={styles.aiDoctorLabel}>ASK DR. BANYAN</Text>
+                  <Text style={styles.aiDoctorLabel}>🌿  ASK DOC. SAGE</Text>
                   <Text style={styles.aiDoctorTitle}>
                     Get personalised care advice for {scanResult.commonName}
                   </Text>

@@ -18,7 +18,7 @@
 |---|---|---|
 | ✅ | ~~Build ships the old green-square icon~~ | **RESOLVED** — clean prebuild regenerated native icons + `#ECE7E0`; committed |
 | 🔴 | `eas build` fails on placeholder **projectId** | `eas init` (only remaining hard gate) |
-| 🟠 | **Dr. Banyan is non-AI** (`OPENAI_API_KEY` empty) → local responder only | Known/accepted for internal; add key + rebuild for live AI |
+| 🟠 | **Doc. Sage is non-AI** (`OPENAI_API_KEY` empty) → local responder only | Known/accepted for internal; add key + rebuild for live AI |
 | 🟠 | **No remote push** (`google-services.json` absent) | Add for FCM, or launch with local reminders only (deferred workstream) |
 | 🟡 | **Monetization is a no-op** in release (no RevenueCat/Billing) | Deferred workstream; launch free or wire billing first |
 | 🟡 | **Plant care-content accuracy** not expert-reviewed (500 entries) | Schedule a horticulturalist review pass |

@@ -1,4 +1,4 @@
-// Client-side OpenAI chat client for Dr. Banyan (internal-testing mode).
+// Client-side OpenAI chat client for Doc. Sage (internal-testing mode).
 //
 // Mirrors the Plant.id pattern: the key is read from the NON-PUBLIC
 // `openaiKey` baked via app.config.ts → extra (process.env.OPENAI_API_KEY).
@@ -39,7 +39,7 @@ export async function chatComplete({
 }: ChatCompleteOptions): Promise<string> {
   const apiKey = resolveKey();
   if (!apiKey) {
-    throw new Error('OpenAI key not set — Dr. Banyan is unavailable (internal-testing mode)');
+    throw new Error('OpenAI key not set — Doc. Sage is unavailable (internal-testing mode)');
   }
 
   const internalController = new AbortController();
@@ -63,7 +63,7 @@ export async function chatComplete({
     });
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {
-      if (timedOut) throw new Error('Dr. Banyan took too long to respond — please try again');
+      if (timedOut) throw new Error('Doc. Sage took too long to respond — please try again');
       throw new Error('Request cancelled');
     }
     const msg = err instanceof Error ? err.message.toLowerCase() : '';
@@ -79,17 +79,17 @@ export async function chatComplete({
   const rawText = await response.text();
   if (!response.ok) {
     if (__DEV__) console.warn('[OpenAI] HTTP', response.status, rawText.slice(0, 300));
-    if (response.status === 429) throw new Error('Dr. Banyan is busy right now — please try again in a moment');
-    throw new Error(`Dr. Banyan error (HTTP ${response.status})`);
+    if (response.status === 429) throw new Error('Doc. Sage is busy right now — please try again in a moment');
+    throw new Error(`Doc. Sage error (HTTP ${response.status})`);
   }
 
   let data: { choices?: { message?: { content?: string } }[] };
   try {
     data = JSON.parse(rawText);
   } catch {
-    throw new Error('Dr. Banyan sent an unreadable response — please try again');
+    throw new Error('Doc. Sage sent an unreadable response — please try again');
   }
   const content = data.choices?.[0]?.message?.content?.trim();
-  if (!content) throw new Error('Dr. Banyan had nothing to say — please try again');
+  if (!content) throw new Error('Doc. Sage had nothing to say — please try again');
   return content;
 }

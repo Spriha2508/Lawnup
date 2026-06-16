@@ -20,7 +20,7 @@
 | Sev | Risk | Note |
 |---|---|---|
 | 🔴 | EAS `projectId` placeholder | Cleared by `eas init` (the one gate to building). |
-| 🟠 | `OPENAI_API_KEY` empty | Dr. Banyan runs the local responder (known/accepted). |
+| 🟠 | `OPENAI_API_KEY` empty | Doc. Sage runs the local responder (known/accepted). |
 | 🟠 | `google-services.json` absent | Only blocks **remote** push; preview build + local reminders fine. |
 | 🟡 | Device QA not yet executed | Run Phase-3 checklist on the preview build. |
 | 🟡 | Monetization no-op in release | Deferred workstream. |

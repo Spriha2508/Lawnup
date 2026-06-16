@@ -1,5 +1,5 @@
 /**
- * Dr. Banyan service — the single entry point for an AI reply.
+ * Doc. Sage service — the single entry point for an AI reply.
  *
  * Flow (retrieval-FIRST, every request):
  *   1. Load this plant's long-term memory (recurring issues, care pattern, summary).

@@ -131,7 +131,7 @@ Option B is the only direction that satisfies **all** of the approved identity p
 - Light **ivory background**, **sage bonsai**, **one rose-gold blossom accent**; high contrast; identical art across every size (icon ↔ Play 512 ↔ feature graphic).
 
 ### Store screenshot visual direction (6 phone shots)
-- 1080×1920, real app screens in a clean device frame, on a soft ivory/botanical background, each with **one bold benefit headline** in Jakarta. Calm/Planta-grade restraint — generous whitespace, warm palette, no clutter. (Sequence per `PHASE-B-play-store-listing.md`: Scan result → Dr. Banyan → Diagnosis → Home/weather → My Garden → Soil/Light.)
+- 1080×1920, real app screens in a clean device frame, on a soft ivory/botanical background, each with **one bold benefit headline** in Jakarta. Calm/Planta-grade restraint — generous whitespace, warm palette, no clutter. (Sequence per `PHASE-B-play-store-listing.md`: Scan result → Doc. Sage → Diagnosis → Home/weather → My Garden → Soil/Light.)
 
 ### Feature graphic direction (1024×500)
 - Ivory ground; **wordmark + tagline on the left**, **bonsai+blossom hero on the right**; sage/rose/gold palette; minimal text; no screenshots-in-graphic.

@@ -2,7 +2,7 @@
  * LawnUp Knowledge Layer — type system.
  *
  * The knowledge layer is the structured, authoritative source of plant facts.
- * Dr. Banyan RETRIEVES from here (70%) and only REASONS over it (30%). OpenAI
+ * Doc. Sage RETRIEVES from here (70%) and only REASONS over it (30%). OpenAI
  * must never invent scientific names, soil recipes, propagation steps, or
  * disease definitions — those always come from these collections.
  *

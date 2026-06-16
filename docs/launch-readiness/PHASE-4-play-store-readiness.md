@@ -20,7 +20,7 @@
 | # | Screen | Headline | Supporting copy | Purpose | Device mockup |
 |---|---|---|---|---|---|
 | 1 | **Scan result (hero)** | **Identify any plant instantly** | Point your camera — get the name, in seconds. | Lead with the magic moment; communicate core value fast. | Pixel 8 / iPhone 15 portrait |
-| 2 | **Dr. Banyan chat** | **Your AI plant doctor, on call** | Ask about watering, pests, yellow leaves — anytime. | Show the AI differentiator + ongoing-help promise. | iPhone 15 portrait |
+| 2 | **Doc. Sage chat** | **Your plant expert, on call** | Ask about watering, pests, yellow leaves — anytime. | Show the AI differentiator + ongoing-help promise. | iPhone 15 portrait |
 | 3 | **Diagnosis / health card** | **Catch problems before it's too late** | Spot disease & stress from a single photo. | Speak to the core fear ("Don't Let It Die!"). | Pixel 8 portrait |
 | 4 | **Home dashboard (weather/AQI)** | **Care that knows your city** | Tips tuned to your weather, air quality & season. | Show the India-first, context-aware intelligence. | iPhone 15 portrait |
 | 5 | **My Garden** | **Your whole garden, remembered** | Every plant, nickname and milestone in one place. | Ownership + retention; "this is *my* garden". | Pixel 8 portrait |

@@ -16,8 +16,8 @@ interface UpgradePromptProps {
   onDismiss: () => void;
 }
 
-// Copy reflects ACTUAL premium value: more scans per month + unlimited Dr.
-// Banyan chat. Disease detection, reminders, weather tips and unlimited plants
+// Copy reflects ACTUAL premium value: more scans per month + unlimited Doc.
+// Sage chat. Disease detection, reminders, weather tips and unlimited plants
 // are FREE — never sell them as premium-only here.
 const COPY: Record<string, { title: string; message: string }> = {
   scan_limit: {
@@ -28,22 +28,22 @@ const COPY: Record<string, { title: string; message: string }> = {
   ai_doctor: {
     title: "You've hit today's free AI messages",
     message:
-      'Free includes 20 Dr. Banyan messages a day. Premium makes them unlimited, so you can keep the conversation going.',
+      'Free includes 20 Doc. Sage messages a day. Premium makes them unlimited, so you can keep the conversation going.',
   },
   reminders: {
     title: 'Get more from LawnUp',
     message:
-      'Premium gives you many more scans each month and unlimited Dr. Banyan chat for your whole garden.',
+      'Premium gives you many more scans each month and unlimited Doc. Sage chat for your whole garden.',
   },
   after_save: {
     title: 'Keep scanning your garden',
     message:
-      "You're building a beautiful garden. Premium gives you 80–100 scans a month and unlimited Dr. Banyan chat.",
+      "You're building a beautiful garden. Premium gives you 80–100 scans a month and unlimited Doc. Sage chat.",
   },
   general: {
     title: 'Upgrade to LawnUp Premium',
     message:
-      'More AI scans every month and unlimited Dr. Banyan chat — the full LawnUp experience.',
+      'More AI scans every month and unlimited Doc. Sage chat — the full LawnUp experience.',
   },
 };
 

@@ -2,7 +2,7 @@ import type { DiseaseEntry } from '../types';
 
 /**
  * diseaseLibrary seed — the most common issues for Indian houseplants.
- * Definitions/treatments are authoritative; Dr. Banyan retrieves these
+ * Definitions/treatments are authoritative; Doc. Sage retrieves these
  * verbatim and never invents disease definitions.
  */
 export const DISEASES: Record<string, DiseaseEntry> = {

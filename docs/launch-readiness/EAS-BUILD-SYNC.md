@@ -59,4 +59,4 @@ That produces an internal-distribution APK with the new launcher icon, splash, a
 - `eas init` projectId *(blocks the build command itself)*.
 - `google-services.json` *(only if testing remote push)*.
 - `expo-system-ui` *(to enforce light-only)*.
-- `OPENAI_API_KEY` empty *(Dr. Banyan stays local — known)*.
+- `OPENAI_API_KEY` empty *(Doc. Sage stays local — known)*.

@@ -38,7 +38,7 @@ export const PREMIUM_FEATURES: FeatureName[] = [
 
 export const FEATURE_LABELS: Record<FeatureName, string> = {
   unlimitedScans:   'More scans every month',
-  aiDoctor:         'AI Doctor — personalised care',
+  aiDoctor:         'Doc. Sage — personalised care',
   diseaseDetection: 'Disease detection',
   advancedWeather:  'Advanced weather insights',
   unlimitedPlants:  'Unlimited plants in garden',

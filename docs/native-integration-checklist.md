@@ -22,7 +22,7 @@ Audited current state:
 | `EXPO_PUBLIC_IMAGEKIT_URL_ENDPOINT` | ✅ SET | none |
 | `EXPO_PUBLIC_OPENWEATHER_KEY` | ✅ SET | none |
 | `PLANT_ID_KEY` | ✅ SET | OK — intentionally non-`EXPO_PUBLIC`; `app.config.ts` bakes it into `extra.plantIdKey` (client provider reads `Constants.expoConfig.extra.plantIdKey`). No change. |
-| `OPENAI_API_KEY` | ⚠️ EMPTY | set it — client-side Dr. Banyan reads `extra.openaiKey` (from `app.config.ts`); empty ⇒ **AI chat replies disabled**. Non-`EXPO_PUBLIC` (baked via extra). |
+| `OPENAI_API_KEY` | ⚠️ EMPTY | set it — client-side Doc. Sage reads `extra.openaiKey` (from `app.config.ts`); empty ⇒ **AI chat replies disabled**. Non-`EXPO_PUBLIC` (baked via extra). |
 | `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` | ⬜ not in `.env` | add (RevenueCat → Project → API keys → Android public key) |
 | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | ⬜ not in `.env` | add (OAuth **Web** client id, ends `.apps.googleusercontent.com`) |
 | `EXPO_PUBLIC_SENTRY_DSN` | ⬜ not in `.env` | add (Sentry project DSN) |
@@ -109,7 +109,7 @@ Audited current state:
 ## Blockers summary (must clear before launch)
 - ⚠️ `google-services.json` not placed.
 - ⚠️ `EXPO_PUBLIC_POSTHOG_KEY` empty (analytics).
-- ⚠️ `OPENAI_API_KEY` empty → Dr. Banyan AI chat replies disabled.
+- ⚠️ `OPENAI_API_KEY` empty → Doc. Sage AI chat replies disabled.
 - ⬜ RevenueCat + Play products (no real payment path until done).
 - ⬜ Google OAuth (Web client id + SHA) and Sentry DSN.
 - ⬜ Privacy Policy URL + Play Data Safety / Content Rating.

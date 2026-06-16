@@ -1,5 +1,5 @@
 /**
- * Local Dr. Banyan responder — used when no OpenAI key is configured
+ * Local Doc. Sage responder — used when no OpenAI key is configured
  * (internal-testing mode). It composes a grounded, helpful answer purely from
  * the retrieved knowledge in BanyanContext: light, seasonal watering, humidity,
  * fertiliser, soil recipe, diseases, propagation, toxicity.
@@ -28,7 +28,7 @@ export function localBanyanReply(query: string, ctx: BanyanContext, opts: Opts =
 
   // ── Social niceties ──────────────────────────────────────────────────────
   if (q.length <= 14 && has('hello', 'hi', 'hey', 'namaste')) {
-    return `Hi! I'm Dr. Banyan 🌿 Ask me about ${p ? `your ${p.commonNameEn}` : 'your plants'} — watering, light, yellowing leaves, soil, pests, propagation, anything.`;
+    return `Hi! I'm Doc. Sage 🌿 Ask me about ${p ? `your ${p.commonNameEn}` : 'your plants'} — watering, light, yellowing leaves, soil, pests, propagation, anything.`;
   }
   if (has('thank', 'thanks', 'thx')) return `Anytime — your ${name} is lucky to have you 🌱`;
 

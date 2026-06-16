@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PlantMemoryDoc } from '../../../types/firestore.types';
 
 /**
- * Dr. Banyan's long-term PLANT MEMORY (per plant).
+ * Doc. Sage's long-term PLANT MEMORY (per plant).
  *
  * Stores ONLY durable signal — recurring issues, nickname, recent diagnoses,
  * watering pattern, and a rolling conversation summary. It does NOT store full

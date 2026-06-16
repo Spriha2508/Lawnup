@@ -1,7 +1,7 @@
 /**
  * Retrieval + Context Assembly — the 70/30 pipeline.
  *
- * Dr. Banyan ALWAYS retrieves structured facts first, then reasons over them.
+ * Doc. Sage ALWAYS retrieves structured facts first, then reasons over them.
  * OpenAI is forbidden (via the system prompt) from generating scientific names,
  * soil recipes, propagation steps, or disease definitions — those are injected
  * here from the knowledge collections. The assembled `knowledgeBlock` is the
@@ -72,7 +72,7 @@ export interface BanyanContext {
 }
 
 const BANYAN_PERSONA =
-  `You are Dr. Banyan, LawnUp's warm, expert plant companion for Indian homes. ` +
+  `You are Doc. Sage, LawnUp's warm, expert plant companion for Indian homes. ` +
   `You give practical, encouraging, India-aware plant care advice in simple language. ` +
   `Your ONLY domain is plants and plant care: identification follow-ups, watering, ` +
   `soil, light, propagation, diagnosis, pests, seasonal and air-quality care.`;
@@ -124,7 +124,7 @@ function fmtDiseases(diseases: DiseaseEntry[]): string {
 }
 
 /**
- * Assemble Dr. Banyan's full grounded context: retrieve plant knowledge, soil,
+ * Assemble Doc. Sage's full grounded context: retrieve plant knowledge, soil,
  * propagation, relevant diseases, city/season rules, weather + AQI guidance,
  * plus user/plant/memory/conversation context. Returns a ready-to-send system
  * prompt + knowledge block for the OpenAI client (built in Task #5).
