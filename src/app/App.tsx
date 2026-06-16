@@ -300,6 +300,8 @@ if (RUN_FULL_APP) {
 
   // Initialise crash reporting once at boot (no-op until Sentry is wired).
   require('../services/monitoring/crashReporting').initCrashReporting();
+  // Configure Google Sign-In once (no-op until the Web client ID is set).
+  require('../features/auth/services/googleSignIn').configureGoogleSignIn();
 
   const FullApp: React.FC = () => {
     const [fontsLoaded, setFontsLoaded] = useState(false);

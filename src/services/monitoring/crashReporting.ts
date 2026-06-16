@@ -1,46 +1,63 @@
 /**
- * crashReporting — error-monitoring seam (Sentry).
+ * crashReporting — error monitoring (Sentry).
  *
- * Written WITHOUT importing `@sentry/react-native` yet, so the bundle stays
- * green until the native package is installed (see docs/sentry-setup.md and the
- * Sentry task). Every function is a safe no-op until `CRASH_REPORTING_READY` and
- * the TODO blocks are filled in. `logger` already forwards error-level logs here
- * via `reportError`, so once wired, handled errors flow to Sentry automatically.
+ * Activates once EXPO_PUBLIC_SENTRY_DSN is set AND a native build includes
+ * @sentry/react-native (rebuild required). Until the DSN is present every call
+ * is a safe no-op. The logger forwards error-level logs here via `reportError`,
+ * so handled errors flow to Sentry automatically once live. Setup:
+ * docs/sentry-setup.md.
  */
+import * as Sentry from '@sentry/react-native';
 
-// Flip true once @sentry/react-native is installed + configured.
-export const CRASH_REPORTING_READY = false;
+const DSN = process.env.EXPO_PUBLIC_SENTRY_DSN ?? '';
+
+export const CRASH_REPORTING_READY = DSN.length > 0;
+
+let initialised = false;
 
 /** Initialise the SDK once at app boot. */
 export function initCrashReporting(): void {
-  if (!CRASH_REPORTING_READY) return;
-  // TODO(sentry):
-  // import * as Sentry from '@sentry/react-native';
-  // Sentry.init({
-  //   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  //   enableInExpoDevelopment: false,
-  //   debug: false,
-  //   tracesSampleRate: 0.2,
-  // });
+  if (!CRASH_REPORTING_READY || initialised) return;
+  try {
+    Sentry.init({
+      dsn: DSN,
+      // Keep transaction sampling modest; errors are always captured.
+      tracesSampleRate: 0.2,
+      enabled: !__DEV__,
+    });
+    initialised = true;
+  } catch {
+    // Native module not linked (JS without a rebuild) — stay off.
+  }
 }
 
-/** Associate subsequent events with a user (call after auth resolves / on sign-out with null). */
+/** Associate events with a user (null on sign-out). */
 export function setCrashUser(user: { id: string; email?: string } | null): void {
   if (!CRASH_REPORTING_READY) return;
-  // TODO(sentry): Sentry.setUser(user ? { id: user.id, email: user.email } : null);
+  try {
+    Sentry.setUser(user ? { id: user.id, email: user.email } : null);
+  } catch {
+    /* not linked */
+  }
 }
 
 /** Report a handled error. Wired into logger error-level output. */
 export function reportError(message: string, err?: unknown): void {
   if (!CRASH_REPORTING_READY) return;
-  // TODO(sentry):
-  // if (err instanceof Error) Sentry.captureException(err, { extra: { message } });
-  // else Sentry.captureMessage(message, 'error');
+  try {
+    if (err instanceof Error) Sentry.captureException(err, { extra: { message } });
+    else Sentry.captureMessage(message, 'error');
+  } catch {
+    /* not linked */
+  }
 }
 
 /** Wrap the root component for automatic crash capture (optional). */
 export function wrapWithCrashReporting<T>(RootComponent: T): T {
   if (!CRASH_REPORTING_READY) return RootComponent;
-  // TODO(sentry): return Sentry.wrap(RootComponent as any) as T;
-  return RootComponent;
+  try {
+    return Sentry.wrap(RootComponent as any) as T;
+  } catch {
+    return RootComponent;
+  }
 }

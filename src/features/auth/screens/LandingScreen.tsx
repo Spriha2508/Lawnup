@@ -7,16 +7,15 @@ import { useAuthNavigation } from '@navigation/AuthNavigationContext';
 import { AmbientBackground } from '@shared/components/motion/AmbientBackground';
 import { PlantEmblem } from '@shared/components/motion/PlantEmblem';
 import { PressableScale } from '@shared/components/motion/PressableScale';
+import { GOOGLE_AUTH_READY, signInWithGooglePrompt } from '../services/googleSignIn';
 import { theme } from '@constants/designSystem';
 
 const { color: C, spacing: S, typography: T, radii: R, motion: M, fonts: F } = theme;
 
-// Google Sign-In ships before launch via @react-native-google-signin. The
-// button stays VISIBLE; until the native flow is wired it shows a "coming soon"
-// notice rather than silently opening email signup. Flip to true once
-// GoogleSignin.configure({ webClientId }) → signInWithGoogle(idToken) is in
-// place. See docs/google-signin-setup.md and the Google Auth task.
-const GOOGLE_AUTH_READY = false;
+// Google Sign-In activates automatically when EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+// is set + a native build includes the SDK (rebuild required). Until then the
+// button stays VISIBLE and shows a "coming soon" notice rather than silently
+// opening email signup. See docs/google-signin-setup.md.
 
 const GoogleLogo: React.FC = () => (
   <Svg width={18} height={18} viewBox="0 0 24 24">
@@ -30,7 +29,7 @@ const GoogleLogo: React.FC = () => (
 export const LandingScreen: React.FC = () => {
   const { navigate } = useAuthNavigation();
 
-  const handleGoogle = () => {
+  const handleGoogle = async () => {
     if (!GOOGLE_AUTH_READY) {
       Alert.alert(
         'Google Sign-In coming soon',
@@ -38,8 +37,12 @@ export const LandingScreen: React.FC = () => {
       );
       return;
     }
-    // TODO(google-auth): GoogleSignin.hasPlayServices() → signIn() →
-    // signInWithGoogle(idToken). See docs/google-signin-setup.md.
+    // On success the auth listener (RootNavigator) signs the user in and
+    // navigates automatically — nothing else to do here.
+    const res = await signInWithGooglePrompt();
+    if (res.status === 'error') {
+      Alert.alert('Couldn’t sign in with Google', 'Please try again, or continue with email.');
+    }
   };
 
   return (

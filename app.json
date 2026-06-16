@@ -44,6 +44,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "@react-native-google-signin/google-signin",
+      "@sentry/react-native/expo",
       [
         "expo-camera",
         {
