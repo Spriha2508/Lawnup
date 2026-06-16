@@ -330,7 +330,7 @@ export const HomeScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* ── 3 · My Plants carousel ────────────────────────────────────── */}
+            {/* ── 3 · My Garden carousel ────────────────────────────────────── */}
             <View style={[styles.stripWrap, { marginBottom: SECTION_GAP }]}>
               <View style={{ paddingHorizontal: H_PAD }}>
                 <SectionHeader label="MY GARDEN" actionLabel="Add plant +" onAction={() => goAddPlant('my_plants')} />

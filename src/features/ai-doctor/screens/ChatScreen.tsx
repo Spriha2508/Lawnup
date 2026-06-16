@@ -173,7 +173,7 @@ export const ChatScreen: React.FC = () => {
       <View style={{ flex: 1 }}>
         <Text style={styles.headerTitle}>Doc. Sage</Text>
         <Text style={styles.headerSub}>
-          {enrichedPlant?.nickname ? `Caring for ${enrichedPlant.nickname}` : 'Plant Expert'}
+          {enrichedPlant?.nickname ? `Caring for ${enrichedPlant.nickname}` : 'Your plant mentor'}
         </Text>
       </View>
       {!isPremium && (
@@ -187,12 +187,12 @@ export const ChatScreen: React.FC = () => {
   const empty = (
     <Animated.View entering={FadeIn.duration(M.duration.expressive)} style={styles.empty}>
       <View style={styles.emptyBadge}><DoctorMark size={34} /></View>
-      <Text style={styles.emptyEyebrow}>🌿  PLANT EXPERT</Text>
+      <Text style={styles.emptyEyebrow}>🌿  YOUR PLANT MENTOR</Text>
       <Text style={styles.emptyTitle}>Meet Doc. Sage</Text>
       <Text style={styles.emptyBody}>
         {enrichedPlant?.nickname
-          ? `I know ${enrichedPlant.nickname} — ask me anything about its watering, light, soil, or any trouble you’re seeing.`
-          : 'I’m Doc. Sage, your plant expert, grounded in care data for 100+ Indian plants. Ask about watering, light, soil, pests — or that mystery yellow leaf.'}
+          ? `I know ${enrichedPlant.nickname} — ask me anything about its watering, light, soil, or any trouble you’re seeing. I’m here to help it thrive.`
+          : 'I’m Doc. Sage — your plant mentor. Ask me anything: watering, light, soil, pests, or that mystery yellow leaf. I know 100+ Indian plants and I’m here to help yours thrive.'}
       </Text>
       <Text style={styles.chipsHint}>Tap a question to begin</Text>
       <View style={styles.chips}>
