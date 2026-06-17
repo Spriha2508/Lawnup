@@ -34,19 +34,33 @@ const vineBloom = makeMutable(0);
 const vineVisible = makeMutable(0);
 let bloomed = false;
 
+// Vine growth is PROPORTIONAL to journey completion. Auth gets it started; the
+// four onboarding screens grow it evenly, and the LAST onboarding step
+// (SkillLevel) is where it reaches full height. Leaves/blossoms are gated by
+// `vineProgress` passing each element's `t`, so they only unfurl on the portion
+// of the vine that has actually grown.
 const PROGRESS: Record<string, number> = {
-  Landing: 0.06, Login: 0.06, ForgotPassword: 0.06,
-  Signup: 0.16,
-  Welcome: 0.35,
-  Location: 0.58, PlaceType: 0.78, SkillLevel: 0.95,
+  Landing: 0.05, Login: 0.05, ForgotPassword: 0.05,
+  Signup: 0.12,
+  Welcome: 0.30,
+  Location: 0.52,
+  PlaceType: 0.74,
+  SkillLevel: 1.0, // last onboarding screen → fully grown
 };
+
+// Reaching the app proper means the journey is complete → bloom once, then rest.
+const BLOOM_ROUTES = new Set(['Main', 'Home']);
 
 export function setVineForRoute(name?: string) {
   if (!name) return;
+
   if (name in PROGRESS) {
     vineVisible.value = withTiming(1, { duration: 500 });
     vineProgress.value = withTiming(PROGRESS[name], { duration: 1100, easing: M.ease.organic });
-  } else {
+    return;
+  }
+
+  if (BLOOM_ROUTES.has(name)) {
     vineProgress.value = withTiming(1, { duration: 700, easing: M.ease.smooth });
     if (!bloomed) {
       bloomed = true;
@@ -56,7 +70,13 @@ export function setVineForRoute(name?: string) {
     } else {
       vineVisible.value = withTiming(0, { duration: 400 });
     }
+    return;
   }
+
+  // Any other route — the transient "Onboarding" parent reported before its
+  // nested screen hydrates, or deep in-app routes — must NOT move the vine.
+  // Leaving it where it is keeps growth proportional and prevents the premature
+  // jump-to-full-height + bloom that made every leaf/flower appear at once.
 }
 
 // Organic S-curve up the left edge (bottom → top).
