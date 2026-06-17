@@ -360,15 +360,19 @@ export const HomeScreen: React.FC = () => {
 
             {/* ── 6 · Weather + AQI Intelligence ────────────────────────────── */}
             {(weather || aqi) && (
-              <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={[styles.intelCard, { marginBottom: SECTION_GAP }]}>
-                <Text style={styles.cardEyebrow}>TODAY{city ? ` · ${city}` : ''}</Text>
-                <View style={styles.intelRow}>
-                  {weather && <IntelStat value={`${weather.tempC}°`} label="Temp" />}
-                  {weather && <IntelStat value={`${weather.humidity}%`} label="Humidity" />}
-                  {aqi && aqiAdvice && <IntelStat value={String(aqi.aqi)} label="AQI" color={bandColor(aqiAdvice.band)} />}
-                </View>
-                <Text style={styles.intelRec}>{careRecommendation}</Text>
-              </Animated.View>
+              <View style={{ marginBottom: SECTION_GAP }}>
+                {/* SectionHeader (like every other dashboard section) so the
+                    weather card reads as part of the dashboard, not a stray widget. */}
+                <SectionHeader label={`WEATHER & CARE${city ? ` · ${city}` : ''}`} />
+                <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.intelCard}>
+                  <View style={styles.intelRow}>
+                    {weather && <IntelStat value={`${weather.tempC}°`} label="Temp" />}
+                    {weather && <IntelStat value={`${weather.humidity}%`} label="Humidity" />}
+                    {aqi && aqiAdvice && <IntelStat value={String(aqi.aqi)} label="AQI" color={bandColor(aqiAdvice.band)} />}
+                  </View>
+                  <Text style={styles.intelRec}>{careRecommendation}</Text>
+                </Animated.View>
+              </View>
             )}
 
             {/* ── 7 · Learn & Grow ──────────────────────────────────────────── */}
@@ -562,7 +566,6 @@ const styles = StyleSheet.create({
   overviewStatLabel: { ...T.caption, color: C.textMuted, marginTop: 2 },
   overviewDivider: { width: StyleSheet.hairlineWidth, height: 36, backgroundColor: C.border },
 
-  cardEyebrow: { ...T.statLabel, color: C.textMuted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: S.sm },
 
   // First-run scan hero (kept deep green — it's the single first-run focal point)
   scanCard: { backgroundColor: C.primaryDark, borderRadius: R.sheet, paddingHorizontal: 26, paddingTop: 28, paddingBottom: 28, overflow: 'hidden', ...theme.shadows.lg },
