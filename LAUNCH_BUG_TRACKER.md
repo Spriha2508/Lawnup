@@ -11,7 +11,7 @@
 |---|---|
 | **App Version** | 1.0.0 |
 | **Branch** | `redesign/phase1-design-system-auth` |
-| **Current Commit** | `8598ced` (Auth: complete Google Sign-In — logout session teardown + error mapping) |
+| **Current Commit** | `b8876b2` (QA Round 1 — LB-028…LB-043 device-QA fixes, see §4) |
 | **Owner** | Spriha Choudhary |
 | **Last Updated** | 2026-06-17 |
 | **Release Target** | TBD — internal testing first; Play Store launch gated on `PLAY_STORE_SETUP.md` |
