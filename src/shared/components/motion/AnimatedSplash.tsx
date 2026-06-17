@@ -56,12 +56,18 @@ const GREENS = ['#4E7C4A', '#5E7F61', '#6FA06B', '#7FB069', '#3E6B3C', '#88B07E'
 const TOTAL = 3700;
 const SKIP_AT = 1800;
 const WORD = 'LawnUp';
-const WORD_Y = H * 0.66;
 const NBANDS = 6;
 
 // ── Geometry (computed once at module load) ──────────────────────────────────
 const baseY = H * 0.52;           // trunk base / pot lip
 const POT_BOT = baseY + 28;
+
+// Brand lockup anchored RELATIVE to the plant, so the wordmark + tagline always
+// clear the pot/foliage and keep a fixed gap between themselves — no overlap on
+// any screen height. (Previously both used independent fractional-H positions,
+// which crowded together on short devices.) WORD_TOP is the wordmark wrap's top.
+const WORD_TOP = Math.max(H * 0.62, POT_BOT + 72);
+const TAG_TOP = WORD_TOP + 62;
 
 const POT_D = `M ${cx - 54} ${baseY} L ${cx + 54} ${baseY} L ${cx + 44} ${POT_BOT} L ${cx - 44} ${POT_BOT} Z`;
 const POT_RIM_D = `M ${cx - 62} ${baseY} L ${cx + 62} ${baseY}`;
@@ -448,12 +454,12 @@ export const AnimatedSplash: React.FC<Props> = ({ onDone }) => {
         </Animated.View>
 
         {/* WORDMARK resolving on the daylight */}
-        <Animated.View style={[styles.wordWrap, { top: WORD_Y - 26 }, wordStyle]} pointerEvents="none">
+        <Animated.View style={[styles.wordWrap, { top: WORD_TOP }, wordStyle]} pointerEvents="none">
           <View style={styles.wordRow}>
             {WORD.split('').map((ch, i) => <Letter key={i} ch={ch} delay={3000 + i * 40} />)}
           </View>
         </Animated.View>
-        <Animated.View style={[styles.tagWrap, tagStyle]} pointerEvents="none">
+        <Animated.View style={[styles.tagWrap, { top: TAG_TOP }, tagStyle]} pointerEvents="none">
           <Animated.Text style={styles.tagline}>DON'T LET IT DIE!</Animated.Text>
         </Animated.View>
 
@@ -487,7 +493,7 @@ const styles = StyleSheet.create({
   wordWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   wordRow: { flexDirection: 'row' },
   letter: { fontFamily: F.serifMedium, fontSize: 42, lineHeight: 48, color: WORD_COLOR, letterSpacing: 0.5 },
-  tagWrap: { position: 'absolute', left: 0, right: 0, top: H * 0.72, alignItems: 'center' },
+  tagWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   tagline: { fontFamily: F.sansMedium, fontSize: 11, color: TAG_COLOR, letterSpacing: 2.5 },
   skipWrap: { position: 'absolute', bottom: theme.spacing['4xl'], right: theme.spacing['2xl'] },
   skipText: { fontFamily: F.sansMedium, fontSize: 12, color: TAG_COLOR, letterSpacing: 0.4 },
