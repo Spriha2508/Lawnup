@@ -1,4 +1,9 @@
 export const config = {
+  // Build environment — set per EAS profile (development | preview | staging |
+  // production). Used to gate behaviours that are safe for internal testing but
+  // must NEVER reach the production store build (e.g. the mock premium CTA).
+  APP_ENV: process.env.EXPO_PUBLIC_APP_ENV ?? 'development',
+
   // Feature flags — toggle without redeploy via this file
   ENABLE_AI_CHAT: true,
   ENABLE_PLANT_MEMORY: true,

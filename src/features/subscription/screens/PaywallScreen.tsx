@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path, Ellipse } from 'react-native-svg';
 import { useSubscriptionStore } from '../store/subscriptionStore';
-import { purchase as purchaseTier, restore as restorePurchases, PAYMENTS_READY } from '../services/purchasesService';
+import { purchase as purchaseTier, restore as restorePurchases, PAYMENTS_READY, MOCK_PREMIUM_ENABLED } from '../services/purchasesService';
 import { FREE_WEEKLY_SCAN_LIMIT } from '../constants/plans';
 import { theme } from '@constants/designSystem';
 
@@ -86,14 +86,15 @@ export const PaywallScreen: React.FC = () => {
 
   const handleUpgrade = useCallback(async () => {
     // Real payments go through RevenueCat once PAYMENTS_READY (see
-    // purchasesService + docs/revenuecat-setup.md). Until then, DEV builds use a
-    // mock so the app is testable end-to-end.
+    // purchasesService + docs/revenuecat-setup.md). Until then, non-production
+    // builds (dev/preview/staging) use a LOCAL mock so the upgrade flow is fully
+    // testable on device. MOCK_PREMIUM_ENABLED is hard-gated off in production.
     if (PAYMENTS_READY) {
       const res = await purchaseTier(selectedPlan);
       if (res.success) navigation.goBack();
       return;
     }
-    if (__DEV__) {
+    if (MOCK_PREMIUM_ENABLED) {
       activateMockPremium(true);
       setPlan('premium', undefined, selectedPlan);
       navigation.goBack();
@@ -298,7 +299,7 @@ export const PaywallScreen: React.FC = () => {
               In release before payments are wired it stays disabled rather than
               dead-tapping. */}
           {(() => {
-            const ctaEnabled = PAYMENTS_READY || __DEV__;
+            const ctaEnabled = PAYMENTS_READY || MOCK_PREMIUM_ENABLED;
             return (
               <Pressable style={[styles.ctaBtn, !ctaEnabled && styles.ctaBtnDisabled]} onPress={handleUpgrade} disabled={!ctaEnabled}>
                 <Text style={styles.ctaBtnText}>{ctaEnabled ? 'Start Premium  →' : 'Premium — coming soon'}</Text>

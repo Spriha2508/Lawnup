@@ -37,6 +37,13 @@ const ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '';
 /** Live only when the public SDK key is configured. */
 export const PAYMENTS_READY = ANDROID_KEY.length > 0;
 
+// QA round (P0-4): until real payments are live, allow the paywall CTA to flip a
+// LOCAL mock premium so the full upgrade flow is testable on internal builds.
+// HARD-GATED off in production so a fake "purchase" can NEVER reach the store —
+// the production build keeps the honest "coming soon" state until PAYMENTS_READY.
+const APP_ENV = process.env.EXPO_PUBLIC_APP_ENV ?? 'development';
+export const MOCK_PREMIUM_ENABLED = !PAYMENTS_READY && APP_ENV !== 'production';
+
 /** RevenueCat entitlement identifier — MUST match the dashboard exactly. */
 export const ENTITLEMENT_ID = process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT || 'premium';
 
