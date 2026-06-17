@@ -40,8 +40,9 @@ export const LandingScreen: React.FC = () => {
     // On success the auth listener (RootNavigator) signs the user in and
     // navigates automatically — nothing else to do here.
     const res = await signInWithGooglePrompt();
+    // Cancellation is silent; everything else shows its specific message.
     if (res.status === 'error') {
-      Alert.alert('Couldn’t sign in with Google', 'Please try again, or continue with email.');
+      Alert.alert('Couldn’t sign in with Google', res.message);
     }
   };
 

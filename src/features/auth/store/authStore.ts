@@ -5,6 +5,7 @@ import { signOut as firebaseSignOut, deleteUser } from '@firebase/auth';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../../services/firebase/firebaseConfig';
 import { resetAnalytics } from '../../../services/analytics/posthog';
+import { signOutGoogle } from '../services/googleSignIn';
 import type { UserDoc } from '../../../types/firestore.types';
 
 interface AuthState {
@@ -39,6 +40,9 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signOut: async () => {
+        // Clear the native Google session too (no-op for email/password users)
+        // so a later Google sign-in re-prompts the account picker.
+        await signOutGoogle();
         await firebaseSignOut(auth);
         resetAnalytics();
         set({ user: null, isAuthenticated: false, isLoading: false });
@@ -68,6 +72,7 @@ export const useAuthStore = create<AuthState>()(
           throw e;
         }
 
+        await signOutGoogle();
         resetAnalytics();
         set({ user: null, isAuthenticated: false, isLoading: false });
       },
