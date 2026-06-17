@@ -106,7 +106,18 @@ const TabButton: React.FC<{
   const scale = useSharedValue(1);
   const anim  = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   // Dark grounded bar: inactive = soft light, active = luminous primary green.
-  const color = focused ? C.primary : 'rgba(240,253,244,0.45)';
+  // Inactive lifted to 0.55 for clearer icon visibility; active stays primary.
+  const color = focused ? C.primary : 'rgba(240,253,244,0.55)';
+
+  // Animated highlight pill behind the active icon — makes the selected tab
+  // unmistakable beyond the colour swap alone.
+  const hl = useSharedValue(focused ? 1 : 0);
+  useEffect(() => {
+    hl.value = focused
+      ? withSpring(1, theme.motion.spring.gentle)
+      : withTiming(0, { duration: theme.motion.duration.fast });
+  }, [focused]); // eslint-disable-line react-hooks/exhaustive-deps
+  const highlightStyle = useAnimatedStyle(() => ({ opacity: hl.value, transform: [{ scale: 0.7 + hl.value * 0.3 }] }));
 
   const pressIn  = useCallback(() => { scale.value = withSpring(0.88, theme.motion.spring.snappy); }, []); // eslint-disable-line
   const pressOut = useCallback(() => { scale.value = withSpring(1,    theme.motion.spring.gentle); }, []); // eslint-disable-line
@@ -127,10 +138,13 @@ const TabButton: React.FC<{
     <Pressable onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} style={styles.tabBtn}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
       <Animated.View style={[styles.tabInner, anim]}>
-        {tabKey === 'Home'    && <HomeIcon    color={color} />}
-        {tabKey === 'Plants'  && <LeafIcon    color={color} />}
-        {tabKey === 'Chat'    && <ChatIcon    color={color} />}
-        {tabKey === 'Profile' && <ProfileIcon color={color} />}
+        <View style={styles.iconWrap}>
+          <Animated.View style={[styles.activeHighlight, highlightStyle]} pointerEvents="none" />
+          {tabKey === 'Home'    && <HomeIcon    color={color} />}
+          {tabKey === 'Plants'  && <LeafIcon    color={color} />}
+          {tabKey === 'Chat'    && <ChatIcon    color={color} />}
+          {tabKey === 'Profile' && <ProfileIcon color={color} />}
+        </View>
         {label ? (
           <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>{label}</Text>
         ) : null}
@@ -199,7 +213,16 @@ const styles = StyleSheet.create({
 
   tabBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
   tabInner: { alignItems: 'center', gap: 4 },
-  tabLabel: { fontFamily: F.sansMedium, fontSize: 10, color: 'rgba(240,253,244,0.45)', letterSpacing: 0.3 },
+  iconWrap: { width: 46, height: 32, alignItems: 'center', justifyContent: 'center' },
+  // Soft primary highlight behind the active icon (reads on the dark bar)
+  activeHighlight: {
+    position: 'absolute',
+    width: 46,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(74,222,128,0.16)',
+  },
+  tabLabel: { fontFamily: F.sansMedium, fontSize: 10, color: 'rgba(240,253,244,0.55)', letterSpacing: 0.3 },
   tabLabelActive: { color: C.primary, fontFamily: F.sansBold },
   sprout: { height: 10, marginTop: 1, alignItems: 'center', justifyContent: 'center' },
 
