@@ -37,14 +37,20 @@ const { width: SW, height: SH } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'Camera'>;
 type FlashMode = 'off' | 'on' | 'auto';
 
-// Scan guidance tips — rotate through these during the live view
+// Persistent pre-capture guidance. Plant.id is most accurate on a clear,
+// well-lit subject, so we steer the user toward that BEFORE capture rather than
+// letting a poor framing silently produce a low-confidence result (P1-5).
+const BEST_RESULTS_HINT = 'For best results, capture one healthy leaf clearly in good lighting';
+
+// Scan guidance tips — rotate through these during the live view. Lead with the
+// highest-impact guidance (clarity + light), then cover whole-plant / disease.
 const SCAN_TIPS = [
-  'Include the full plant — leaves, stem, and overall shape',
-  'Natural daylight gives the most accurate results',
-  'Hold steady and move close — blurry photos reduce accuracy',
-  'Keep affected leaves clearly visible in the frame',
-  'Avoid harsh backlighting — step into shade if needed',
-  'Include the pot if possible — it helps with context',
+  'Move close so one clear leaf fills the frame',
+  'Natural daylight gives the most accurate identification',
+  'Hold steady — blurry photos reduce accuracy',
+  'A plain background helps — isolate a single plant',
+  'Whole-plant or potted shots work too — just keep leaves sharp',
+  'Checking for disease? Keep the affected leaf clearly in frame',
 ];
 
 // How long a quality warning stays before resuming tip rotation (ms)
@@ -527,6 +533,12 @@ export const CameraScreen: React.FC = () => {
         <Text style={styles.qualityPillText}>{pillText}</Text>
       </Animated.View>
 
+      {/* Persistent best-results guidance — always visible before capture so the
+          user frames a good shot rather than getting a silent poor result. */}
+      <View style={styles.bestResultsContainer} pointerEvents="none">
+        <Text style={styles.bestResultsText}>{BEST_RESULTS_HINT}</Text>
+      </View>
+
       {/* Tip / quality warning area */}
       <Animated.View
         style={[styles.tipContainer, { opacity: tipFade }]}
@@ -727,10 +739,27 @@ const styles = StyleSheet.create({
     ...T.label,
     color: C.onPrimary,
   },
-  // Tip / quality warning text below scan frame
-  tipContainer: {
+  // Persistent best-results guidance — sits just below the frame, above tips
+  bestResultsContainer: {
     position: 'absolute',
     top: (SH - FRAME_SIZE) / 2 + FRAME_SIZE + 14,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: S['2xl'],
+  },
+  bestResultsText: {
+    fontFamily: F.sansBold,
+    fontSize: 13,
+    color: '#fff',
+    textAlign: 'center',
+    letterSpacing: 0.2,
+    lineHeight: 18,
+  },
+  // Tip / quality warning text below scan frame (below the persistent hint)
+  tipContainer: {
+    position: 'absolute',
+    top: (SH - FRAME_SIZE) / 2 + FRAME_SIZE + 46,
     left: 0,
     right: 0,
     alignItems: 'center',
