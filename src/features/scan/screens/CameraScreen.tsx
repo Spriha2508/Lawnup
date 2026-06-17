@@ -73,9 +73,16 @@ export const CameraScreen: React.FC = () => {
 
   const handleAllowCamera = useCallback(async () => {
     try {
-      const { granted } = await request();
-      if (!granted) openCameraSettings();
+      const { granted, canAskAgain } = await request();
+      // Granted → the screen re-renders straight into the live camera.
+      if (granted) return;
+      // Not granted, but the OS will still prompt → leave the user on this
+      // rationale screen so tapping "Allow" again re-shows the system popup.
+      // Only when the OS won't prompt anymore (permanently denied) do we route
+      // to Settings — so a single decline is never a dead-end into Settings.
+      if (!canAskAgain) openCameraSettings();
     } catch {
+      // requestPermission threw (e.g. native module/stale build) — give an exit.
       openCameraSettings();
     }
   }, [request]);
@@ -124,6 +131,25 @@ export const CameraScreen: React.FC = () => {
       if (captureLockTimer.current) clearTimeout(captureLockTimer.current);
     };
   }, []);
+
+  // ── Always return to a FRESH live preview (P1-7) ───────────────────────────
+  // CameraScreen sits below Processing in the stack, so it stays mounted while
+  // the user analyses a photo. Without this, pressing Back from Processing
+  // re-shows the previously captured image (the screen still holds capturedUri).
+  // Resetting on every focus guarantees Back — and a brand-new Scan — always
+  // lands on the live camera, with no stale capture, quality state, or scan
+  // store left over. (Fires harmlessly on first focus where all are already clear.)
+  useEffect(() => {
+    const unsub = navigation.addListener('focus', () => {
+      setCapturedUri(null);
+      setQualityResult(null);
+      setShowingQualityWarn(false);
+      setCaptureLocked(false);
+      setIsCapturing(false);
+      resetScan();
+    });
+    return unsub;
+  }, [navigation, resetScan]);
 
   // ── [CAMERA_PERMISSION] permission/hydration log ───────────────────────────
   useEffect(() => {
