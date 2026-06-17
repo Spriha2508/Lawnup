@@ -34,9 +34,10 @@ google-play-service-account.json
 # Dev environment runtime files
 .dev-pids
 .dev-session
-logs/*.log
-logs/archive/
-logs/.emulator-data/
+# QA artifacts & runtime logs — never tracked (screenshots, logcat, logs,
+# emulator data). Keep the directory present via .gitkeep only.
+logs/*
+!logs/.gitkeep
 
 # Editor
 .vscode/
