@@ -88,7 +88,8 @@
 | LB-039 | 🟡 P2 | 🟢 Fixed | Scan Result (INFO tab) | Both | Any | Open INFO tab → Identification details | Confidence is explained, not just a bare % | Showed only "84%" with no meaning | No explanation copy | `601e2ac` | — | Added under the Confidence row: "AI confidence is based on image clarity and the visible characteristics of the plant — a clearer, closer photo usually raises it." Hero pill now also reads "{n}% confidence". **Verify on device** |
 | LB-040 | 🟡 P2 | 🟢 Fixed | Home (weather card) | Both | Any | Scroll Home to the Weather + AQI card | Weather card feels part of the dashboard | Felt visually disconnected | It was the ONLY dashboard section with its eyebrow INSIDE the card and no `SectionHeader` above it — every sibling section has one | `61198a0` | — | Gave it a `SectionHeader` ("WEATHER & CARE · {city}") like its siblings; removed the redundant in-card eyebrow. Now matches the dashboard's section rhythm/typography. **Verify on device** |
 | LB-041 | 🟡 P2 | 🟢 Fixed | Bottom navigation | Both | Any | Switch tabs | Selected tab is clearly obvious | Active state relied only on a colour swap + a tiny sprout | Weak active emphasis | `8a06ac9` | — | Added an animated primary highlight pill behind the active icon; lifted inactive icon/label tone 0.45→0.55 for visibility; active label stays bold primary. Design language unchanged. **Verify on device** |
-| LB-042 | 🟡 P2 | 🟢 Fixed | Doc. Sage chat | Both | Any | Read a multi-point Doc. Sage reply | Easy to scan — paragraphs/bullets, comfortable spacing | Replies rendered as one flat text block | Assistant content shown via a single `<Text>` with no structure | _(this round — see commit below)_ | — | Added a formatter for assistant messages: paragraph spacing, bullet rows (`- * •`), line-height 23, wider bubble (94%). Tone/wording untouched; user bubbles unchanged. **Verify on device** |
+| LB-042 | 🟡 P2 | 🟢 Fixed | Doc. Sage chat | Both | Any | Read a multi-point Doc. Sage reply | Easy to scan — paragraphs/bullets, comfortable spacing | Replies rendered as one flat text block | Assistant content shown via a single `<Text>` with no structure | `afb5f92` | — | Added a formatter for assistant messages: paragraph spacing, bullet rows (`- * •`), line-height 23, wider bubble (94%). Tone/wording untouched; user bubbles unchanged. **Verify on device** |
+| LB-043 | 🟡 P2 | 🟢 Audited | App-wide (UI consistency) | Both | Any | Compare radii / typography / spacing / icons / shadows across screens | One consistent standard | Two conventions coexist | Newer screens use the central design system (`designSystem.ts` — radii/spacing/typography/shadows tokens); several **pre-existing** screens (Paywall, ScanResult, ProcessingScreen, PlantDetail, scan components, Button/Input) still use raw font strings (`'Nunito-*'`) and raw `borderRadius` numbers | — (audit, see §10) | — | **Standard = `designSystem.ts`.** All changes made THIS round use the tokens/convention of their file. Most legacy raw values (e.g. `borderRadius: 20`, `fontSize: 14`) do **not** map 1:1 to tokens — swapping them would shift pixels (= a redesign), which the round's rules forbid. So a blanket token migration is **deliberately deferred** to a design-signed-off pass (logged in §10). No risky sweeping refactor done. |
 
 ---
 
@@ -220,3 +221,36 @@
 4. **Never delete resolved bugs** — keep them as release history.
 5. **Update this tracker after every QA session and after every bug-fix commit.**
 6. **This file is the authoritative launch tracker for the project.**
+
+---
+
+## 10. UI Consistency Audit (LB-043 · QA Round 1)
+
+**Standard:** `src/constants/designSystem.ts` is the single source of truth —
+`radii` (xs 6 · sm 8 · md 12 · lg 16 · card 18 · xl 24 · sheet 28 · pill 100),
+`spacing`, `typography` (Plus Jakarta serif + Nunito body, body ≥ 14sp),
+`fonts`, and `shadows`.
+
+**Findings**
+
+| Area | State | Notes |
+|---|---|---|
+| Corner radius | Mixed | Newer screens use `R.*`; legacy screens use raw numbers (`16/18/20/24/999`). Many raw values **don't equal** a token. |
+| Typography | Mixed | Newer screens use `T.*`/`F.*`; ~20 files still use raw `'Nunito-*'`/`'Jakarta-*'` strings + raw sizes. |
+| Card spacing / padding | Consistent enough | Cards use `C.card` + border + `theme.shadows.card`; section gap via `SECTION_GAP`. Weather card brought in line this round (LB-040). |
+| Icon weights | Consistent | SVG stroke icons at `strokeWidth ≈ 1.7–1.8` across nav + screens. |
+| Elevation / shadows | Consistent | `theme.shadows.{sm,card,cta,lg}` used widely. |
+| Bottom-nav active state | Fixed | LB-041. |
+| Diagnosis hierarchy / care icons / confidence | Fixed | LB-037/038/039. |
+
+**Decision (rule-compliant):** all changes in this QA round use the tokens /
+convention of the file they touch. A **blanket raw-value → token migration is
+deliberately deferred** — most legacy raw values do not map 1:1 to tokens, so
+swapping them would change pixels (a redesign), which this round's rules forbid
+("Do NOT redesign", "Do NOT refactor unrelated code"). 
+
+**Recommended follow-up (separate, design-signed-off task):** migrate the raw
+font strings + radii in `PaywallScreen`, `ScanResultScreen`, `ProcessingScreen`,
+`PlantDetailScreen`, the `scan/components/*`, and `Button`/`Input` to
+`designSystem` tokens, snapping each raw value to the nearest token **with design
+sign-off** on the small visual deltas. Not a launch blocker.
