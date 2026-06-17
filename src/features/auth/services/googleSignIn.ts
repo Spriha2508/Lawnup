@@ -43,6 +43,24 @@ export type GoogleSignInOutcome =
 
 /** Map any failure to a stable code + a user-facing message. */
 function toError(e: any): Extract<GoogleSignInOutcome, { status: 'error' }> {
+  // Always surface the raw cause in dev — the #1 silent failure on Android is a
+  // DEVELOPER_ERROR (code 10) from a missing/incorrect SHA-1/256 fingerprint in
+  // Firebase for the build's signing key. This log makes that visible in QA.
+  if (__DEV__) console.warn('[GoogleSignIn] failure:', { code: e?.code, message: e?.message });
+
+  // DEVELOPER_ERROR (native code 10): the build's SHA fingerprint / OAuth client
+  // config doesn't match Firebase. Not a constant in statusCodes across versions,
+  // so match the raw code/message. This is a build-config problem, not the user's.
+  const codeStr = String(e?.code ?? '');
+  if (codeStr === '10' || codeStr === 'DEVELOPER_ERROR' || /developer_?error/i.test(e?.message ?? '')) {
+    return {
+      status: 'error',
+      code: 'developer_error',
+      message:
+        'Google Sign-In isn’t available in this build yet. Please continue with email — we’re finishing setup.',
+    };
+  }
+
   // Firebase: the email already exists via a different provider (e.g. email/password).
   if (e?.code === 'auth/account-exists-with-different-credential') {
     return {

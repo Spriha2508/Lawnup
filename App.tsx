@@ -22,6 +22,7 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { AnimatedSplash } from './src/shared/components/motion/AnimatedSplash';
 import { RootAtmosphere, setAtmosphereForRoute, getActiveRouteName } from './src/shared/components/motion/RootAtmosphere';
 import { JourneyVine, setVineForRoute } from './src/shared/components/motion/JourneyVine';
+import { configureGoogleSignIn } from './src/features/auth/services/googleSignIn';
 import { logger } from './src/shared/utils/logger';
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
@@ -33,6 +34,11 @@ const DevOverlay = __DEV__
 // Install global JS crash + unhandled-promise handlers before anything renders.
 // Errors will appear in Metro as [BUNDLE_CRASH] / [RUNTIME_ERROR] / [UNHANDLED_PROMISE].
 logger.installGlobalHandlers();
+
+// Configure Google Sign-In once at boot (no-op until the Web client ID is set
+// and a native build includes the SDK). Done here in the real entry so the
+// native picker is ready before the user taps "Continue with Google".
+configureGoogleSignIn();
 
 LogBox.ignoreLogs([
   '@firebase/firestore',
