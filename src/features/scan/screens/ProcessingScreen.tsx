@@ -30,10 +30,14 @@ const { width: SW, height: SH } = Dimensions.get('window');
 type Nav = StackNavigationProp<ScanStackParamList, 'Processing'>;
 type Route = RouteProp<ScanStackParamList, 'Processing'>;
 
+// Progressive analysis states — advance FORWARD (no looping) so the scan reads
+// as a sequence of real steps, holding on the last while the API finishes.
 const PROCESSING_MESSAGES = [
-  'Identifying the species',
-  'Checking plant health',
-  'Building your care guide',
+  'Identifying plant…',
+  'Detecting disease…',
+  'Checking plant health…',
+  'Preparing treatment…',
+  'Finalising recommendations…',
 ];
 
 type Phase = 'validating' | 'scanning' | 'not_plant' | 'scan_failed' | 'limit_reached';
@@ -75,13 +79,23 @@ export const ProcessingScreen: React.FC = () => {
     });
     progressTimer.current.start();
 
-    // Crossfade each message swap so the copy never pops abruptly
+    // Advance FORWARD through the progressive states, crossfading each swap.
+    // A closure counter steps us to the last message and then stops the timer,
+    // so we hold on "Finalising…" until the API resolves (never loop back).
+    setMsgIdx(0);
+    let step = 0;
+    const LAST = PROCESSING_MESSAGES.length - 1;
     msgTimer.current = setInterval(() => {
+      step += 1;
       Animated.timing(msgOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
-        setMsgIdx(i => (i + 1) % PROCESSING_MESSAGES.length);
+        setMsgIdx(Math.min(step, LAST));
         Animated.timing(msgOpacity, { toValue: 1, duration: 280, useNativeDriver: true }).start();
       });
-    }, 1900);
+      if (step >= LAST && msgTimer.current) {
+        clearInterval(msgTimer.current);
+        msgTimer.current = null;
+      }
+    }, 1050);
 
     return () => {
       if (msgTimer.current) clearInterval(msgTimer.current);
