@@ -24,6 +24,14 @@ import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import type { PremiumTier } from '../constants/plans';
 
+// TODO(play-store): RevenueCat is intentionally DORMANT until Google Play Console
+// exists. The Android public SDK key is read from EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
+// which is BLANK on purpose (see .env + PLAY_STORE_SETUP.md). While blank,
+// PAYMENTS_READY is false and every export below is a guarded no-op, so the app runs
+// normally with no subscriptions. To go live: create the Play account → create the
+// monthly + yearly subscription products → connect Play to RevenueCat → set this key
+// (must start with `goog_`). Until then, do NOT paste a `test_`/placeholder value:
+// it would flip PAYMENTS_READY true with no real offerings and break the upgrade flow.
 const ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '';
 
 /** Live only when the public SDK key is configured. */
@@ -32,6 +40,9 @@ export const PAYMENTS_READY = ANDROID_KEY.length > 0;
 /** RevenueCat entitlement identifier — MUST match the dashboard exactly. */
 export const ENTITLEMENT_ID = process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT || 'premium';
 
+// TODO(play-store): these product identifiers MUST match the subscription product IDs
+// created in BOTH Google Play Console and the RevenueCat dashboard. `lawnup_premium_*`
+// are the planned IDs — confirm/adjust them when the Play subscriptions are created.
 /** Fallback product-id → tier map (packageType is the primary signal). */
 export const PRODUCT_TIER: Record<string, PremiumTier> = {
   yearly: 'annual',

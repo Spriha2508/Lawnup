@@ -1,44 +1,55 @@
-# RevenueCat — Setup & Implementation Guide
+# RevenueCat — How the Code Works
 
-Payments go through **RevenueCat** wrapping Google Play Billing. The app talks to
-RC only via `src/features/subscription/services/purchasesService.ts` (scaffolded).
-Pricing source of truth: `src/features/subscription/constants/plans.ts`
-(₹199/mo, ₹1990/yr). Entitlement → `subscriptionStore.setPlan('premium', …, tier)`.
+> **Setup steps live in one place: [`PLAY_STORE_SETUP.md`](../PLAY_STORE_SETUP.md).**
+> That is the single authoritative guide for creating the Google Play account,
+> subscription products, the RevenueCat dashboard, the Android SDK key, sandbox
+> testing, and production rollout. This file only documents how the *implemented*
+> code behaves — it does **not** repeat setup instructions.
 
-## Prerequisites (external — can't be done in code)
-1. **Play Console**: create the app, upload a signed build to an internal track
-   (products require an uploaded build with the billing permission).
-2. Create **subscription products** in Play Console with IDs that match
-   `PRODUCT_TIER` in purchasesService:
-   - `lawnup_premium_monthly` → ₹199 / month
-   - `lawnup_premium_annual` → ₹1990 / year
-3. **RevenueCat dashboard**: create project, add the Android app
-   (`com.lawnup.app`), connect Play (service-account JSON), create:
-   - Entitlement **`premium`** (matches `ENTITLEMENT_ID`)
-   - Offering with both packages mapped to the Play products
-4. Copy the **RevenueCat Android public SDK key** →
-   `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` in `.env`.
+Payments go through **RevenueCat** (SDK 10 + RevenueCatUI) wrapping Google Play
+Billing. The app talks to RevenueCat only via
+`src/features/subscription/services/purchasesService.ts`.
 
-## Code steps
-1. `npx expo install react-native-purchases`
-2. Fill the `TODO(revenuecat)` blocks in `purchasesService.ts` (configure,
-   getOfferings, purchasePackage, restorePurchases, getCustomerInfo).
-3. Call `initPurchases(uid)` at app boot (after auth resolves) and
-   `syncEntitlement()` on launch / resume.
-4. Add a **Restore purchases** button to the Paywall → `restore()`.
-5. Set `PAYMENTS_READY = true` in `purchasesService.ts`.
-6. Remove the DEV mock path in `PaywallScreen.handleUpgrade` (or keep behind
-   `__DEV__` for QA).
-7. **Rebuild** the dev/EAS client (native module).
+- **Pricing source of truth:** `src/features/subscription/constants/plans.ts`
+  (Monthly ₹199, Annual ₹1990).
+- **Activation switch:** `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` in `.env`.
+  Blank → `PAYMENTS_READY = false` and the whole layer is a no-op. A real
+  `goog_…` key → live. (Setting the key is step 6 of `PLAY_STORE_SETUP.md`.)
+- **Entitlement:** `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT` (default `premium`), must
+  match the RevenueCat dashboard.
 
-## Already wired (this scaffold)
-- ✅ `purchasesService` seam: `initPurchases / purchase / restore / syncEntitlement / applyEntitlement`.
-- ✅ `PaywallScreen.handleUpgrade` routes through `purchase(tier)` when `PAYMENTS_READY`; CTA enables automatically.
-- ✅ `applyEntitlement` → `setPlan` already unlocks the scan + chat quotas (the
-  real gates). **NOTE:** other "premium" perks on the Paywall table
-  (disease detection, reminders, advanced weather) are **not currently gated** —
-  see the Premium Feature Gate task before launch.
+## Current state (implemented)
 
-## Webhooks / server validation (P2)
-RevenueCat manages entitlement state; for tamper-resistant server checks, add an
-RC → Firebase webhook later. Not required for launch with RC client SDK.
+The integration is **code-complete and dormant** — no scaffolding or TODO code
+blocks remain. It activates automatically when the `goog_` key is present in a
+native build; until then every call is a guarded no-op.
+
+- ✅ `initPurchases` configures RevenueCat and registers a single
+  `CustomerInfoUpdate` listener — the real-time source of truth that reconciles
+  the local store on purchase, renewal, expiry, restore, and refund.
+- ✅ `syncEntitlement` re-reads entitlement on launch / resume.
+- ✅ `purchase(tier)` powers the in-app `PaywallScreen`; `presentPaywall()` shows
+  the hosted (dashboard-designed) Paywall and falls back to `PaywallScreen` if no
+  hosted paywall is configured (see `src/navigation/openPaywall.ts`).
+- ✅ `restore()` and `presentCustomerCenter()` (manage / cancel / restore / refund).
+- ✅ Entitlement → `subscriptionStore.setPlan('premium', …, tier)`, which unlocks
+  the scan + chat quotas (the real gates).
+- ✅ Without the key: `PaywallScreen` CTA shows "Premium — coming soon"; DEV builds
+  still test Premium end-to-end via the `activateMockPremium` mock path.
+
+## Things to confirm before launch
+
+- **Product IDs must match** the Play + RevenueCat products. The planned IDs are
+  `lawnup_premium_monthly` / `lawnup_premium_annual` (see `PRODUCT_TIER` in
+  `purchasesService.ts`, marked `TODO(play-store)`). If you create different IDs in
+  Play, update that map.
+- **Premium feature gating:** `setPlan` unlocks scan + chat quotas, but other perks
+  shown on the Paywall table (e.g. disease detection, reminders, advanced weather)
+  are **not** separately gated — decide intended behavior before launch.
+- **Rebuild required:** `react-native-purchases` is a native module; the key only
+  takes effect in a fresh `eas build`, not a JS reload.
+
+## Server validation (P2, post-launch)
+
+RevenueCat manages entitlement state. For tamper-resistant server-side checks, add
+a RevenueCat → Firebase webhook later. Not required for launch with the RC client SDK.

@@ -40,26 +40,17 @@ Audited current state:
 - ⬜ **Re-download `google-services.json`** (now contains `oauth_client`) → place at **repo root** (`./google-services.json`). It is **MISSING** today; `app.json.android.googleServicesFile` ✅ already points to it (build fails without it).
 - ✅ Firebase JS config present in `.env`.
 
-## 3. Play Console configuration
-- ⬜ App created under `com.lawnup.app`.
-- ⬜ Upload one **signed build to the internal track** (required before products are purchasable).
-- ⬜ Create **subscriptions** with IDs matching `purchasesService.PRODUCT_TIER`:
-  - `lawnup_premium_monthly` → ₹199 / month
-  - `lawnup_premium_annual` → ₹1990 / year
-- ⬜ Link a **service account** (for RevenueCat) with Play Developer API access.
-- ⬜ Complete **Data Safety** + **Content Rating** + **Privacy Policy URL** (store gate).
+## 3. Play Console + RevenueCat configuration
+- ⬜ Follow **[`../PLAY_STORE_SETUP.md`](../PLAY_STORE_SETUP.md)** — the single source of truth
+  for the Play account, app, subscription products, Play↔RevenueCat connection,
+  entitlement/offering, the `goog_` Android SDK key, sandbox testing, and rollout.
+  (Steps are intentionally not duplicated here to avoid drift.)
 
-## 4. RevenueCat configuration
-- ⬜ Create project → add Android app (`com.lawnup.app`) → connect Play (service-account JSON).
-- ⬜ Create entitlement **`premium`** (matches `purchasesService.ENTITLEMENT_ID`).
-- ⬜ Create an **offering** with two packages mapped to the Play product IDs above.
-- ⬜ Copy **Android public SDK key** → `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`.
-
-## 5. Sentry configuration
+## 4. Sentry configuration
 - ⬜ Create a **React Native** project → copy **DSN** → `EXPO_PUBLIC_SENTRY_DSN`.
 - ⬜ (CI, optional) Sentry auth token for source-map upload — not needed to capture errors.
 
-## 6. Secrets audit (Firebase Functions — server side)
+## 5. Secrets audit (Firebase Functions — server side)
 `functions/` exists (Cashfree payment code is **parked** — RevenueCat replaces it; no action unless you keep web checkout).
 - Required only if `EXPO_PUBLIC_BACKEND_ENABLED=true` (currently client-side):
   - ⬜ `firebase functions:secrets:set PLANT_ID_KEY`
@@ -68,7 +59,7 @@ Audited current state:
   - Parked: `CASHFREE_APP_ID`, `CASHFREE_SECRET_KEY`, `CASHFREE_WEBHOOK_SECRET`
 - No secret belongs in the app bundle — keep these out of `.env`'s `EXPO_PUBLIC_*`.
 
-## 7. Build configuration (`app.json` / `eas.json`)
+## 6. Build configuration (`app.json` / `eas.json`)
 - ✅ `package: com.lawnup.app`, `version: 1.0.0`, `googleServicesFile` set.
 - ✅ Plugins present: `expo-camera`, `expo-notifications`, `expo-build-properties`.
 - ⬜ Add config plugins when installing: **`@react-native-google-signin/google-signin`** and **`@sentry/react-native`** (RevenueCat needs no plugin).

@@ -1,20 +1,21 @@
 # LawnUp — Launch Runbook (native-setup stage)
 
-All three integrations are **scaffolded in code** (seams + flags + auth wiring).
-The steps below are the remaining on-machine work: install native packages,
-configure external services, fill TODOs, flip the READY flags, and rebuild.
-Do these in order — each ends with the app still building.
+Payments (RevenueCat) are **code-complete and env-gated** — no TODOs or flags to
+flip; they activate when the real key is set (see `PLAY_STORE_SETUP.md`). Google
+Sign-In and Sentry are scaffolded in code (seams + flags + auth wiring). The steps
+below are the remaining on-machine work: configure external services, set keys,
+flip the remaining READY flags where noted, and rebuild. Do these in order — each
+ends with the app still building.
 
 Identity: package `com.lawnup.app`, Firebase owner `spriha007`.
-Detailed guides: `revenuecat-setup.md`, `google-signin-setup.md`, `sentry-setup.md`.
+Detailed guides: **payments → [`../PLAY_STORE_SETUP.md`](../PLAY_STORE_SETUP.md)** (single source of truth; `revenuecat-setup.md` covers only how the code behaves), `google-signin-setup.md`, `sentry-setup.md`.
 
 ---
 
 ## 0. Prereqs (no code)
 - [ ] Firebase: enable **Google** sign-in provider + support email.
 - [ ] Firebase: add Android app SHA-1 + SHA-256 (`eas credentials -p android` and the debug keystore) → **re-download `google-services.json`** → place at repo root (gitignored; `app.json.android.googleServicesFile` already points to it).
-- [ ] RevenueCat: project + Android app + Play service-account; entitlement `premium`; offering with both packages.
-- [ ] Play Console: app created; subscription products `lawnup_premium_monthly` (₹199), `lawnup_premium_annual` (₹1990); a signed build uploaded to internal track.
+- [ ] RevenueCat + Play Console (account, app, subscription products, key): follow [`../PLAY_STORE_SETUP.md`](../PLAY_STORE_SETUP.md) — the single source of truth for all payments setup.
 - [ ] Sentry: project (React Native) → DSN.
 - [ ] `.env`: set `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`, `EXPO_PUBLIC_SENTRY_DSN` (+ Firebase + PostHog + OpenWeather + ImageKit).
 
@@ -24,10 +25,12 @@ Detailed guides: `revenuecat-setup.md`, `google-signin-setup.md`, `sentry-setup.
 - [ ] LandingScreen `handleGoogle`: `hasPlayServices()` → `signIn()` → `signInWithGoogle(idToken)` (already in authService).
 - [ ] Flip `GOOGLE_AUTH_READY = true` (LandingScreen).
 
-## 2. RevenueCat  (Task #20)
-- [ ] `npx expo install react-native-purchases`.
-- [ ] Fill `TODO(revenuecat)` blocks in `purchasesService.ts`.
-- [ ] Flip `PAYMENTS_READY = true` (purchasesService). Paywall CTA + Restore + boot `initPurchases/syncEntitlement` (already wired) go live.
+## 2. RevenueCat / Payments  (Task #20)
+Code is **complete and dormant** — no scaffold or flag to flip. It activates when a
+real `goog_` key is set in `.env` (and the app is rebuilt). All account, product,
+key, testing, and rollout steps live in **[`../PLAY_STORE_SETUP.md`](../PLAY_STORE_SETUP.md)** —
+do not duplicate them here.
+- [ ] Complete `PLAY_STORE_SETUP.md` (set `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY=goog_…`, rebuild).
 - [ ] Verify purchase, restore, entitlement persistence, and that premium unlocks the scan + chat quotas.
 
 ## 3. Sentry  (Task #21)
