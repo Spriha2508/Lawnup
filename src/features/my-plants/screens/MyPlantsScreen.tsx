@@ -65,11 +65,11 @@ export const MyPlantsScreen: React.FC = () => {
       <View style={styles.root}>
         <AmbientBackground animated={false} />
         <SafeAreaView style={styles.emptyContainer}>
-          <View style={styles.emptyIconWrap}><LeafMark size={36} /></View>
-          <Text style={styles.emptyTitle}>Your living collection{'\n'}starts here</Text>
-          <Text style={styles.emptySub}>Identify any plant around you and it'll take root here. Your green space is one scan away.</Text>
+          <View style={styles.emptyIconWrap}><LeafMark size={40} /></View>
+          <Text style={styles.emptyTitle}>Your garden is waiting 🌱</Text>
+          <Text style={styles.emptySub}>Scan your first plant to start growing your digital garden.</Text>
           <PressableScale style={styles.emptyBtn} onPress={() => navigation.navigate('Scan')} to={0.97}>
-            <Text style={styles.emptyBtnText}>Identify your first plant  →</Text>
+            <Text style={styles.emptyBtnText}>Scan Your First Plant</Text>
           </PressableScale>
         </SafeAreaView>
       </View>
