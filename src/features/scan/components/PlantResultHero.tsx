@@ -57,20 +57,9 @@ export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
       <View style={[styles.scrimLayer, { height: HERO_HEIGHT * 0.58, backgroundColor: 'rgba(0,0,0,0.42)' }]} />
       <View style={[styles.scrimLayer, { height: HERO_HEIGHT * 0.36, backgroundColor: 'rgba(0,0,0,0.55)' }]} />
 
-      {/* Health status pill — top of image, tag style */}
-      {!lowConfidence && (
-        <View style={[
-          styles.healthPill,
-          isHealthy ? styles.healthPillGreen : styles.healthPillAmber,
-        ]}>
-          <View style={[styles.healthDot, isHealthy ? styles.dotGreen : styles.dotAmber]} />
-          <Text style={styles.healthText}>
-            {isHealthy ? 'Healthy' : 'Needs attention'}
-          </Text>
-        </View>
-      )}
-
-      {/* Bottom content overlay */}
+      {/* Bottom content overlay — diagnosis hierarchy reads top→bottom:
+          1) plant name  2) health badge  3) confidence  4) supporting names
+          (the conversational description follows in AICompanionSummary). */}
       <View style={styles.overlay}>
         {/* Uncertainty notice for low-confidence — replaces name */}
         {lowConfidence && (
@@ -84,32 +73,35 @@ export const PlantResultHero: React.FC<PlantResultHeroProps> = ({
           <Text style={styles.confidencePrefix}>This may be</Text>
         )}
 
-        {/* Primary plant name — Indian common name when known, else English */}
+        {/* 1 · Primary plant name — Indian common name when known, else English */}
         {!lowConfidence && (
           <Text style={styles.commonName} numberOfLines={2}>{primaryName}</Text>
         )}
 
-        {/* English common name — shown as a labelled secondary when the Indian name leads */}
+        {/* 2 · Health badge  ·  3 · Confidence — the diagnosis, read together */}
+        {!lowConfidence && (
+          <View style={styles.diagnosisRow}>
+            <View style={[styles.healthPill, isHealthy ? styles.healthPillGreen : styles.healthPillAmber]}>
+              <View style={[styles.healthDot, isHealthy ? styles.dotGreen : styles.dotAmber]} />
+              <Text style={styles.healthText}>{isHealthy ? 'Healthy' : 'Needs attention'}</Text>
+            </View>
+            <View style={[styles.confPill, { backgroundColor: col + '28', borderColor: col + '55' }]}>
+              <Text style={[styles.confPct, { color: col === C.textMuted ? 'rgba(255,255,255,0.55)' : col }]}>
+                {Math.round(confidence * 100)}% confidence
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* 4 · Supporting names — English (when Indian leads) + scientific */}
         {showEnglishRow && !lowConfidence && (
           <Text style={styles.nameRow} numberOfLines={1}>
             <Text style={styles.nameLabel}>ENGLISH  </Text>{commonName}
           </Text>
         )}
-
-        {/* Scientific name (labelled) + confidence % in one line */}
-        <View style={styles.metaRow}>
-          <Text style={styles.scientificName} numberOfLines={1}>
-            <Text style={styles.nameLabel}>SCIENTIFIC  </Text>{scientificName}
-          </Text>
-          <View style={[
-            styles.confPill,
-            { backgroundColor: col + '28', borderColor: col + '55' },
-          ]}>
-            <Text style={[styles.confPct, { color: col === C.textMuted ? 'rgba(255,255,255,0.45)' : col }]}>
-              {Math.round(confidence * 100)}%
-            </Text>
-          </View>
-        </View>
+        <Text style={styles.scientificName} numberOfLines={1}>
+          <Text style={styles.nameLabel}>SCIENTIFIC  </Text>{scientificName}
+        </Text>
       </View>
     </View>
   );
@@ -143,11 +135,16 @@ const styles = StyleSheet.create({
     right: 0,
   },
 
-  // Health pill — top-left corner of image
+  // Diagnosis row — health badge + confidence, directly under the name
+  diagnosisRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  // Health pill — tag style (sits in the diagnosis row)
   healthPill: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -214,19 +211,12 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.45)',
     fontStyle: 'normal',
   },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 6,
-  },
   scientificName: {
     fontFamily: 'Nunito-Regular',
     fontSize: 13,
     color: 'rgba(255,255,255,0.55)',
     fontStyle: 'italic',
-    flex: 1,
-    paddingRight: 10,
+    marginTop: 2,
   },
   confPill: {
     borderRadius: 999,

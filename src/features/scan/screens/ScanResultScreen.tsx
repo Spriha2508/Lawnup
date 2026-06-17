@@ -532,6 +532,9 @@ export const ScanResultScreen: React.FC = () => {
                     <Text style={styles.scanMetaValue}>{scanResult.indianAlternate}</Text>
                   </View>
                 )}
+                <Text style={styles.confidenceExplain}>
+                  AI confidence is based on image clarity and the visible characteristics of the plant — a clearer, closer photo usually raises it.
+                </Text>
               </View>
             </View>
           )}
@@ -975,6 +978,16 @@ const styles = StyleSheet.create({
     color: C.textPrimary,
     flex: 1,
     textAlign: 'right',
+  },
+  confidenceExplain: {
+    fontFamily: 'Nunito-Regular',
+    fontSize: 12,
+    color: C.textMuted,
+    lineHeight: 18,
+    marginTop: 4,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: C.divider,
   },
 
   // Sticky bottom CTA
