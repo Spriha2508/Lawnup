@@ -11,7 +11,7 @@
 |---|---|
 | **App Version** | 1.0.0 |
 | **Branch** | `redesign/phase1-design-system-auth` |
-| **Current Commit** | `175a7d7` (RevenueCat: hosted Paywall + Customer Center + real-time entitlement listener) |
+| **Current Commit** | `8598ced` (Auth: complete Google Sign-In — logout session teardown + error mapping) |
 | **Owner** | Spriha Choudhary |
 | **Last Updated** | 2026-06-17 |
 | **Release Target** | TBD — internal testing first; Play Store launch gated on `PLAY_STORE_SETUP.md` |
@@ -72,6 +72,8 @@
 | LB-023 | 🟢 P3 | 🟢 Fixed | Auth (Login/Signup) | Both | Any | Submit malformed email | Inline validation blocks submit | No email-format validation | Missing validation | `1aa3835` | — | Email-format validation added to Login & Signup CTAs |
 | LB-024 | 🟢 P3 | 🟢 Fixed | Help & Support | Both | Any | Read "how to scan" help copy | Matches current UI | Said "Tap the Scan tab (or the + button)" after FAB removed | Stale copy | `e58cb79` | — | Updated to "Tap the Scan tab in the bottom bar" |
 | LB-025 | 🟡 P2 | 🔵 Open | App icon / launch screen | Android | Any | Cold launch | LawnUp launch screen, no Expo blue default | Blue launch screen (Expo default `colorPrimary`) | Default Android theme color | — | — | Fix applied in `colors.xml` / `styles.xml` / `app.json`; **requires native rebuild + device re-verify** (DEVICE_QA TC-1.2). Re-open until verified on device |
+| LB-026 | 🟠 P1 | 🟢 Fixed | Auth (logout) | Android | Any | Sign in with Google → log out → tap "Continue with Google" again | Account picker re-appears; can switch accounts | Native Google session persisted; next sign-in silently reused the last account, no picker | `signOut` only cleared the Firebase session, not the native Google session | `8598ced` | — | Found during Phase 1 impl. `signOutGoogle()` now called in `authStore.signOut` + `deleteAccount`. **Verify on device** |
+| LB-027 | 🟡 P2 | 🟢 Fixed | Auth (Google) | Android | Any | Trigger cancel / no-network / duplicate-email / no-Play-services during Google sign-in | Each shows a distinct, accurate message; cancel is silent | All failures collapsed into one generic "try again" alert; raw error codes leaked | `signInWithGooglePrompt` caught errors generically | `8598ced` | — | Found during Phase 1 impl. Mapped cancellation / in-progress / Play-services / network / `auth/account-exists-with-different-credential` to friendly messages. **Verify on device** |
 
 ---
 
@@ -81,7 +83,7 @@
 
 | ID | Blocker | Owner | Priority | Dependencies | Status |
 |---|---|---|---|---|---|
-| BLK-1 | **Google Sign-In implementation** (real OAuth end-to-end) | Spriha | 🟠 P1 | Firebase Google provider + SHA certs + `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` + native rebuild | 🟡 In Progress — scaffolded (`26c96f6`, `50898b7`); not verified live |
+| BLK-1 | **Google Sign-In implementation** (real OAuth end-to-end) | Spriha | 🟠 P1 | Firebase Google provider enabled + SHA-1/256 in Firebase + **`google-services.json` at repo root** + `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (OAuth Web client) in `.env` + native rebuild (`eas build`) | 🟡 Code complete (logout session + error handling done, LB-026/027); **blocked on Firebase config artifacts + real-device QA** — see deliverable notes |
 | BLK-2 | **Sentry installation / activation** | Spriha | 🟡 P2 | `EXPO_PUBLIC_SENTRY_DSN` + native rebuild | 🟡 In Progress — seam wired & env-gated (`7df338e`, `50898b7`); DSN not set |
 | BLK-3 | **Full Android device QA** | Spriha | 🔴 P0 | A signed dev/internal build on real devices | 🔵 Open — code audit done (`QA_AUDIT_REPORT.md`); on-device run pending |
 | BLK-4 | **Google Play Console setup** (account, app, products) | Spriha | 🟠 P1 | $25 dev account; signed AAB on internal track | 🔵 Open — intentionally deferred until app stable (`PLAY_STORE_SETUP.md`) |
