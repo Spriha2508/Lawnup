@@ -38,6 +38,31 @@ function makeMsg(role: 'user' | 'assistant', content: string, plantNickname?: st
   };
 }
 
+// Renders Doc. Sage replies for scannability — paragraph spacing + bullet rows
+// + a comfortable line height. Formatting only; the AI's wording/tone is never
+// altered. User messages stay as plain text.
+const BULLET_RE = /^\s*[-*•]\s+/;
+const MessageContent: React.FC<{ content: string; mine: boolean }> = ({ content, mine }) => {
+  if (mine) {
+    return <Text style={[styles.bubbleText, styles.bubbleTextMine]}>{content}</Text>;
+  }
+  const blocks = content.split('\n').filter(l => l.trim() !== '');
+  return (
+    <View style={styles.msgBody}>
+      {blocks.map((line, i) =>
+        BULLET_RE.test(line) ? (
+          <View key={i} style={styles.bulletRow}>
+            <Text style={styles.bulletDot}>•</Text>
+            <Text style={styles.bulletText}>{line.replace(BULLET_RE, '')}</Text>
+          </View>
+        ) : (
+          <Text key={i} style={styles.paraText}>{line}</Text>
+        ),
+      )}
+    </View>
+  );
+};
+
 const DoctorMark: React.FC<{ size?: number }> = ({ size = 22 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path d="M21 11.5C21 16 17 19 12 19C10.8 19 9.7 18.8 8.7 18.5L4 20L5.3 16.2C4.5 15 4 13.3 4 11.5C4 7 8 4 12 4C17 4 21 7 21 11.5Z" stroke={C.primary} strokeWidth={1.6} strokeLinejoin="round" />
@@ -161,7 +186,7 @@ export const ChatScreen: React.FC = () => {
       <Animated.View entering={FadeInUp.duration(M.duration.standard)} style={[styles.row, mine ? styles.rowMine : styles.rowTheirs]}>
         {!mine && <View style={styles.avatar}><DoctorMark size={18} /></View>}
         <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}>
-          <Text style={[styles.bubbleText, mine && styles.bubbleTextMine]}>{item.content}</Text>
+          <MessageContent content={item.content} mine={mine} />
         </View>
       </Animated.View>
     );
@@ -279,9 +304,17 @@ const styles = StyleSheet.create({
   avatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center' },
   bubble: { borderRadius: R.lg, paddingHorizontal: S.lg, paddingVertical: S.md, maxWidth: '88%' },
   bubbleMine: { backgroundColor: C.primary, borderBottomRightRadius: R.xs },
-  bubbleTheirs: { backgroundColor: C.card, borderBottomLeftRadius: R.xs, borderWidth: 1, borderColor: C.border },
-  bubbleText: { ...T.body, color: C.textPrimary },
+  // Doc. Sage bubbles run wider so formatted answers have room to breathe.
+  bubbleTheirs: { backgroundColor: C.card, borderBottomLeftRadius: R.xs, borderWidth: 1, borderColor: C.border, maxWidth: '94%' },
+  bubbleText: { ...T.body, color: C.textPrimary, lineHeight: 23 },
   bubbleTextMine: { color: C.onPrimary },
+
+  // Doc. Sage formatted message body — paragraph spacing + bullets
+  msgBody: { gap: 7 },
+  paraText: { ...T.body, color: C.textPrimary, lineHeight: 23 },
+  bulletRow: { flexDirection: 'row', gap: S.sm, alignItems: 'flex-start' },
+  bulletDot: { ...T.body, color: C.primary, lineHeight: 23 },
+  bulletText: { ...T.body, color: C.textPrimary, lineHeight: 23, flex: 1 },
 
   typingRow: { flexDirection: 'row', alignItems: 'flex-end', gap: S.sm, paddingHorizontal: S.screenX, paddingBottom: S.sm },
   typingBubble: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
