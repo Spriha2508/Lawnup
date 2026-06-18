@@ -11,9 +11,9 @@
 |---|---|
 | **App Version** | 1.0.0 |
 | **Branch** | `redesign/phase1-design-system-auth` |
-| **Current Commit** | `b8876b2` (QA Round 1 — LB-028…LB-043 device-QA fixes, see §4) |
+| **Current Commit** | `d94499c` (QA Round 2 — LB-029…LB-046 all Implemented; last code commit LB-046, see §4.2) |
 | **Owner** | Spriha Choudhary |
-| **Last Updated** | 2026-06-18 (QA Round 2 logged — LB-029…LB-046, see §4.2) |
+| **Last Updated** | 2026-06-18 — **QA Round 2 implementation COMPLETE (18/18 🟡 Implemented); codebase frozen for Device Regression QA** (see §4.2.1) |
 | **Release Target** | TBD — internal testing first; Play Store launch gated on `PLAY_STORE_SETUP.md` |
 
 ---
@@ -121,6 +121,36 @@
 | LB-044 | 🟡 P2 | Paywall / Premium | Premium value proposition is generic | Hero copy was a single flat sentence. **Constraint:** Round 1 LB-006 forbids advertising as premium-only anything free users already get (disease checks, reminders, weather) — so the requested bullets (Weather-aware watering, Disease history) can't be gated. | `PaywallScreen.tsx`: sharper hero subtitle leading with the USP ("care personalized to your plant, your city and today's weather"); added an honest value strip listing **only** the two genuine premium differentiators (Unlimited Doc. Sage · many more scans/month) + an explicit "Every plan includes plant ID, disease checks, watering reminders and weather-aware care" line. Preserves LB-006 honesty. | 🟡 Implemented | Adapted the requested bullets to avoid false gating (LB-006). Commit `dcd2f3b`. **Verify on device.** |
 | LB-045 | 🟡 P2 | Scan Result | No delight on successful identification | The result appeared with no moment of success feedback. | `ScanResultScreen.tsx`: added a lightweight auto-dismissing toast — "🎉 Plant identified" on a confident result load (≥0.60) and "🌿 {nickname} added to your garden" after saving. Spring-in / fade-out, ~2.2s, `pointerEvents="none"` (non-blocking). | 🟡 Implemented | Commit `f38bb74`. **Verify on device.** |
 | LB-046 | 🟡 P2 | App-wide (USP) | Personalized-care positioning not surfaced consistently | The positioning ("Generic plant advice doesn't grow healthy plants. Personalized care does." / "Care that's tailored to your plant, your city and today's weather.") is not surfaced naturally across surfaces. | Audited every surface and filled the gaps with **varied** phrasing (no single sentence pasted everywhere): **Landing** body now leads with the USP + the "generic advice doesn't grow healthy plants" line; **Welcome** (onboarding) = "care that adapts to each plant, your city and today's weather"; **Reminders** subline = "tuned to each plant and today's weather in {city} — not a fixed schedule"; **Home first-run** scan hero = care plan "made for your plant and your local conditions" (varied to avoid echoing the weather card right below it). Already covered, left as-is: weather cards (LB-043), Premium (LB-044), Scan Result (weather context + "personalised care advice"), Doc. Sage (knows your specific plant). | 🟡 Implemented | Code commit `d94499c`. Overlaps LB-036/043/044. **Verify on device.** |
+
+### 4.2.1 — QA Round 2 Completion Summary
+
+> **Status: Round 2 implementation COMPLETE — codebase frozen for Device Regression QA (2026-06-18).**
+> No further feature work, refactors, optimizations, or dead-code removal until the device regression report lands. Bug fixes only.
+
+| Metric | Count |
+|---|---|
+| **Round 2 tickets (LB-029…LB-046)** | 18 |
+| **Round 2 — 🟡 Implemented** | 18 / 18 (100%) |
+| **Round 2 — still 🔴 Pending** | 0 |
+| **Round 2 — 🟢 Verified on device** | 0 (device regression pass not yet run) |
+| Round 1 tickets (LB-001…LB-028), §4 | 28 — all 🟡 Implemented / Audited |
+| **Total tickets implemented, both rounds** | **46** |
+
+**Every Round 2 ticket is 🟡 Implemented and awaits on-device verification** — none may be promoted to 🟢 Verified until tested on a physical Android device (Status policy, §3 / Maintenance Rule #3).
+
+**Items needing device verification (Round 2):** all 18 (LB-029…LB-046). Of these, several have an extra precondition beyond a normal device pass:
+
+| Ticket | Extra precondition before it can be verified |
+|---|---|
+| LB-029 | **Owner/Firebase, server-side:** register the `debug.keystore` SHA-1/256 in Firebase, re-download `google-services.json`, **rebuild** (BLK-1). |
+| LB-031 | Requires an **internal/preview build** (mock-premium path; real purchases gated by BLK-4/5). |
+| LB-033 | Verify on a **fresh install / cleared app data** (a device that permanently denied camera in Round 1 will still route to Settings by OS design). |
+| LB-037 | Monochrome themed launcher icon needs a **native rebuild**; status-bar drawable applies to the next build directly. |
+| LB-025 (§4) | Android launch-screen colour fix needs a **native rebuild + device re-verify**. |
+
+**Open blockers (unchanged, owner-side):** BLK-1 (Google SHA), BLK-2 (Sentry DSN), BLK-3 (full Android device QA — *this round*), BLK-4 (Play Console), BLK-5 (RevenueCat), BLK-6 (internal build), BLK-7 (closed beta). See §5.
+
+**Next:** Device Regression QA Round → collect regressions/UX/crash/polish into a new QA batch → Round 3 fixes → final regression → **then** a dedicated Code Cleanup & Optimization phase (dead code, unused components/hooks/assets, obsolete files, duplicate logic, state simplification, bundle/LOC reduction — strictly no functional changes). Cleanup is deferred until the app is functionally stable.
 
 ---
 
