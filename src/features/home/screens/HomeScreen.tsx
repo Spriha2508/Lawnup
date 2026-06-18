@@ -322,7 +322,7 @@ export const HomeScreen: React.FC = () => {
                 <Animated.View style={[styles.scanBlob, blobStyle]} />
                 <Text style={styles.scanLabel}>START HERE</Text>
                 <Text style={styles.scanTitle}>Scan your{'\n'}first plant</Text>
-                <Text style={styles.scanBody}>Point your camera at any plant — we’ll name it, check its health, and build a care plan just for it.</Text>
+                <Text style={styles.scanBody}>Point your camera at any plant — we’ll name it, check its health, and build a care plan made for your plant and your local conditions.</Text>
                 <View style={styles.scanBtn}><Text style={styles.scanBtnText}>Scan a plant  →</Text></View>
               </PressableScale>
             </Animated.View>

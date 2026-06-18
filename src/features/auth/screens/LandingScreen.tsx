@@ -65,7 +65,7 @@ export const LandingScreen: React.FC = () => {
           </Animated.Text>
 
           <Animated.Text entering={FadeInDown.delay(460).duration(M.duration.expressive)} style={styles.body}>
-            Identify, diagnose and care for every plant in your home — with a companion that learns your garden.
+            Identify and diagnose any plant — then care tuned to your plant, your city and today's weather. Generic advice doesn't grow healthy plants; personalized care does.
           </Animated.Text>
         </View>
 

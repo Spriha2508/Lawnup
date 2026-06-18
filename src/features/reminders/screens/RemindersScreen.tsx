@@ -109,6 +109,7 @@ export const RemindersScreen: React.FC = () => {
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           <Text style={styles.lead}>Never miss a watering.</Text>
+          <Text style={styles.leadSub}>Reminders tuned to each plant and today's weather{city ? ` in ${city}` : ''} — not a fixed schedule.</Text>
 
           {/* Permission prompt */}
           {!permitted && (
@@ -202,7 +203,8 @@ const styles = StyleSheet.create({
   backBtn: { width: 32 },
   headerTitle: { fontFamily: F.serifMedium, fontSize: 20, color: C.textPrimary },
   content: { paddingHorizontal: 20, paddingTop: S.sm },
-  lead: { fontFamily: F.serifMedium, fontSize: 30, color: C.textPrimary, marginBottom: S.xl, letterSpacing: -0.4 },
+  lead: { fontFamily: F.serifMedium, fontSize: 30, color: C.textPrimary, marginBottom: S.sm, letterSpacing: -0.4 },
+  leadSub: { ...T.bodyMd, color: C.textSecondary, lineHeight: 21, marginBottom: S.xl },
 
   permCard: {
     flexDirection: 'row', alignItems: 'center', gap: S.lg,

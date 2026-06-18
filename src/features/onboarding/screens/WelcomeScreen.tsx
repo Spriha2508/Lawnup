@@ -54,8 +54,8 @@ export const WelcomeScreen: React.FC = () => {
             entering={FadeInDown.delay(700).duration(M.duration.expressive)}
             style={styles.body}
           >
-            An intelligent companion for every plant you love — sensing what they
-            need, and quietly growing alongside you.
+            Care that adapts to each plant, your city and today's weather — an
+            intelligent companion that grows alongside you.
           </Animated.Text>
         </View>
 
