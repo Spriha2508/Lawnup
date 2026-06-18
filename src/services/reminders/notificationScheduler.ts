@@ -6,6 +6,8 @@ import * as Notifications from 'expo-notifications';
 import type { UserPlantDoc } from '../../types/firestore.types';
 import { getWaterInfo, generateWateringMessage } from './reminderService';
 import { useNotificationPrefsStore } from '../../features/profile/store/notificationPrefsStore';
+import { usePlantsStore } from '../../features/my-plants/store/plantsStore';
+import { useOnboardingStore } from '../../features/onboarding/store/onboardingStore';
 import type { WeatherData } from '../weather/weatherService';
 
 export type LocalReminderType =
@@ -62,21 +64,47 @@ export async function hasNotificationPermission(): Promise<boolean> {
 
 export type TestReminderResult = 'scheduled' | 'no_permission' | 'error';
 
+// Build production-quality, personalized copy for the test reminder so it reads
+// like the real thing rather than a developer placeholder (LB-036).
+function buildTestReminderCopy(): { title: string; body: string } {
+  const plants = usePlantsStore.getState().plants;
+  const city = useOnboardingStore.getState().city;
+  const plant = plants[0];
+
+  if (plant) {
+    const name = plant.nickname || plant.speciesName;
+    const where = city ? ` in ${city}` : '';
+    return {
+      title: `🌿 Time to water ${name}`,
+      body: `Your garden${where} is set up for smart reminders — we'll nudge you the moment ${name} needs water, tuned to today's weather.`,
+    };
+  }
+  return {
+    title: '🌿 Reminders are on',
+    body: city
+      ? `We'll nudge you when your plants need water — personalized to ${city} and today's weather. 🌱`
+      : `We'll nudge you when your plants need water — personalized to your city and today's weather. 🌱`,
+  };
+}
+
 /**
  * Fire a one-off local notification a few seconds out so the user can confirm
- * notifications actually arrive on their device (a "does this work?" check).
- * Requests permission if not already granted.
+ * notifications actually arrive on their device. The copy mirrors a REAL
+ * watering reminder — personalized to the user's first plant + city when
+ * available — so it never reads like a developer test (LB-036).
  */
 export async function sendTestReminder(delaySeconds = 5): Promise<TestReminderResult> {
   try {
     const granted = await requestNotificationPermission();
     if (!granted) return 'no_permission';
 
+    const { title, body } = buildTestReminderCopy();
+
     await Notifications.scheduleNotificationAsync({
       identifier: `${ID_PREFIX}test`,
       content: {
-        title: '🌿 LawnUp reminder test',
-        body: 'Nice — reminders are working. This is how watering reminders will arrive.',
+        title,
+        body,
         data: { type: 'test' } as Record<string, unknown>,
         sound: false,
       },
@@ -127,7 +155,9 @@ export async function scheduleWateringReminder(
     await Notifications.scheduleNotificationAsync({
       identifier: id,
       content: {
-        title: plant.nickname,
+        // Intelligent, action-led title (not just the bare nickname) so the
+        // notification reads as a real care reminder (LB-036).
+        title: `💧 Time to water ${plant.nickname}`,
         body: message,
         data: { plantId: plant.plantId, type: 'water' } as Record<string, unknown>,
         sound: false,
