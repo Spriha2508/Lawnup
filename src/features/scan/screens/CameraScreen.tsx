@@ -433,7 +433,9 @@ export const CameraScreen: React.FC = () => {
   const captureOpacity  = captureDisabled ? 0.45 : 1;
 
   // ── Permission: Not yet determined ──────────────────────────────────────────
-  if (!isGranted && !isDenied) {
+  // (A gallery photo picked from this screen takes precedence — show its preview
+  // even without camera permission, so the scan flow is never blocked.)
+  if (!isGranted && !isDenied && !capturedUri) {
     return (
       <View style={styles.permissionScreen}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
@@ -447,6 +449,11 @@ export const CameraScreen: React.FC = () => {
           <TouchableOpacity style={styles.permBtn} onPress={handleAllowCamera} activeOpacity={0.88}>
             <Text style={styles.permBtnText}>Allow Camera Access</Text>
           </TouchableOpacity>
+          {/* Always offer a way to scan even if the camera can't be granted, so the
+              scan flow is never a dead end (P0: scanner blocked). */}
+          <TouchableOpacity style={styles.permSecondaryBtn} onPress={handleGallery} activeOpacity={0.82}>
+            <Text style={styles.permSecondaryBtnText}>Choose from Gallery</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleClose} style={styles.permCancel}>
             <Text style={styles.permCancelText}>Not now</Text>
           </TouchableOpacity>
@@ -456,7 +463,8 @@ export const CameraScreen: React.FC = () => {
   }
 
   // ── Permission: Denied ───────────────────────────────────────────────────────
-  if (isDenied) {
+  // (A gallery photo still routes to the preview below, even when camera is off.)
+  if (isDenied && !capturedUri) {
     return (
       <View style={styles.permissionScreen}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
