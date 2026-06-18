@@ -14,6 +14,7 @@ import {
   BackHandler,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -24,6 +25,7 @@ import { useCameraPermission } from '../hooks/useCameraPermission';
 import { useScanStore } from '../store/scanStore';
 import { useSubscriptionStore } from '../../subscription/store/subscriptionStore';
 import { ScanFrame, FRAME_SIZE } from '../components/ScanFrame';
+import { ScanGuidanceSheet } from '../components/ScanGuidanceSheet';
 import { analyzeImageQuality } from '../../../shared/utils/imageQuality';
 import type { ImageQualityResult } from '../../../shared/utils/imageQuality';
 import { logger } from '../../../shared/utils/logger';
@@ -53,6 +55,9 @@ const SCAN_TIPS = [
   'Whole-plant or potted shots work too — just keep leaves sharp',
   'Checking for disease? Keep the affected leaf clearly in frame',
 ];
+
+// Persisted flag: show the pre-capture guidance sheet only on the first scan.
+const GUIDANCE_SEEN_KEY = 'scan.guidanceSeen.v1';
 
 // How long a quality warning stays before resuming tip rotation (ms)
 const QUALITY_WARN_DURATION = 4000;
@@ -108,6 +113,10 @@ export const CameraScreen: React.FC = () => {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [mountError, setMountError] = useState<string | null>(null);
+
+  // Pre-capture guidance sheet (LB-032 / LB-038) — shown on the first scan only,
+  // re-openable via the "?" button.
+  const [showGuidance, setShowGuidance] = useState(false);
 
   // Quality state
   const [qualityResult, setQualityResult] = useState<ImageQualityResult | null>(null);
@@ -182,6 +191,18 @@ export const CameraScreen: React.FC = () => {
     });
     return () => sub.remove();
   }, [capturedUri]);
+
+  // ── First scan: show the pre-capture guidance sheet once (LB-032/LB-038) ────
+  useEffect(() => {
+    AsyncStorage.getItem(GUIDANCE_SEEN_KEY)
+      .then((seen) => { if (!seen) setShowGuidance(true); })
+      .catch(() => {});
+  }, []);
+
+  const dismissGuidance = useCallback(() => {
+    setShowGuidance(false);
+    AsyncStorage.setItem(GUIDANCE_SEEN_KEY, '1').catch(() => {});
+  }, []);
 
   // ── First-run: surface the OS permission popup directly (LB-033) ────────────
   // When the permission is genuinely undetermined (never asked, can still ask),
@@ -546,15 +567,26 @@ export const CameraScreen: React.FC = () => {
 
           <Text style={styles.hintText}>Scan your plant</Text>
 
-          <TouchableOpacity
-            onPress={() => setFlash((f) => (f === 'off' ? 'on' : f === 'on' ? 'auto' : 'off'))}
-            style={styles.flashBtn}
-            hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
-          >
-            <Text style={[styles.flashBtnText, flash !== 'off' && styles.flashBtnOn]}>
-              {flash === 'auto' ? 'AUTO' : 'FLASH'}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.topRightGroup}>
+            <TouchableOpacity
+              onPress={() => setShowGuidance(true)}
+              style={styles.helpBtn}
+              hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Scan tips"
+            >
+              <Text style={styles.helpBtnText}>?</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setFlash((f) => (f === 'off' ? 'on' : f === 'on' ? 'auto' : 'off'))}
+              style={styles.flashBtn}
+              hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+            >
+              <Text style={[styles.flashBtnText, flash !== 'off' && styles.flashBtnOn]}>
+                {flash === 'auto' ? 'AUTO' : 'FLASH'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -665,6 +697,9 @@ export const CameraScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Pre-capture guidance (first scan + via "?") — steers good framing */}
+      <ScanGuidanceSheet visible={showGuidance} onDismiss={dismissGuidance} />
     </View>
   );
 };
@@ -841,6 +876,20 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     flex: 1,
+  },
+  topRightGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  helpBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helpBtnText: {
+    fontSize: 15,
+    fontFamily: F.sansBold,
+    color: 'rgba(255,255,255,0.85)',
   },
   flashBtn: {
     paddingHorizontal: 10,
