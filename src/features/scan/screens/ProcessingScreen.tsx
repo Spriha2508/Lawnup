@@ -31,13 +31,15 @@ type Nav = StackNavigationProp<ScanStackParamList, 'Processing'>;
 type Route = RouteProp<ScanStackParamList, 'Processing'>;
 
 // Progressive analysis states — advance FORWARD (no looping) so the scan reads
-// as a sequence of real steps, holding on the last while the API finishes.
-const PROCESSING_MESSAGES = [
-  'Identifying plant…',
-  'Detecting disease…',
-  'Checking plant health…',
-  'Preparing treatment…',
-  'Finalising recommendations…',
+// as a sequence of real pipeline steps, holding on the last while the API
+// finishes. Each step carries a contextual sub-line; the weather + personalized
+// steps also reinforce LawnUp's USP (care tuned to your plant, city & weather).
+const PROCESSING_STEPS: { msg: string; sub: string }[] = [
+  { msg: 'Identifying your plant…',       sub: 'Matching leaves, shape & growth pattern' },
+  { msg: 'Checking for disease…',         sub: 'Scanning for spots, pests & stress signs' },
+  { msg: 'Assessing plant health…',       sub: 'Reading overall vigour & condition' },
+  { msg: 'Matching your local weather…',  sub: 'Tuning care to your city & today’s conditions' },
+  { msg: 'Preparing personalized care…',  sub: 'Building a plan for your plant & home' },
 ];
 
 type Phase = 'validating' | 'scanning' | 'not_plant' | 'scan_failed' | 'limit_reached';
@@ -84,7 +86,7 @@ export const ProcessingScreen: React.FC = () => {
     // so we hold on "Finalising…" until the API resolves (never loop back).
     setMsgIdx(0);
     let step = 0;
-    const LAST = PROCESSING_MESSAGES.length - 1;
+    const LAST = PROCESSING_STEPS.length - 1;
     msgTimer.current = setInterval(() => {
       step += 1;
       Animated.timing(msgOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
@@ -233,7 +235,7 @@ export const ProcessingScreen: React.FC = () => {
           {phase === 'scanning' && (
             <>
               <Animated.Text style={[styles.scanningMsg, { opacity: msgOpacity }]}>
-                {PROCESSING_MESSAGES[msgIdx]}
+                {PROCESSING_STEPS[msgIdx].msg}
               </Animated.Text>
               <View style={styles.progressTrack}>
                 <Animated.View
@@ -248,7 +250,9 @@ export const ProcessingScreen: React.FC = () => {
                   ]}
                 />
               </View>
-              <Text style={styles.trustLine}>Analyzing leaves, shape & health</Text>
+              <Animated.Text style={[styles.trustLine, { opacity: msgOpacity }]}>
+                {PROCESSING_STEPS[msgIdx].sub}
+              </Animated.Text>
             </>
           )}
         </Animated.View>
