@@ -124,6 +124,7 @@ export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const { plants } = usePlantsStore();
+  const plantsHydrated = usePlantsStore(s => s.hydrated);
   const { city } = useOnboardingStore();
   const isPremiumActive = useSubscriptionStore(s => s.isPremiumActive);
   const scansCompleted = useScanHistoryStore(s => s.entries.length);
@@ -134,8 +135,14 @@ export const HomeScreen: React.FC = () => {
   const [learnOpen, setLearnOpen] = useState<string | null>(null);
   const isPremium = isPremiumActive();
 
-  // First-run: with no plants yet, Home stays focused on one action.
-  const isNewUser = plants.length === 0;
+  // First-run vs populated dashboard — only decide once the garden has loaded,
+  // so the initial empty `plants` array never flashes the first-run hero before
+  // a returning user's plants arrive (LB-030).
+  const hasPlants = plants.length > 0;
+  const showFirstRun = plantsHydrated && !hasPlants;
+  const showDashboard = hasPlants;
+  const showGardenLoader = !plantsHydrated && !hasPlants;
+  const isNewUser = showFirstRun; // analytics + first-run gating
 
   useEffect(() => {
     track('home_viewed', { plants: plants.length, isNewUser });
@@ -262,7 +269,13 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.firstName}>{firstName}</Text>
         </Animated.View>
 
-        {!isNewUser && (
+        {showGardenLoader && (
+          <View style={styles.gardenLoader}>
+            <Text style={styles.gardenLoaderText}>Loading your garden…</Text>
+          </View>
+        )}
+
+        {showDashboard && (
           <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.overviewCard}>
             <View style={styles.overviewRingWrap}>
               <HealthRing progress={garden.score / 100} size={64} stroke={6} color={C.primary}>
@@ -285,7 +298,7 @@ export const HomeScreen: React.FC = () => {
         )}
 
         {/* ── First-run: focused single action ──────────────────────────────── */}
-        {isNewUser && (
+        {showFirstRun && (
           <>
             <Animated.View entering={FadeInDown.delay(120).duration(M.duration.expressive)} style={{ marginBottom: S.lg }}>
               <PressableScale style={styles.scanCard} onPress={() => goScan('first_run_hero')} to={0.97}>
@@ -314,7 +327,7 @@ export const HomeScreen: React.FC = () => {
         )}
 
         {/* ════════ Populated dashboard ════════ */}
-        {!isNewUser && (
+        {showDashboard && (
           <>
             {/* ── 2 · Today's Care Tasks ────────────────────────────────────── */}
             <View style={{ marginBottom: SECTION_GAP }}>
@@ -658,4 +671,7 @@ const styles = StyleSheet.create({
 
   emptyWrap: { paddingVertical: S['2xl'], alignItems: 'center' },
   emptyText: { ...T.bodyMd, color: C.textMuted, textAlign: 'center' },
+
+  gardenLoader: { paddingVertical: S['4xl'], alignItems: 'center' },
+  gardenLoaderText: { ...T.bodyMd, color: C.textMuted },
 });

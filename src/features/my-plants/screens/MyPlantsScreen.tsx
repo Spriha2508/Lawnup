@@ -47,6 +47,7 @@ const LeafMark: React.FC<{ size?: number; color?: string }> = ({ size = 30, colo
 export const MyPlantsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { plants } = usePlantsStore();
+  const plantsHydrated = usePlantsStore(s => s.hydrated);
   const { city } = useOnboardingStore();
   const [activeFilter, setActiveFilter] = useState<FilterKey>('All');
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -60,6 +61,19 @@ export const MyPlantsScreen: React.FC = () => {
 
   const handlePlantPress = useCallback((plantId: string) => navigation.navigate('PlantDetail', { plantId }), [navigation]);
 
+  // Don't decide "empty garden" until the first snapshot has loaded — otherwise
+  // the initial empty array flashes the empty state for a user who has plants (LB-030).
+  if (plants.length === 0 && !plantsHydrated) {
+    return (
+      <View style={styles.root}>
+        <AmbientBackground animated={false} />
+        <SafeAreaView style={styles.emptyContainer}>
+          <Text style={styles.loadingText}>Loading your garden…</Text>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
   if (plants.length === 0) {
     return (
       <View style={styles.root}>
@@ -67,7 +81,7 @@ export const MyPlantsScreen: React.FC = () => {
         <SafeAreaView style={styles.emptyContainer}>
           <View style={styles.emptyIconWrap}><LeafMark size={40} /></View>
           <Text style={styles.emptyTitle}>Your garden is waiting 🌱</Text>
-          <Text style={styles.emptySub}>Scan your first plant to start growing your digital garden.</Text>
+          <Text style={styles.emptySub}>No plants yet — scan your first plant to start growing your digital garden.</Text>
           <PressableScale style={styles.emptyBtn} onPress={() => navigation.navigate('Scan')} to={0.97}>
             <Text style={styles.emptyBtnText}>Scan Your First Plant</Text>
           </PressableScale>
@@ -195,6 +209,7 @@ const styles = StyleSheet.create({
   row: { paddingHorizontal: H_PAD, justifyContent: 'space-between' },
 
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  loadingText: { ...T.bodyMd, color: C.textMuted },
   emptyIconWrap: { width: 88, height: 88, borderRadius: 30, backgroundColor: C.primaryWash, alignItems: 'center', justifyContent: 'center', marginBottom: S['2xl'] },
   emptyTitle: { fontFamily: F.serifMedium, fontSize: 30, lineHeight: 35, color: C.textPrimary, textAlign: 'center', marginBottom: S.md },
   emptySub: { ...T.bodyMd, color: C.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: S['2xl'] },

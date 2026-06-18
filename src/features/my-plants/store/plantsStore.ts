@@ -5,7 +5,13 @@ interface PlantsState {
   plants: UserPlantDoc[];
   selectedPlantId: string | null;
   isLoading: boolean;
+  // True once the Firestore garden subscription has delivered at least one
+  // snapshot for the current user. Screens must not decide "new user / empty
+  // garden" vs "show the garden" until this is true — otherwise the initial
+  // empty `plants` array flashes a first-run/empty state before data loads (LB-030).
+  hydrated: boolean;
   setPlants: (plants: UserPlantDoc[]) => void;
+  beginSync: () => void;
   addPlant: (plant: UserPlantDoc) => void;
   updatePlant: (id: string, updates: Partial<UserPlantDoc>) => void;
   removePlant: (id: string) => void;
@@ -18,8 +24,13 @@ export const usePlantsStore = create<PlantsState>((set, get) => ({
   plants: [],
   selectedPlantId: null,
   isLoading: false,
+  hydrated: false,
 
-  setPlants: (plants) => set({ plants, isLoading: false }),
+  setPlants: (plants) => set({ plants, isLoading: false, hydrated: true }),
+
+  // Call when (re)subscribing for a user, before the first snapshot, so screens
+  // show a loader rather than a premature empty/first-run state.
+  beginSync: () => set({ hydrated: false, isLoading: true }),
 
   addPlant: (plant) =>
     set((state) => ({ plants: [plant, ...state.plants] })),

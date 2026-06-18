@@ -99,8 +99,11 @@ export const RootNavigator = memo(function RootNavigator() {
         setCrashUser({ id: userDoc.uid, email: userDoc.email });
         initPurchases(userDoc.uid).then(syncEntitlement).catch(() => {});
 
-        // Live-sync the user's garden from Firestore into the plants store
+        // Live-sync the user's garden from Firestore into the plants store.
+        // Mark unhydrated first so screens show a loader (not a premature
+        // empty/first-run state) until this user's first snapshot lands (LB-030).
         plantsUnsubRef.current?.();
+        usePlantsStore.getState().beginSync();
         plantsUnsubRef.current = subscribeToUserPlants(firebaseUser.uid, (plants) => {
           usePlantsStore.getState().setPlants(plants);
         });
