@@ -35,17 +35,19 @@ const vineVisible = makeMutable(0);
 let bloomed = false;
 
 // Vine growth is PROPORTIONAL to journey completion. Auth gets it started; the
-// four onboarding screens grow it evenly, and the LAST onboarding step
-// (SkillLevel) is where it reaches full height. Leaves/blossoms are gated by
+// four onboarding screens grow it in even steps; the LAST onboarding step
+// (SkillLevel) leaves it *almost* grown, and FULL height is reached only at the
+// completion bloom when the user actually enters the app (BLOOM_ROUTES). This
+// keeps it from looking finished a screen early. Leaves/blossoms are gated by
 // `vineProgress` passing each element's `t`, so they only unfurl on the portion
-// of the vine that has actually grown.
+// of the vine that has actually grown — the top blossom opens during the bloom.
 const PROGRESS: Record<string, number> = {
-  Landing: 0.05, Login: 0.05, ForgotPassword: 0.05,
-  Signup: 0.12,
-  Welcome: 0.30,
-  Location: 0.52,
-  PlaceType: 0.74,
-  SkillLevel: 1.0, // last onboarding screen → fully grown
+  Landing: 0.04, Login: 0.04, ForgotPassword: 0.04,
+  Signup: 0.10,
+  Welcome: 0.22,     // +0.12
+  Location: 0.42,    // +0.20
+  PlaceType: 0.64,   // +0.22
+  SkillLevel: 0.86,  // +0.22 — nearly grown; bloom completes it to 1.0
 };
 
 // Reaching the app proper means the journey is complete → bloom once, then rest.
