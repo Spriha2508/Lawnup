@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  BackHandler,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,7 +62,9 @@ const CAPTURE_LOCK_DURATION = 2500;
 export const CameraScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const { isGranted, isDenied, request } = useCameraPermission();
+  const { isGranted, isDenied, isUndetermined, canAskAgain, request } = useCameraPermission();
+  // Ensures the OS permission popup is auto-surfaced at most once per mount.
+  const autoPromptedRef = useRef(false);
 
   // Allow-camera CTA. Granting re-renders this screen into the live camera. If
   // it does NOT grant for any reason (declined, OS won't re-prompt, or a stale
@@ -145,17 +148,52 @@ export const CameraScreen: React.FC = () => {
   // Resetting on every focus guarantees Back — and a brand-new Scan — always
   // lands on the live camera, with no stale capture, quality state, or scan
   // store left over. (Fires harmlessly on first focus where all are already clear.)
+  const clearCaptureState = useCallback(() => {
+    setCapturedUri(null);
+    setQualityResult(null);
+    setShowingQualityWarn(false);
+    setCaptureLocked(false);
+    setIsCapturing(false);
+    resetScan();
+  }, [resetScan]);
+
   useEffect(() => {
-    const unsub = navigation.addListener('focus', () => {
-      setCapturedUri(null);
-      setQualityResult(null);
-      setShowingQualityWarn(false);
-      setCaptureLocked(false);
-      setIsCapturing(false);
-      resetScan();
+    // Reset on BOTH focus and blur. Focus alone misses the case where the Scan
+    // tab is already active (re-tapping it fires no focus event), so a stale
+    // capture could linger; clearing on blur guarantees the next entry — via tab
+    // re-tap, deep link, or Back — always starts on the live preview (LB-034).
+    const unsubFocus = navigation.addListener('focus', clearCaptureState);
+    const unsubBlur = navigation.addListener('blur', clearCaptureState);
+    return () => {
+      unsubFocus();
+      unsubBlur();
+    };
+  }, [navigation, clearCaptureState]);
+
+  // ── Hardware Back from the preview returns to the live camera (LB-034) ───────
+  // In preview mode (capturedUri set) Android Back should drop the capture and
+  // re-show the live camera, not exit Scan with the photo still held. Only active
+  // while a capture is on screen; otherwise the navigator handles Back normally.
+  useEffect(() => {
+    if (!capturedUri) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleRetake();
+      return true; // consume — stay in Scan, back on the live preview
     });
-    return unsub;
-  }, [navigation, resetScan]);
+    return () => sub.remove();
+  }, [capturedUri]);
+
+  // ── First-run: surface the OS permission popup directly (LB-033) ────────────
+  // When the permission is genuinely undetermined (never asked, can still ask),
+  // request it once on entry so the user sees Android's permission dialog — not a
+  // screen that looks like it skips to Settings. Settings is only reached after a
+  // PERMANENT denial (isDenied), never on the first request.
+  useEffect(() => {
+    if (isUndetermined && canAskAgain && !autoPromptedRef.current) {
+      autoPromptedRef.current = true;
+      request().catch(() => {});
+    }
+  }, [isUndetermined, canAskAgain, request]);
 
   // ── [CAMERA_PERMISSION] permission/hydration log ───────────────────────────
   useEffect(() => {

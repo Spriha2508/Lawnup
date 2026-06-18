@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { AppState } from 'react-native';
 import { useCameraPermissions } from 'expo-camera';
 import { logger } from '../../../shared/utils/logger';
@@ -38,7 +38,7 @@ export const useCameraPermission = (): UseCameraPermissionResult => {
     return () => sub.remove();
   }, [getPermission]);
 
-  const request = async (): Promise<PermissionRequestResult> => {
+  const request = useCallback(async (): Promise<PermissionRequestResult> => {
     const result = await requestPermission();
     if (!result.granted) {
       logger.scan.failed(
@@ -46,7 +46,7 @@ export const useCameraPermission = (): UseCameraPermissionResult => {
       );
     }
     return { granted: result.granted, canAskAgain: result.canAskAgain };
-  };
+  }, [requestPermission]);
 
   const status: PermissionStatus = !permission
     ? 'undetermined'
