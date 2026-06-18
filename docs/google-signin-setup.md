@@ -46,17 +46,29 @@ Add **all** that apply, then **re-download google-services.json**.
   eas credentials -p android
   # → select build profile → Keystore → shows SHA-1 and SHA-256
   ```
-- **Local debug keystore** (for `expo run:android` dev builds):
+- **Local debug keystore** — the project signs **both** debug *and* release with
+  `android/app/debug.keystore` (see `android/app/build.gradle` → `signingConfigs`),
+  so this is the fingerprint for every locally-built APK right now:
   ```
   keytool -list -v -alias androiddebugkey \
-    -keystore ~/.android/debug.keystore -storepass android -keypass android
+    -keystore android/app/debug.keystore -storepass android -keypass android
+  ```
+  **Current value of the committed `android/app/debug.keystore` (must be registered in Firebase):**
+  ```
+  SHA-1:   5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25
+  SHA-256: FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
   ```
 - **Play App Signing** (after first upload, for production installs from Play):
   Play Console → your app → Setup → App signing → copy the SHA-1 + SHA-256.
 
-> Note: this machine has no local debug keystore and the EAS keystore is managed
-> remotely, so the exact values must be pulled with the commands above — they
-> can't be read from the repo.
+> ⚠️ **LB-029 root cause (QA Round 2):** `google-services.json` currently registers
+> the Android OAuth client against `certificate_hash 5fbc5bc4…`, which is **not**
+> the `android/app/debug.keystore` SHA-1 above (`5e8f1606…`). Google's OAuth backend
+> therefore rejects sign-in with `DEVELOPER_ERROR` (code 10). **Fix:** add the
+> `5E:8F:16:…` SHA-1 (+ SHA-256) under Firebase → Project Settings → Android app →
+> SHA fingerprints, **re-download `google-services.json`**, and rebuild. If you also
+> distribute an **EAS** build, register that keystore's SHA too (`eas credentials -p android`).
+> This is a Firebase-console action — no repo edit can satisfy the server-side check.
 
 ## 4. Remaining Firebase config
 

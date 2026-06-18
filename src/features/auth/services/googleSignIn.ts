@@ -53,6 +53,21 @@ function toError(e: any): Extract<GoogleSignInOutcome, { status: 'error' }> {
   // so match the raw code/message. This is a build-config problem, not the user's.
   const codeStr = String(e?.code ?? '');
   if (codeStr === '10' || codeStr === 'DEVELOPER_ERROR' || /developer_?error/i.test(e?.message ?? '')) {
+    // Actionable QA hint: DEVELOPER_ERROR almost always means the SHA-1/256 of the
+    // keystore that signed THIS build is not registered against the Android OAuth
+    // client (com.lawnup.app) in Firebase. Print exactly what to do — see
+    // docs/google-signin-setup.md §3 for the current debug.keystore fingerprints.
+    if (__DEV__) {
+      console.warn(
+        '[GoogleSignIn] DEVELOPER_ERROR (code 10): the signing key of this build ' +
+          'is not registered in Firebase for package com.lawnup.app.\n' +
+          'Fix: get this build’s SHA-1 (debug → `keytool -list -v -keystore ' +
+          'android/app/debug.keystore -alias androiddebugkey -storepass android`; ' +
+          'EAS → `eas credentials -p android`), add it under Firebase → Project ' +
+          'Settings → Android app → SHA fingerprints, re-download google-services.json, ' +
+          'then rebuild. A local file edit cannot satisfy Google’s server-side check.',
+      );
+    }
     return {
       status: 'error',
       code: 'developer_error',
