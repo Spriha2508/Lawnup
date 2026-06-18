@@ -101,6 +101,15 @@ export const PaywallScreen: React.FC = () => {
     }
   }, [activateMockPremium, setPlan, navigation, selectedPlan]);
 
+  // Disabled-CTA tap (production, before RevenueCat): explain rather than no-op,
+  // so the screen is never a silent dead end.
+  const handleComingSoon = useCallback(() => {
+    Alert.alert(
+      'Premium is almost here',
+      'In-app purchases go live at launch. Your free plan already includes plant ID, disease checks, watering reminders and weather-aware care.',
+    );
+  }, []);
+
   const handleRestore = useCallback(async () => {
     if (!PAYMENTS_READY) {
       Alert.alert('Restore purchases', 'Purchases will be available at launch — nothing to restore yet.');
@@ -295,14 +304,22 @@ export const PaywallScreen: React.FC = () => {
             </Pressable>
           </Animated.View>
 
-          {/* CTA — tappable once payments are live (RevenueCat) or in DEV (mock).
-              In release before payments are wired it stays disabled rather than
-              dead-tapping. */}
+          {/* Single, plan-aware purchase action ("Continue …" for the selected
+              plan) so the chosen plan + price is unmistakable. Tappable once
+              payments are live (RevenueCat) or in non-production (mock). Even
+              when neither is available it stays tappable with an explainer — the
+              Premium screen must never be a silent dead end (LB-031). */}
           {(() => {
             const ctaEnabled = PAYMENTS_READY || MOCK_PREMIUM_ENABLED;
+            const planLabel = selectedPlan === 'annual' ? 'Annual · ₹1990/yr' : 'Monthly · ₹199/mo';
             return (
-              <Pressable style={[styles.ctaBtn, !ctaEnabled && styles.ctaBtnDisabled]} onPress={handleUpgrade} disabled={!ctaEnabled}>
-                <Text style={styles.ctaBtnText}>{ctaEnabled ? 'Start Premium  →' : 'Premium — coming soon'}</Text>
+              <Pressable
+                style={[styles.ctaBtn, !ctaEnabled && styles.ctaBtnDisabled]}
+                onPress={ctaEnabled ? handleUpgrade : handleComingSoon}
+              >
+                <Text style={styles.ctaBtnText}>
+                  {ctaEnabled ? `Continue · ${planLabel}  →` : 'Premium — coming soon'}
+                </Text>
               </Pressable>
             );
           })()}
