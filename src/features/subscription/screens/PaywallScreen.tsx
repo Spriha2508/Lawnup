@@ -76,6 +76,12 @@ export const PaywallScreen: React.FC = () => {
 
   const [selectedPlan, setSelectedPlan] = useState<'annual' | 'monthly'>('annual');
 
+  // CTA state is computed once and used by BOTH the in-scroll plan picker and the
+  // always-visible sticky footer below, so the purchase action can never be lost
+  // off the bottom of the long scroll (P0: "CTAs not visible / never a dead end").
+  const ctaEnabled = PAYMENTS_READY || MOCK_PREMIUM_ENABLED;
+  const planLabel = selectedPlan === 'annual' ? 'Annual · ₹1990/yr' : 'Monthly · ₹199/mo';
+
   const annualScale  = useRef(new Animated.Value(1)).current;
   const monthlyScale = useRef(new Animated.Value(1)).current;
 
@@ -127,8 +133,9 @@ export const PaywallScreen: React.FC = () => {
   return (
     <View style={styles.root}>
       <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 150 }]}
       >
         {/* ── Dark hero ──────────────────────────────────────────────────── */}
         <View style={styles.hero}>
@@ -321,29 +328,10 @@ export const PaywallScreen: React.FC = () => {
             </Pressable>
           </Animated.View>
 
-          {/* Single, plan-aware purchase action ("Continue …" for the selected
-              plan) so the chosen plan + price is unmistakable. Tappable once
-              payments are live (RevenueCat) or in non-production (mock). Even
-              when neither is available it stays tappable with an explainer — the
-              Premium screen must never be a silent dead end (LB-031). */}
-          {(() => {
-            const ctaEnabled = PAYMENTS_READY || MOCK_PREMIUM_ENABLED;
-            const planLabel = selectedPlan === 'annual' ? 'Annual · ₹1990/yr' : 'Monthly · ₹199/mo';
-            return (
-              <Pressable
-                style={[styles.ctaBtn, !ctaEnabled && styles.ctaBtnDisabled]}
-                onPress={ctaEnabled ? handleUpgrade : handleComingSoon}
-              >
-                <Text style={styles.ctaBtnText}>
-                  {ctaEnabled ? `Continue · ${planLabel}  →` : 'Premium — coming soon'}
-                </Text>
-              </Pressable>
-            );
-          })()}
-
-          <Pressable style={styles.restoreBtn} onPress={handleRestore} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.restoreBtnText}>Restore purchases</Text>
-          </Pressable>
+          {/* The purchase action lives in the always-visible sticky footer below,
+              so it can never scroll off-screen. A scroll hint sits here for
+              continuity. */}
+          <Text style={styles.pickerHint}>Tap a plan above, then continue below ↓</Text>
         </View>
 
         {/* ── Trust row ──────────────────────────────────────────────────── */}
@@ -356,13 +344,49 @@ export const PaywallScreen: React.FC = () => {
           ))}
         </View>
       </ScrollView>
+
+      {/* ── Sticky purchase bar — always visible, never a dead end (P0 #3/#4) ── */}
+      <View style={[styles.stickyFooter, { paddingBottom: insets.bottom + 10 }]}>
+        <Pressable
+          style={[styles.ctaBtn, !ctaEnabled && styles.ctaBtnDisabled]}
+          onPress={ctaEnabled ? handleUpgrade : handleComingSoon}
+        >
+          <Text style={styles.ctaBtnText}>
+            {ctaEnabled ? `Continue · ${planLabel}  →` : 'Premium — coming soon'}
+          </Text>
+        </Pressable>
+        <Pressable style={styles.restoreBtn} onPress={handleRestore} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={styles.restoreBtnText}>Restore purchases</Text>
+        </Pressable>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: 'transparent' },
-  scroll: { paddingBottom: 40 },
+  root:       { flex: 1, backgroundColor: 'transparent' },
+  scrollView: { flex: 1 },
+  scroll:     { paddingBottom: 40 },
+
+  // Sticky purchase bar pinned to the bottom — the CTA is always on screen.
+  stickyFooter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    backgroundColor: C.canvas,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: C.border,
+  },
+  pickerHint: {
+    fontSize: 12,
+    fontFamily: 'Nunito-SemiBold',
+    color: C.textMuted,
+    textAlign: 'center',
+    marginTop: 16,
+  },
 
   // ── Hero ──────────────────────────────────────────────────────────────────
   hero: {
