@@ -243,6 +243,23 @@ export const HomeScreen: React.FC = () => {
     setLearnOpen(prev => { const next = prev === id ? null : id; if (next) track('home_learn_open', { topic: next }); return next; });
   }, []);
 
+  // Weather + AQI "today's care" card — useful even before the first plant
+  // (location-based), so it's surfaced on first-run too (LB-042). Shared by both
+  // the first-run and populated layouts so they stay identical.
+  const weatherCareSection = (weather || aqi) ? (
+    <View style={{ marginBottom: SECTION_GAP }}>
+      <SectionHeader label={`WEATHER & CARE${city ? ` · ${city}` : ''}`} />
+      <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.intelCard}>
+        <View style={styles.intelRow}>
+          {weather && <IntelStat value={`${weather.tempC}°`} label="Temp" />}
+          {weather && <IntelStat value={`${weather.humidity}%`} label="Humidity" />}
+          {aqi && aqiAdvice && <IntelStat value={String(aqi.aqi)} label="AQI" color={bandColor(aqiAdvice.band)} />}
+        </View>
+        <Text style={styles.intelRec}>{careRecommendation}</Text>
+      </Animated.View>
+    </View>
+  ) : null;
+
   return (
     <View style={styles.root}>
       <TimeSky />
@@ -309,6 +326,19 @@ export const HomeScreen: React.FC = () => {
                 <View style={styles.scanBtn}><Text style={styles.scanBtnText}>Scan a plant  →</Text></View>
               </PressableScale>
             </Animated.View>
+
+            {/* Other ways to get started — the key actions a new user needs (LB-042). */}
+            <Animated.View entering={FadeInDown.delay(160).duration(M.duration.standard)} style={{ marginBottom: SECTION_GAP }}>
+              <SectionHeader label="OR START WITH" />
+              <View style={styles.quickGrid}>
+                <QuickAction emoji="🪴" label="Add Plant" onPress={() => goAddPlant('first_run')} />
+                <QuickAction emoji="🌿" label="Ask Doc. Sage" onPress={() => goDoctor('first_run')} />
+              </View>
+            </Animated.View>
+
+            {/* Today's weather-aware care — live and useful before the first plant. */}
+            {weatherCareSection}
+
             <Text style={styles.valueHeading}>What one scan gives you</Text>
             <View style={styles.valueGrid}>
               {VALUE_PROPS.map((v, i) => (
@@ -372,21 +402,7 @@ export const HomeScreen: React.FC = () => {
             )}
 
             {/* ── 6 · Weather + AQI Intelligence ────────────────────────────── */}
-            {(weather || aqi) && (
-              <View style={{ marginBottom: SECTION_GAP }}>
-                {/* SectionHeader (like every other dashboard section) so the
-                    weather card reads as part of the dashboard, not a stray widget. */}
-                <SectionHeader label={`WEATHER & CARE${city ? ` · ${city}` : ''}`} />
-                <Animated.View entering={FadeInDown.duration(M.duration.expressive)} style={styles.intelCard}>
-                  <View style={styles.intelRow}>
-                    {weather && <IntelStat value={`${weather.tempC}°`} label="Temp" />}
-                    {weather && <IntelStat value={`${weather.humidity}%`} label="Humidity" />}
-                    {aqi && aqiAdvice && <IntelStat value={String(aqi.aqi)} label="AQI" color={bandColor(aqiAdvice.band)} />}
-                  </View>
-                  <Text style={styles.intelRec}>{careRecommendation}</Text>
-                </Animated.View>
-              </View>
-            )}
+            {weatherCareSection}
 
             {/* ── 7 · Learn & Grow ──────────────────────────────────────────── */}
             <View style={{ marginBottom: SECTION_GAP }}>
