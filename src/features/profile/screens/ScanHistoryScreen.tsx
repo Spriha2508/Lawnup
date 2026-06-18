@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import Svg, { Path } from 'react-native-svg';
 import { useScanHistoryStore, type ScanHistoryItem } from '../../scan/store/scanHistoryStore';
+import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { theme } from '@constants/designSystem';
 import type { ProfileStackParamList } from '../../../navigation/types';
 
@@ -23,6 +24,16 @@ const relDate = (iso: string): string => {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 };
 const confTone = (c: number) => (c >= 0.7 ? C.healthyFg : c >= 0.5 ? C.waterFg : C.textMuted);
+
+const ScanMark: React.FC = () => (
+  <Svg width={38} height={38} viewBox="0 0 24 24" fill="none">
+    <Path d="M4 8V6a2 2 0 0 1 2-2h2" stroke={C.primary} strokeWidth={1.8} strokeLinecap="round" />
+    <Path d="M20 8V6a2 2 0 0 0-2-2h-2" stroke={C.primary} strokeWidth={1.8} strokeLinecap="round" />
+    <Path d="M4 16v2a2 2 0 0 0 2 2h2" stroke={C.primary} strokeWidth={1.8} strokeLinecap="round" />
+    <Path d="M20 16v2a2 2 0 0 1-2 2h-2" stroke={C.primary} strokeWidth={1.8} strokeLinecap="round" />
+    <Path d="M12 9C12 9 9 10.5 9 13C9 14.66 10.34 16 12 16C13.66 16 15 14.66 15 13C15 10.5 12 9 12 9Z" fill={C.primary} opacity={0.85} />
+  </Svg>
+);
 
 export const ScanHistoryScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
@@ -76,9 +87,14 @@ export const ScanHistoryScreen: React.FC = () => {
         </View>
 
         {entries.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>Your scans will appear here. Scan a plant to start building your history.</Text>
-          </View>
+          <EmptyState
+            style={styles.empty}
+            icon={<ScanMark />}
+            title="No scans yet"
+            subtitle="Your scans will appear here. Scan a plant to start building your history."
+            actionLabel="Scan a Plant"
+            onAction={() => (navigation.getParent() as any)?.navigate('Scan')}
+          />
         ) : (
           <FlatList
             data={entries}
@@ -119,6 +135,5 @@ const styles = StyleSheet.create({
   meta: { ...T.caption, color: C.textSecondary },
   conf: { fontFamily: F.sansHeavy, fontSize: 14 },
 
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 44 },
-  emptyText: { ...T.bodyMd, color: C.textMuted, textAlign: 'center', lineHeight: 22 },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

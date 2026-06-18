@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { Timestamp } from 'firebase/firestore';
 import Svg, { Path } from 'react-native-svg';
+import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { usePlantsStore } from '../store/plantsStore';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useOnboardingStore } from '../../onboarding/store/onboardingStore';
@@ -24,6 +25,13 @@ type Nav = StackNavigationProp<PlantsStackParamList, 'Tasks'>;
 
 const fsTs = (d: Date) => Timestamp.fromDate(d);
 const shortDate = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+const LeafMark: React.FC<{ size?: number }> = ({ size = 40 }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 3C12 3 5 6 5 13C5 17.4183 8.13 21 12 21C15.87 21 19 17.4183 19 13C19 6 12 3 12 3Z" fill={C.primary} opacity={0.9} />
+    <Path d="M12 3V21" stroke={C.canvas} strokeWidth={1.3} strokeLinecap="round" />
+  </Svg>
+);
 
 export const TasksScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
@@ -71,57 +79,63 @@ export const TasksScreen: React.FC = () => {
           <View style={{ width: 32 }} />
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-          <Text style={styles.lead}>{due.length > 0 ? `${due.length} ${due.length === 1 ? 'plant needs' : 'plants need'} water` : 'All caught up 🌿'}</Text>
-
-          {/* Due */}
-          {due.length > 0 ? (
-            <View style={styles.card}>
-              {due.map(({ p, info }, i) => (
-                <Animated.View key={p.plantId} layout={Layout.springify().damping(18)} entering={FadeInDown.delay(i * 40).duration(M.duration.standard)}>
-                  <View style={[styles.row, i < due.length - 1 && styles.rowBorder]}>
-                    <View style={[styles.dot, { backgroundColor: info.status === 'overdue' ? C.criticalFg : C.waterFg }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.taskName}>Water {p.nickname}</Text>
-                      <Text style={[styles.taskMeta, { color: info.status === 'overdue' ? C.criticalFg : C.waterFg }]}>{info.urgentLabel}</Text>
-                    </View>
-                    <TouchableOpacity style={styles.check} onPress={() => markWatered(p)} activeOpacity={0.7} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                      <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                        <Path d="M5 12.5L10 17.5L19 7" stroke={C.primary} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
-                      </Svg>
-                    </TouchableOpacity>
-                  </View>
-                </Animated.View>
-              ))}
-            </View>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={plants.length === 0 ? styles.contentEmpty : styles.content}>
+          {plants.length === 0 ? (
+            <EmptyState
+              icon={<LeafMark size={40} />}
+              title="No plants yet"
+              subtitle="Add your first plant and its watering and care tasks will show up here."
+              actionLabel="Add Your First Plant"
+              onAction={() => navigation.navigate('AddPlant', {})}
+            />
           ) : (
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>Nothing needs water today. Your garden is happy.</Text>
-            </View>
-          )}
-
-          {/* Upcoming */}
-          {upcoming.length > 0 && (
             <>
-              <Text style={[styles.sectionLabel, { marginTop: S['2xl'] }]}>COMING UP</Text>
-              <View style={styles.card}>
-                {upcoming.map(({ p, info }, i) => (
-                  <View key={p.plantId} style={[styles.row, i < upcoming.length - 1 && styles.rowBorder]}>
-                    <View style={[styles.dot, { backgroundColor: C.primary }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.taskName}>Water {p.nickname}</Text>
-                      <Text style={styles.taskMetaMuted}>{info.label} · {shortDate(getNextWaterDate(p))}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
+              <Text style={styles.lead}>{due.length > 0 ? `${due.length} ${due.length === 1 ? 'plant needs' : 'plants need'} water` : 'All caught up 🌿'}</Text>
 
-          {plants.length === 0 && (
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>Add a plant to your garden and its care tasks will show up here.</Text>
-            </View>
+              {/* Due */}
+              {due.length > 0 ? (
+                <View style={styles.card}>
+                  {due.map(({ p, info }, i) => (
+                    <Animated.View key={p.plantId} layout={Layout.springify().damping(18)} entering={FadeInDown.delay(i * 40).duration(M.duration.standard)}>
+                      <View style={[styles.row, i < due.length - 1 && styles.rowBorder]}>
+                        <View style={[styles.dot, { backgroundColor: info.status === 'overdue' ? C.criticalFg : C.waterFg }]} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.taskName}>Water {p.nickname}</Text>
+                          <Text style={[styles.taskMeta, { color: info.status === 'overdue' ? C.criticalFg : C.waterFg }]}>{info.urgentLabel}</Text>
+                        </View>
+                        <TouchableOpacity style={styles.check} onPress={() => markWatered(p)} activeOpacity={0.7} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                            <Path d="M5 12.5L10 17.5L19 7" stroke={C.primary} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+                          </Svg>
+                        </TouchableOpacity>
+                      </View>
+                    </Animated.View>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.empty}>
+                  <Text style={styles.emptyText}>Nothing needs water today. Your garden is happy.</Text>
+                </View>
+              )}
+
+              {/* Upcoming */}
+              {upcoming.length > 0 && (
+                <>
+                  <Text style={[styles.sectionLabel, { marginTop: S['2xl'] }]}>COMING UP</Text>
+                  <View style={styles.card}>
+                    {upcoming.map(({ p, info }, i) => (
+                      <View key={p.plantId} style={[styles.row, i < upcoming.length - 1 && styles.rowBorder]}>
+                        <View style={[styles.dot, { backgroundColor: C.primary }]} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.taskName}>Water {p.nickname}</Text>
+                          <Text style={styles.taskMetaMuted}>{info.label} · {shortDate(getNextWaterDate(p))}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+            </>
           )}
 
           <View style={{ height: 40 }} />
@@ -137,6 +151,7 @@ const styles = StyleSheet.create({
   backBtn: { width: 32 },
   headerTitle: { fontFamily: F.serifMedium, fontSize: 20, color: C.textPrimary },
   content: { paddingHorizontal: 20, paddingTop: S.sm },
+  contentEmpty: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 20 },
   lead: { fontFamily: F.serifMedium, fontSize: 30, color: C.textPrimary, marginBottom: S.xl, letterSpacing: -0.4 },
 
   sectionLabel: { ...T.eyebrow, color: C.textMuted, letterSpacing: 2, marginBottom: S.md },

@@ -17,6 +17,7 @@ import { getCurrentWeather } from '../../../services/weather/weatherService';
 import type { WeatherData } from '../../../services/weather/weatherService';
 import { getNextWaterDate } from '../../../shared/utils/plantUtils';
 import { PressableScale } from '@shared/components/motion/PressableScale';
+import { EmptyState } from '@shared/components/ui/EmptyState';
 import { theme } from '@constants/designSystem';
 import type { ProfileStackParamList } from '../../../navigation/types';
 import type { UserPlantDoc } from '../../../types/firestore.types';
@@ -25,6 +26,14 @@ const { color: C, spacing: S, typography: T, radii: R, fonts: F } = theme;
 type Nav = StackNavigationProp<ProfileStackParamList, 'Reminders'>;
 
 const shortDate = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+const BellMark: React.FC = () => (
+  <Svg width={38} height={38} viewBox="0 0 24 24" fill="none">
+    <Path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9Z" fill={C.primary} opacity={0.9} />
+    <Path d="M13.73 21a2 2 0 0 1-3.46 0" stroke={C.primary} strokeWidth={1.8} strokeLinecap="round" />
+  </Svg>
+);
+
 const toneFor = (status: string) =>
   status === 'overdue' ? C.criticalFg : status === 'today' ? C.waterFg : C.primary;
 
@@ -127,12 +136,13 @@ export const RemindersScreen: React.FC = () => {
 
           {/* List */}
           {plants.length === 0 ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>Add a plant to your garden to set up watering reminders.</Text>
-              <PressableScale style={styles.emptyBtn} onPress={() => navigation.navigate('AddReminder', {})} to={0.97}>
-                <Text style={styles.emptyBtnText}>Add a reminder</Text>
-              </PressableScale>
-            </View>
+            <EmptyState
+              icon={<BellMark />}
+              title="No reminders yet"
+              subtitle="Add a plant to your garden and we'll remind you the moment it needs water."
+              actionLabel="Add a Plant"
+              onAction={() => navigation.navigate('AddReminder', {})}
+            />
           ) : (
             <>
               <View style={styles.listHeader}>
@@ -231,8 +241,4 @@ const styles = StyleSheet.create({
   },
   addBtnText: { ...T.label, fontFamily: F.sansBold, color: C.primary },
 
-  empty: { paddingVertical: S['2xl'], alignItems: 'center', gap: S.xl },
-  emptyText: { ...T.bodyMd, color: C.textMuted, textAlign: 'center', lineHeight: 21 },
-  emptyBtn: { backgroundColor: C.primary, borderRadius: R.pill, paddingHorizontal: S['2xl'], paddingVertical: 14 },
-  emptyBtnText: { ...T.button, fontFamily: F.sansBold, color: C.onPrimary },
 });
