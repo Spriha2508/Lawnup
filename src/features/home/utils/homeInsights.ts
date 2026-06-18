@@ -15,33 +15,34 @@ export const getWeatherInsight = (weather: WeatherData | null, city?: string): I
   if (!weather) return null;
   const where = city || weather.city;
 
-  // Each body leads with the temp/condition + city so the card reads as advice
-  // tuned to *your* plant, *your* city and *today's* weather (LawnUp's USP).
+  // Two-part, directive copy: a crisp condition line + ONE concrete action tuned
+  // to *your* city and *today's* weather (LawnUp's USP). e.g. "Today is 36°C in
+  // Delhi. Water outdoor plants before 9 AM."
   if (weather.isRaining) {
     return {
       eyebrow: 'WEATHER · GARDEN SYNC',
       title: 'Rain is doing the watering',
-      body: `It's raining in ${where} today — skip outdoor watering and let the soil drink naturally.`,
+      body: `Today it's raining in ${where}. Skip outdoor watering and let the soil drink naturally.`,
     };
   }
   if (weather.isHumid) {
     return {
       eyebrow: 'WEATHER · GARDEN SYNC',
       title: `${weather.humidity}% humidity in ${where}`,
-      body: `It's ${weather.tempC}° and humid in ${where} today — keep airflow moving and check leaf undersides for spots.`,
+      body: `Today it's ${weather.tempC}°C and humid in ${where}. Keep airflow moving and check leaf undersides for spots.`,
     };
   }
   if (weather.isHot) {
     return {
       eyebrow: 'WEATHER · GARDEN SYNC',
       title: `${weather.tempC}° and rising`,
-      body: `It's ${weather.tempC}° in ${where} today — water early morning and move balcony and tender plants out of the harsh afternoon sun.`,
+      body: `Today is ${weather.tempC}°C in ${where}. Water outdoor plants before 9 AM and move tender pots out of the afternoon sun.`,
     };
   }
   return {
     eyebrow: 'WEATHER · GARDEN SYNC',
     title: `A gentle ${weather.tempC}° in ${where}`,
-    body: `It's a mild ${weather.tempC}° in ${where} today — a good moment to check soil moisture and turn pots toward the light.`,
+    body: `Today is a mild ${weather.tempC}°C in ${where}. Check soil moisture and turn pots toward the light.`,
   };
 };
 

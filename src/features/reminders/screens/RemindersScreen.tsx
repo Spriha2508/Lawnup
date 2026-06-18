@@ -18,6 +18,7 @@ import type { WeatherData } from '../../../services/weather/weatherService';
 import { getNextWaterDate } from '../../../shared/utils/plantUtils';
 import { PressableScale } from '@shared/components/motion/PressableScale';
 import { EmptyState } from '@shared/components/ui/EmptyState';
+import { Toast } from '@shared/components/feedback/Toast';
 import { theme } from '@constants/designSystem';
 import type { ProfileStackParamList } from '../../../navigation/types';
 import type { UserPlantDoc } from '../../../types/firestore.types';
@@ -46,6 +47,7 @@ export const RemindersScreen: React.FC = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [permitted, setPermitted] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (city) getCurrentWeather(city).then(setWeather).catch(() => {});
@@ -83,7 +85,11 @@ export const RemindersScreen: React.FC = () => {
     }
     updatePlant(plant.plantId, { remindersEnabled: value });
     if (user) updatePlantInCloud(user.uid, plant.plantId, { remindersEnabled: value }).catch(() => {});
-    if (value) setPermitted(true);
+    if (value) {
+      setPermitted(true);
+      // Meaningful success feedback on enabling a reminder (QA3 #16).
+      setToast(`🔔 Reminder on — we'll alert you when ${plant.nickname} needs water`);
+    }
     setBusyId(null);
   }, [weather, updatePlant, user]);
 
@@ -183,6 +189,8 @@ export const RemindersScreen: React.FC = () => {
           <View style={{ height: 40 }} />
         </ScrollView>
       </SafeAreaView>
+
+      {toast && <Toast message={toast} type="success" onHide={() => setToast(null)} />}
     </View>
   );
 };
