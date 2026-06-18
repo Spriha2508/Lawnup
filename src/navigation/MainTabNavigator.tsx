@@ -137,6 +137,8 @@ const TabButton: React.FC<{
   return (
     <Pressable onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} style={styles.tabBtn}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      {/* Top-edge indicator bar — the clearest "you are here" signal */}
+      <Animated.View style={[styles.activeTopBar, highlightStyle]} pointerEvents="none" />
       <Animated.View style={[styles.tabInner, anim]}>
         <View style={styles.iconWrap}>
           <Animated.View style={[styles.activeHighlight, highlightStyle]} pointerEvents="none" />
@@ -220,7 +222,19 @@ const styles = StyleSheet.create({
     width: 46,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(74,222,128,0.16)',
+    backgroundColor: 'rgba(74,222,128,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(74,222,128,0.40)',
+  },
+  // Top-edge "you are here" bar on the active tab
+  activeTopBar: {
+    position: 'absolute',
+    top: 0,
+    alignSelf: 'center',
+    width: 22,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: C.primary,
   },
   tabLabel: { fontFamily: F.sansMedium, fontSize: 10, color: 'rgba(240,253,244,0.55)', letterSpacing: 0.3 },
   tabLabelActive: { color: C.primary, fontFamily: F.sansBold },
