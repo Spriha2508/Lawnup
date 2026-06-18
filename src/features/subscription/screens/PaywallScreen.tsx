@@ -151,7 +151,24 @@ export const PaywallScreen: React.FC = () => {
           <Text style={styles.heroEyebrow}>LAWNUP PREMIUM</Text>
           <Text style={styles.heroTitle}>Never lose a{'\n'}plant to a guess.</Text>
           <Text style={styles.heroSubtitle}>
-            Many more AI scans each month and unlimited Doc. Sage chat — the full LawnUp experience, tuned for Indian gardens.
+            Unlimited Doc. Sage and many more AI scans each month — care personalized to your plant, your city and today's weather. The complete LawnUp experience for Indian gardens.
+          </Text>
+
+          {/* Honest value strip — ONLY the two genuine premium differentiators
+              (LB-006: don't gate features free users already get). */}
+          <View style={styles.heroValueStrip}>
+            {[
+              'Unlimited Doc. Sage AI chat',
+              'Many more AI plant scans each month',
+            ].map((v) => (
+              <View key={v} style={styles.heroValueRow}>
+                <Text style={styles.heroValueCheck}>✓</Text>
+                <Text style={styles.heroValueText}>{v}</Text>
+              </View>
+            ))}
+          </View>
+          <Text style={styles.heroEveryPlan}>
+            Every plan includes plant ID, disease checks, watering reminders and weather-aware care.
           </Text>
         </View>
 
@@ -393,6 +410,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-Regular',
     color: 'rgba(255,255,255,0.50)',
     lineHeight: 22,
+  },
+  heroValueStrip: { marginTop: 18, gap: 8 },
+  heroValueRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  heroValueCheck: { fontSize: 14, fontFamily: 'Nunito-Bold', color: C.primary },
+  heroValueText: { fontSize: 14, fontFamily: 'Nunito-SemiBold', color: '#FFFFFF', flex: 1 },
+  heroEveryPlan: {
+    marginTop: 16,
+    fontSize: 12,
+    fontFamily: 'Nunito-Regular',
+    color: 'rgba(255,255,255,0.40)',
+    lineHeight: 18,
   },
 
   // ── Section shell ─────────────────────────────────────────────────────────
