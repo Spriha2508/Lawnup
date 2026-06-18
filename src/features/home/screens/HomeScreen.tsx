@@ -357,8 +357,18 @@ export const HomeScreen: React.FC = () => {
         )}
 
         {/* ════════ Populated dashboard ════════ */}
+        {/* Priority order (QA3 #6): Scan → Today's Care → Weather → My Garden. */}
         {showDashboard && (
           <>
+            {/* ── 1 · Scan a plant — the single most important action ────────── */}
+            <PressableScale style={[styles.dashScanCta, { marginBottom: SECTION_GAP }]} onPress={() => goScan('dashboard_top')} to={0.98}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.dashScanTitle}>Scan a plant</Text>
+                <Text style={styles.dashScanSub}>Identify, diagnose & get care tuned to your weather</Text>
+              </View>
+              <View style={styles.dashScanArrow}><Text style={styles.dashScanArrowText}>→</Text></View>
+            </PressableScale>
+
             {/* ── 2 · Today's Care Tasks ────────────────────────────────────── */}
             <View style={{ marginBottom: SECTION_GAP }}>
               <SectionHeader label="TODAY'S CARE" actionLabel="View all →" onAction={() => goTasks('todays_care')} />
@@ -373,7 +383,10 @@ export const HomeScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* ── 3 · My Garden carousel ────────────────────────────────────── */}
+            {/* ── 3 · Weather + AQI (today's care, tuned to your city) ───────── */}
+            {weatherCareSection}
+
+            {/* ── 4 · My Garden carousel ────────────────────────────────────── */}
             <View style={[styles.stripWrap, { marginBottom: SECTION_GAP }]}>
               <View style={{ paddingHorizontal: H_PAD }}>
                 <SectionHeader label="MY GARDEN" actionLabel="Add plant +" onAction={() => goAddPlant('my_plants')} />
@@ -400,9 +413,6 @@ export const HomeScreen: React.FC = () => {
                 </View>
               </View>
             )}
-
-            {/* ── 6 · Weather + AQI Intelligence ────────────────────────────── */}
-            {weatherCareSection}
 
             {/* ── 7 · Learn & Grow ──────────────────────────────────────────── */}
             <View style={{ marginBottom: SECTION_GAP }}>
@@ -639,6 +649,20 @@ const styles = StyleSheet.create({
   plantInfo: { paddingHorizontal: 11, paddingTop: 9, paddingBottom: 11 },
   plantName: { ...T.bodyMd, fontFamily: F.sansBold, color: C.textPrimary, marginBottom: 4 },
   plantStatus: { ...T.caption, color: C.textSecondary },
+
+  // 1 · Dashboard primary Scan CTA — the dominant action on the populated home
+  dashScanCta: {
+    flexDirection: 'row', alignItems: 'center', gap: S.lg,
+    backgroundColor: C.primary, borderRadius: R.xl,
+    paddingVertical: S.xl, paddingHorizontal: S.xl, ...theme.shadows.cta,
+  },
+  dashScanTitle: { fontFamily: F.serifMedium, fontSize: 22, color: C.onPrimary, marginBottom: 3 },
+  dashScanSub: { ...T.caption, color: 'rgba(255,255,255,0.82)', lineHeight: 17 },
+  dashScanArrow: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  dashScanArrowText: { fontSize: 20, color: C.onPrimary, fontFamily: F.sansBold },
 
   // 5 · Health summary (4-tier)
   healthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
