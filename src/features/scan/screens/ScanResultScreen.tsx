@@ -114,6 +114,20 @@ export const ScanResultScreen: React.FC = () => {
   const scrollFade = useRef(new Animated.Value(0)).current;
   const ctaSlide   = useRef(new Animated.Value(60)).current;
 
+  // Lightweight success toast — a subtle moment of delight on identify / save (LB-045)
+  const [toastText, setToastText] = useState<string | null>(null);
+  const toastAnim = useRef(new Animated.Value(0)).current;
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showToast = useCallback((text: string) => {
+    setToastText(text);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    Animated.spring(toastAnim, { toValue: 1, damping: 15, stiffness: 160, useNativeDriver: true }).start();
+    toastTimer.current = setTimeout(() => {
+      Animated.timing(toastAnim, { toValue: 0, duration: 280, useNativeDriver: true }).start(() => setToastText(null));
+    }, 2200);
+  }, [toastAnim]);
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+
   const scanId = scanResult?.scanId;
   useEffect(() => {
     Animated.parallel([
@@ -122,6 +136,8 @@ export const ScanResultScreen: React.FC = () => {
     ]).start();
 
     if (scanResult) {
+      // Subtle success moment when a plant is confidently identified (LB-045)
+      if (scanResult.confidence >= 0.60) showToast('🎉 Plant identified');
       track('scan_result_viewed', {
         species: scanResult.commonName,
         confidence: scanResult.confidence,
@@ -186,6 +202,7 @@ export const ScanResultScreen: React.FC = () => {
       setSavedPlantId(plantId);
       setSavedIsFirst(wasFirstPlant);
       setModalVisible(false);
+      showToast(`🌿 ${nickname} added to your garden`);
 
       logger.scan.nicknamed(scanResult.commonName, nickname);
       track('plant_saved_from_scan', {
@@ -213,7 +230,7 @@ export const ScanResultScreen: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [scanResult, user, addPlant, navigation]);
+  }, [scanResult, user, addPlant, navigation, showToast]);
 
   if (!scanResult) {
     return (
@@ -265,6 +282,23 @@ export const ScanResultScreen: React.FC = () => {
       >
         <Text style={styles.reScanText}>Scan again</Text>
       </TouchableOpacity>
+
+      {/* ── Success toast (identify / save) ── */}
+      {toastText && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.successToast,
+            {
+              top: insets.top + 56,
+              opacity: toastAnim,
+              transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) }],
+            },
+          ]}
+        >
+          <Text style={styles.successToastText}>{toastText}</Text>
+        </Animated.View>
+      )}
 
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
@@ -613,6 +647,22 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.canvas,
+  },
+  successToast: {
+    position: 'absolute',
+    alignSelf: 'center',
+    zIndex: 20,
+    backgroundColor: C.primaryDark,
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    ...theme.shadows.cta,
+  },
+  successToastText: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   backBtn: {
     position: 'absolute',
