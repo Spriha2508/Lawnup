@@ -15,7 +15,11 @@ import {
 import { signInWithGoogle } from './authService';
 import type { UserDoc } from '../../../types/firestore.types';
 
-const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
+// Trim any stray whitespace/quotes from the inlined env value — a trailing
+// newline silently produces an "invalid audience" idToken that Firebase rejects.
+const WEB_CLIENT_ID = (process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '')
+  .trim()
+  .replace(/^["']+|["']+$/g, '');
 
 export const GOOGLE_AUTH_READY = WEB_CLIENT_ID.length > 0;
 
