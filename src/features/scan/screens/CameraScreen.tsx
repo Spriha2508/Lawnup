@@ -370,9 +370,23 @@ export const CameraScreen: React.FC = () => {
   }, [isCapturing, isCameraReady, captureLocked, captureFlash, triggerQualityWarning, showQualityPill]);
 
   const handleGallery = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       logger.scan.failed('Gallery permission denied in CameraScreen');
+      // Never a dead tap: if the OS won't prompt again, route to Settings;
+      // otherwise tell the user it's needed so they can retry the picker.
+      Alert.alert(
+        'Photo access needed',
+        canAskAgain
+          ? 'Allow photo access to pick a plant image from your gallery.'
+          : 'Photo access is turned off. Enable it for LawnUp in Settings → Permissions to choose a photo.',
+        canAskAgain
+          ? [{ text: 'OK' }]
+          : [
+              { text: 'Not now', style: 'cancel' },
+              { text: 'Open settings', onPress: () => Linking.openSettings().catch(() => {}) },
+            ],
+      );
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({

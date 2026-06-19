@@ -9,6 +9,8 @@ import {
   Animated,
   StatusBar,
   Platform,
+  Alert,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -185,8 +187,23 @@ export const ProcessingScreen: React.FC = () => {
 
   const handleGallery = useCallback(async () => {
     cancelScan();
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return;
+    const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      // Don't leave the user on the failure screen with a no-op button.
+      Alert.alert(
+        'Photo access needed',
+        canAskAgain
+          ? 'Allow photo access to pick a plant image from your gallery.'
+          : 'Photo access is turned off. Enable it for LawnUp in Settings → Permissions to choose a photo.',
+        canAskAgain
+          ? [{ text: 'OK' }]
+          : [
+              { text: 'Not now', style: 'cancel' },
+              { text: 'Open settings', onPress: () => Linking.openSettings().catch(() => {}) },
+            ],
+      );
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.9,
