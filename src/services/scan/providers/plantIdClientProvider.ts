@@ -9,11 +9,27 @@ import { NOT_PLANT_ERROR } from './types';
 // (process.env.PLANT_ID_KEY). This still bundles the key — accepted only
 // because there is no public APK. The server provider replaces this at prod.
 
-const PLANT_ID_URL = 'https://plant.id/api/v3/identification';
+// Request `details` + `language` as query params so classification AND disease
+// suggestions come back populated (common_names, watering, description,
+// treatment). Without these, `suggestion.details` is empty and we lose every
+// Indian/common name, watering range and disease treatment — the analysis looks
+// thin for ALL image types. `classification_level=all` also returns genus-level
+// matches, which is what lets a single-leaf or flower macro resolve when a
+// species-only match is uncertain.
+const PLANT_ID_DETAILS =
+  'common_names,url,description,treatment,classification,watering';
+const PLANT_ID_URL =
+  `https://plant.id/api/v3/identification?details=${PLANT_ID_DETAILS}&language=en`;
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 1_000;
-const IS_PLANT_THRESHOLD = 0.40;
+// is_plant gate. Kept deliberately low: a tight close-up of a single leaf or a
+// flower head often scores 0.3–0.5 on is_plant (less whole-plant context) even
+// though it clearly IS a plant. A higher bar was rejecting those crops as
+// "not a plant" while a full-plant shot of the same plant passed — the exact
+// "one image type fails" symptom. 0.25 still rejects non-plant photos (which
+// score ~0).
+const IS_PLANT_THRESHOLD = 0.25;
 
 // Key is read from the NON-PUBLIC `plantIdKey` baked via app.config.ts → extra
 // (process.env.PLANT_ID_KEY). Never hardcode the key here — it ships in a public repo.
@@ -39,7 +55,14 @@ async function callPlantId(base64s: string[], externalSignal?: AbortSignal): Pro
     throw new Error('PLANT_ID_KEY is not set — cannot call Plant.id (internal-testing mode)');
   }
 
-  const payload = { images: base64s, health: 'all' };
+  // similar_images aids matching on partial crops (leaf/flower); classification_level
+  // 'all' returns species + genus so an uncertain species still yields a usable match.
+  const payload = {
+    images: base64s,
+    health: 'all',
+    similar_images: true,
+    classification_level: 'all',
+  };
 
   const internalController = new AbortController();
   let timedOut = false;
