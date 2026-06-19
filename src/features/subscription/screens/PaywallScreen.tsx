@@ -97,13 +97,29 @@ export const PaywallScreen: React.FC = () => {
     // testable on device. MOCK_PREMIUM_ENABLED is hard-gated off in production.
     if (PAYMENTS_READY) {
       const res = await purchaseTier(selectedPlan);
-      if (res.success) navigation.goBack();
+      if (res.success) {
+        Alert.alert(
+          'Welcome to Premium 🌿',
+          'Your Premium access is active. Enjoy unlimited Doc. Sage and many more AI scans.',
+          [{ text: 'Great', onPress: () => navigation.goBack() }],
+        );
+      } else if (!res.cancelled) {
+        // Never a silent dead end — surface why the purchase didn't complete.
+        Alert.alert(
+          'Couldn’t complete purchase',
+          'Something went wrong with the payment. No charge was made — please try again.',
+        );
+      }
       return;
     }
     if (MOCK_PREMIUM_ENABLED) {
       activateMockPremium(true);
       setPlan('premium', undefined, selectedPlan);
-      navigation.goBack();
+      Alert.alert(
+        'Premium activated 🌿',
+        'You now have Premium access. (Test mode — no payment was taken.)',
+        [{ text: 'Great', onPress: () => navigation.goBack() }],
+      );
     }
   }, [activateMockPremium, setPlan, navigation, selectedPlan]);
 
