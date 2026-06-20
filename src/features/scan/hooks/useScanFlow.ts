@@ -39,6 +39,27 @@ function mapToUserError(err: unknown): string {
     userMessage = 'Request timed out — please try again';
   } else if (msg.includes('http 5')) {
     userMessage = 'Server is busy — please try again in a moment';
+  } else if (
+    // Plant.id provider auth/config failure (inactive or invalid API key):
+    // HTTP 401/403, or the literal "api key ... not active" body. This is a
+    // service-side configuration issue, NOT the user's fault and NOT their plan
+    // limit — never route it to the upgrade flow.
+    msg.includes('http 401') ||
+    msg.includes('http 403') ||
+    msg.includes('api key') ||
+    msg.includes('not active') ||
+    msg.includes('unauthorized')
+  ) {
+    userMessage = 'Plant identification is temporarily unavailable. Please try again later.';
+  } else if (
+    // Plant.id service usage cap hit: credits exhausted (HTTP 402) or rate
+    // limited (HTTP 429). Distinct from the user's own weekly scan limit below.
+    msg.includes('http 402') ||
+    msg.includes('http 429') ||
+    msg.includes('payment required') ||
+    msg.includes('too many requests')
+  ) {
+    userMessage = 'Plant identification is busy right now — please try again in a few minutes.';
   } else if (msg.includes('cancelled') || msg.includes('aborted')) {
     userMessage = 'Scan was cancelled';
   } else if (msg.includes('not_plant_detected')) {
