@@ -288,7 +288,10 @@ export const HomeScreen: React.FC = () => {
 
         {showGardenLoader && (
           <View style={styles.gardenLoader}>
-            <Text style={styles.gardenLoaderText}>Loading your garden…</Text>
+            {/* Shown during the brief pre-hydration window for BOTH a returning
+                user (garden still loading) and a brand-new user (no garden yet),
+                so the copy stays neutral — never assume a garden exists (P1-1). */}
+            <Text style={styles.gardenLoaderText}>Getting things ready…</Text>
           </View>
         )}
 
