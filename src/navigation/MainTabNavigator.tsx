@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { HomeScreen } from '../features/home/screens/HomeScreen';
+import { usePlantsStore } from '../features/my-plants/store/plantsStore';
 import { ScanNavigator } from './ScanNavigator';
 import { PlantsNavigator } from './PlantsNavigator';
 import { ChatNavigator } from './ChatNavigator';
@@ -157,31 +158,42 @@ const TabButton: React.FC<{
 });
 TabButton.displayName = 'TabButton';
 
-const CustomTabBar: React.FC<BottomTabBarProps> = memo(({ state, navigation }) => (
-  <SafeAreaView edges={['bottom']} style={styles.bar}>
-    <View style={styles.row}>
-      {TABS.map(({ key, label }) => {
-        const idx     = state.routes.findIndex(r => r.name === key);
-        const focused = idx !== -1 && state.index === idx;
-        return (
-          <TabButton
-            key={key}
-            tabKey={key}
-            label={label}
-            focused={focused}
-            onPress={() => {
-              if (key === 'Scan') {
-                (navigation as any).navigate('Scan', { screen: 'Camera' });
-              } else {
-                navigation.navigate(key as string);
-              }
-            }}
-          />
-        );
-      })}
-    </View>
-  </SafeAreaView>
-));
+const CustomTabBar: React.FC<BottomTabBarProps> = memo(({ state, navigation }) => {
+  // Hide the Garden tab until the user has their first plant — keeps onboarding
+  // focused on the first scan (P1-2). The Plants screen stays registered so
+  // Add Plant / scan-result navigation still works; we just render an invisible
+  // spacer in its slot so the 5-tab grid (and the centered Scan button) is
+  // preserved. Once the first plant lands, the tab appears.
+  const hasPlants = usePlantsStore(s => s.plants.length > 0);
+  return (
+    <SafeAreaView edges={['bottom']} style={styles.bar}>
+      <View style={styles.row}>
+        {TABS.map(({ key, label }) => {
+          if (key === 'Plants' && !hasPlants) {
+            return <View key={key} style={styles.tabBtn} pointerEvents="none" />;
+          }
+          const idx     = state.routes.findIndex(r => r.name === key);
+          const focused = idx !== -1 && state.index === idx;
+          return (
+            <TabButton
+              key={key}
+              tabKey={key}
+              label={label}
+              focused={focused}
+              onPress={() => {
+                if (key === 'Scan') {
+                  (navigation as any).navigate('Scan', { screen: 'Camera' });
+                } else {
+                  navigation.navigate(key as string);
+                }
+              }}
+            />
+          );
+        })}
+      </View>
+    </SafeAreaView>
+  );
+});
 CustomTabBar.displayName = 'CustomTabBar';
 
 // ─── Navigator ───────────────────────────────────────────────────────────────
