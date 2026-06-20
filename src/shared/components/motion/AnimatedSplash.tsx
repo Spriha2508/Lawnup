@@ -53,8 +53,15 @@ const SUN = '#FFE9B8';             // warm dawn light
 // Lush foliage greens (the plant comes alive).
 const GREENS = ['#4E7C4A', '#5E7F61', '#6FA06B', '#7FB069', '#3E6B3C', '#88B07E'];
 
-const TOTAL = 3700;
-const SKIP_AT = 1800;
+// P0-1 (startup time): the splash is a fixed brand floor on the path to Home.
+// `SPEED` compresses the entire choreography proportionally (every keyframe is
+// scaled through `at()`), so the same scan→bloom→dawn→brand story plays out, just
+// faster — trimming ~1.1s off the time-to-Home without redesigning the animation.
+const SPEED = 0.7;
+const at = (ms: number): number => Math.round(ms * SPEED);
+
+const TOTAL = at(3700);
+const SKIP_AT = at(1800);
 const WORD = 'LawnUp';
 const NBANDS = 6;
 
@@ -302,31 +309,33 @@ export const AnimatedSplash: React.FC<Props> = ({ onDone }) => {
   const finish = useCallback(() => { if (calledRef.current) return; calledRef.current = true; onDone(); }, [onDone]);
 
   useEffect(() => {
-    silh.value = withDelay(150, withTiming(1, { duration: 450, easing: M.ease.smooth }));
+    // Every keyframe is scaled by `at()` (SPEED) so the choreography is identical,
+    // just compressed onto a shorter timeline (P0-1).
+    silh.value = withDelay(at(150), withTiming(1, { duration: at(450), easing: M.ease.smooth }));
 
     // the AI scan sweeps once, top → bottom
-    scan.value = withDelay(600, withTiming(1, { duration: 850, easing: M.ease.standard }));
+    scan.value = withDelay(at(600), withTiming(1, { duration: at(850), easing: M.ease.standard }));
 
     // recognition: name + tick + a confidence pulse
-    ident.value = withDelay(1300, withTiming(1, { duration: 360, easing: M.ease.decelerate }));
-    pulse.value = withDelay(1340, withTiming(1, { duration: 700, easing: M.ease.smooth }));
+    ident.value = withDelay(at(1300), withTiming(1, { duration: at(360), easing: M.ease.decelerate }));
+    pulse.value = withDelay(at(1340), withTiming(1, { duration: at(700), easing: M.ease.smooth }));
 
     // colour floods downward in the scan's wake
-    illum.value = withDelay(1500, withTiming(1, { duration: 950, easing: M.ease.smooth }));
+    illum.value = withDelay(at(1500), withTiming(1, { duration: at(950), easing: M.ease.smooth }));
 
     // the canopy thickens + blossoms open — vibrant
-    foliage.value = withDelay(2200, withSpring(1, M.spring.gentle));
+    foliage.value = withDelay(at(2200), withSpring(1, M.spring.gentle));
 
     // the world dawns into warm ivory daylight
-    dawn.value = withDelay(2600, withTiming(1, { duration: 650, easing: M.ease.smooth }));
+    dawn.value = withDelay(at(2600), withTiming(1, { duration: at(650), easing: M.ease.smooth }));
 
     // the brand resolves on the light
-    word.value = withDelay(3000, withTiming(1, { duration: 100 }));
-    tag.value = withDelay(3380, withTiming(1, { duration: 420, easing: M.ease.smooth }));
+    word.value = withDelay(at(3000), withTiming(1, { duration: at(100) }));
+    tag.value = withDelay(at(3380), withTiming(1, { duration: at(420), easing: M.ease.smooth }));
 
-    skipOp.value = withDelay(SKIP_AT, withTiming(1, { duration: 400 }, (f) => { if (f) runOnJS(setArmed)(true); }));
+    skipOp.value = withDelay(SKIP_AT, withTiming(1, { duration: at(400) }, (f) => { if (f) runOnJS(setArmed)(true); }));
 
-    container.value = withDelay(TOTAL - 420, withTiming(0, { duration: 420, easing: M.ease.smooth }, (f) => { if (f) runOnJS(finish)(); }));
+    container.value = withDelay(TOTAL - at(420), withTiming(0, { duration: at(420), easing: M.ease.smooth }, (f) => { if (f) runOnJS(finish)(); }));
     return () => { cancelAnimation(container); finish(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -456,7 +465,7 @@ export const AnimatedSplash: React.FC<Props> = ({ onDone }) => {
         {/* WORDMARK resolving on the daylight */}
         <Animated.View style={[styles.wordWrap, { top: WORD_TOP }, wordStyle]} pointerEvents="none">
           <View style={styles.wordRow}>
-            {WORD.split('').map((ch, i) => <Letter key={i} ch={ch} delay={3000 + i * 40} />)}
+            {WORD.split('').map((ch, i) => <Letter key={i} ch={ch} delay={at(3000) + i * at(40)} />)}
           </View>
         </Animated.View>
         <Animated.View style={[styles.tagWrap, { top: TAG_TOP }, tagStyle]} pointerEvents="none">

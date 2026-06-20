@@ -89,10 +89,13 @@ function App() {
   const handleSplashDone = useCallback(() => setSplashDone(true), []);
 
   useEffect(() => {
+    // Safety fallback only: bundled fonts resolve in well under a second, so this
+    // never normally fires. Capped low (was 5000ms) so a slow/failed font decode
+    // can't hold the entire tree behind a blank spinner on the startup path (P0-1).
     const timeout = setTimeout(async () => {
       setFontsLoaded(true);
       try { await SplashScreen.hideAsync(); } catch {}
-    }, 5000);
+    }, 2000);
 
     Font.loadAsync({
       'Nunito-Regular':           require('./assets/fonts/Nunito-Regular.ttf'),

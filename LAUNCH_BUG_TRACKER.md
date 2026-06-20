@@ -154,6 +154,16 @@
 
 ---
 
+## 4.3 Launch Bug Table — QA Round 3 / Device Regression (2026-06-20)
+
+> Logged from the owner's device regression pass on a debug build (OnePlus 7 Pro, GM1917, Android 12). Independent Round 3 batch (LB-047+). Status starts 🔴 Pending → 🟡 Implemented per round rules (never 🟢 Verified without a real-device regression pass). Each fix was preceded by an explicit root-cause investigation (measurement / config trace / live API probe), recorded below.
+
+| Bug ID | Priority | Screen | Issue | Root Cause (investigated) | Fix | Status | Notes |
+|---|---|---|---|---|---|---|---|
+| LB-047 | 🔴 P0 | App boot / Splash | Loading screen shows ~15–20s before the app is usable | **Measured cold start (`am start`→first frame = +14.5s).** Dominant cost is the **debug build streaming its JS bundle over Metro** — absent in a release/standalone build. Controllable JS-path costs found: (a) `App.tsx` hard-blocked the whole tree behind font loading with a **5000ms** fallback; (b) `AnimatedSplash` had a fixed **3700ms** floor on the path to Home. Non-critical init (purchases/usage/analytics/notifications) is already deferred/lazy — verified, left as-is. | `App.tsx`: font-load fallback 5000→**2000ms** (bundled fonts resolve <1s; cap stops a slow decode holding a blank spinner). `AnimatedSplash.tsx`: added a single `SPEED=0.7` knob scaling every keyframe via `at()` → splash floor **3700→~2590ms**, same choreography, faster. | 🟡 Implemented | ``ef05cbd``. **Build-type caveat:** the ~14.5s in the measurement is debug-only Metro bundle transfer — **a release/standalone build is required to realise and verify true startup** and is recommended for all device testing. Splash duration past this point is a product call. **Verify on device (ideally a release build).** |
+
+---
+
 ## 5. Current Launch Blockers
 
 > Work that must be cleared before a paid public launch. None of these are app crashes today — they are activation/QA gates.
