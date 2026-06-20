@@ -96,6 +96,19 @@ Add **all** that apply, then **re-download google-services.json**.
 
 ## Status
 - ✅ `signInWithGoogle(idToken)` scaffolded (authService).
-- ✅ Button visible with honest "coming soon" until wired.
-- ✅ `app.json` `googleServicesFile` set.
-- ⬜ Package install + plugin + configure + rebuild (the Google Auth task).
+- ✅ `@react-native-google-signin/google-signin` installed, plugin in `app.json`, configured at boot (`App.tsx` → `configureGoogleSignIn()`).
+- ✅ `app.json` `googleServicesFile` set; `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` set → `GOOGLE_AUTH_READY = true` (the Landing button now *attempts* real sign-in, not "coming soon").
+- ✅ `DEVELOPER_ERROR` (code 10) mapped to a friendly message + dev diagnostic in `googleSignIn.ts`.
+- ⛔ **BLOCKED (owner-side, BLK-1):** SHA fingerprint not registered in Firebase — see below.
+
+### Round 3 re-confirmation (2026-06-20, LB-048)
+Re-verified end-to-end on the OnePlus 7 Pro debug build:
+- The installed APK is signed by `android/app/debug.keystore`, SHA-1 `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25` (lowercase, no colons: `5e8f16062ea3cd2c4a0d547876baa6f38cabf625`).
+- `android/app/google-services.json` registers the Android OAuth client (type 1) against `certificate_hash 5fbc5bc44b40310e3e66d39fe2627b1c7f0d3648` — **a different key**.
+- ⇒ Google's OAuth backend returns `DEVELOPER_ERROR` (code 10); sign-in fails. Everything else verified correct (Web client type 3 `…ed1sm4l95sba…`, `package_name`/`applicationId` = `com.lawnup.app`, boot config, JS flow).
+
+**Owner action to unblock (no repo edit can substitute — server-side check):**
+1. Firebase Console → Project Settings → Android app (`com.lawnup.app`) → **Add fingerprint** → register SHA-1 `5E:8F:16:…F6:25` **and** SHA-256 `FA:C6:17:…3B:9C`.
+2. **Re-download `google-services.json`** → place at repo root (and it copies to `android/app/` on build).
+3. **Rebuild** the app (native — Metro reload is not enough). For EAS distribution also register that keystore's SHA via `eas credentials -p android`.
+4. Firebase Console → Authentication → Sign-in method → ensure **Google** provider is enabled with a support email.
